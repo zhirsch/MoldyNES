@@ -1,7 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
+import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import java.nio.ByteBuffer;
+import com.zacharyhirsch.moldynes.emulator.Stack;
 
 public class Clc implements Instruction {
   @Override
@@ -10,7 +11,7 @@ public class Clc implements Instruction {
   }
 
   @Override
-  public void execute(ByteBuffer ram, Registers regs) {
-    regs.sr.clear(Registers.STATUS_REGISTER_C);
+  public void execute(Ram ram, Registers regs, Stack stack) {
+    regs.sr.c = false;
   }
 }

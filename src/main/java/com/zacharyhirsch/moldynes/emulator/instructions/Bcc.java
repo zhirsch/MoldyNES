@@ -1,7 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
+import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import java.nio.ByteBuffer;
+import com.zacharyhirsch.moldynes.emulator.Stack;
 
 public abstract class Bcc implements Instruction {
 
@@ -19,8 +20,8 @@ public abstract class Bcc implements Instruction {
     }
 
     @Override
-    public void execute(ByteBuffer ram, Registers regs) {
-      if (!regs.sr.get(Registers.STATUS_REGISTER_C)) {
+    public void execute(Ram ram, Registers regs, Stack stack) {
+      if (!regs.sr.c) {
         regs.pc += relative;
       }
     }

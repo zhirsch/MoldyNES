@@ -7,19 +7,21 @@ import java.nio.ByteBuffer;
 
 final class Emulator {
 
-  private final ByteBuffer ram;
+  private final Ram ram;
   private final Registers regs;
+  private final Stack stack;
 
-  public Emulator(byte[] ram, short pc) {
-    this.ram = ByteBuffer.wrap(ram).order(LITTLE_ENDIAN);
+  public Emulator(ByteBuffer ram, short pc) {
+    this.ram = new Ram(ram.order(LITTLE_ENDIAN));
     this.regs = new Registers(pc);
+    this.stack = new Stack(ram, this.regs);
   }
 
   public void step() {
-    var instr = Instruction.decode(ram.position(regs.pc));
-//    System.out.printf("%04x : %s\n", regs.pc, instr.describe());
-    regs.pc = (short) ram.position();
-    instr.execute(ram, regs);
+    System.out.printf("%04x : ", regs.pc);
+    Instruction instr = Instruction.decode(ram, regs);
+    System.out.println(instr.describe());
+    instr.execute(ram, regs, stack);
   }
 
   public void run() {
@@ -27,7 +29,7 @@ final class Emulator {
       short oldPc = regs.pc;
       step();
       if (regs.pc == oldPc) {
-        throw new InfiniteLoopException(regs.pc);
+        throw new InfiniteLoopException(regs);
       }
     }
   }

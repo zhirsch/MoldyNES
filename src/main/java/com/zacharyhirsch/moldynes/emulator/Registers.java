@@ -1,22 +1,12 @@
 package com.zacharyhirsch.moldynes.emulator;
 
-import java.util.BitSet;
-
 public class Registers {
-
-  public static final int STATUS_REGISTER_N = 7;
-  public static final int STATUS_REGISTER_V = 6;
-  public static final int STATUS_REGISTER_B = 4;
-  public static final int STATUS_REGISTER_D = 3;
-  public static final int STATUS_REGISTER_I = 2;
-  public static final int STATUS_REGISTER_Z = 1;
-  public static final int STATUS_REGISTER_C = 0;
 
   public short pc;
   public byte ac;
   public byte x;
   public byte y;
-  public final BitSet sr;
+  public final StatusRegister sr;
   public byte sp;
 
   public Registers(short pc) {
@@ -24,7 +14,13 @@ public class Registers {
     this.ac = 0;
     this.x = 0;
     this.y = 0;
-    this.sr = new BitSet(8);
+    this.sr = new StatusRegister();
     this.sp = 0;
+  }
+
+  @Override
+  public String toString() {
+    return String.format(
+        "pc = %04x\nac = %02x\nx  = %02x\ny  = %02x\nsr = %s\nsp = %02x", pc, ac, x, y, sr, sp);
   }
 }

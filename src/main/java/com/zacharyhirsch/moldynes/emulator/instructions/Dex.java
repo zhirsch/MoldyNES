@@ -1,8 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
+import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-
-import java.nio.ByteBuffer;
+import com.zacharyhirsch.moldynes.emulator.Stack;
 
 public class Dex implements Instruction {
 
@@ -12,10 +12,10 @@ public class Dex implements Instruction {
     }
 
     @Override
-    public void execute(ByteBuffer ram, Registers regs) {
+    public void execute(Ram ram, Registers regs, Stack stack) {
         regs.x = (byte) (regs.x - 1);
 
-        regs.sr.set(Registers.STATUS_REGISTER_N, regs.x < 0);
-        regs.sr.set(Registers.STATUS_REGISTER_Z, regs.x == 0);
+        regs.sr.n = regs.x < 0;
+        regs.sr.z = regs.x == 0;
     }
 }

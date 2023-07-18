@@ -1,7 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
+import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import java.nio.ByteBuffer;
+import com.zacharyhirsch.moldynes.emulator.Stack;
 
 public class Nop implements Instruction {
 
@@ -11,5 +12,5 @@ public class Nop implements Instruction {
   }
 
   @Override
-  public void execute(ByteBuffer ram, Registers regs) {}
+  public void execute(Ram ram, Registers regs, Stack stack) {}
 }

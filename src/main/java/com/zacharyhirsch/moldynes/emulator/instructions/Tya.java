@@ -1,7 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
+import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import java.nio.ByteBuffer;
+import com.zacharyhirsch.moldynes.emulator.Stack;
 
 public class Tya implements Instruction {
 
@@ -11,10 +12,10 @@ public class Tya implements Instruction {
   }
 
   @Override
-  public void execute(ByteBuffer ram, Registers regs) {
+  public void execute(Ram ram, Registers regs, Stack stack) {
     regs.ac = regs.y;
 
-    regs.sr.set(Registers.STATUS_REGISTER_N, regs.ac < 0);
-    regs.sr.set(Registers.STATUS_REGISTER_Z, regs.ac == 0);
+    regs.sr.n = regs.ac < 0;
+    regs.sr.z = regs.ac == 0;
   }
 }

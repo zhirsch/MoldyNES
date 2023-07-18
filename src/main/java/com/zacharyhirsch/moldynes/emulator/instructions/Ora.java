@@ -4,7 +4,7 @@ import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.Stack;
 
-public abstract class Eor implements Instruction {
+public abstract class Ora implements Instruction {
 
   public static class Immediate implements Instruction {
 
@@ -16,12 +16,12 @@ public abstract class Eor implements Instruction {
 
     @Override
     public String describe() {
-      return String.format("EOR #$%02x", immediate);
+      return String.format("ORA #$%02x", immediate);
     }
 
     @Override
     public void execute(Ram ram, Registers regs, Stack stack) {
-      regs.ac = (byte) (regs.ac ^ immediate);
+      regs.ac = (byte) (regs.ac | immediate);
 
       regs.sr.n = regs.ac < 0;
       regs.sr.z = regs.ac == 0;
