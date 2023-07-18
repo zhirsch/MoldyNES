@@ -18,10 +18,7 @@ class EmulatorFunctionalTest {
   @Test
   void functionalTest() throws IOException {
     byte[] ram = readImage("6502_65C02_functional_tests/bin_files/6502_functional_test.bin");
-    Emulator emulator = new Emulator(ram, 0x400);
-
-    for (int i = 0; i < 40; i++) {
-      emulator.step();
-    }
+    Emulator emulator = new Emulator(ram, (short) 0x0400);
+    emulator.run();
   }
 }

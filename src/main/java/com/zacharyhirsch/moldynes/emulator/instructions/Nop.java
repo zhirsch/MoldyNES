@@ -3,15 +3,13 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import java.nio.ByteBuffer;
 
-public class Txs implements Instruction {
+public class Nop implements Instruction {
 
   @Override
   public String describe() {
-    return "TXS";
+    return "NOP";
   }
 
   @Override
-  public void execute(ByteBuffer ram, Registers regs) {
-    regs.sp = regs.x;
-  }
+  public void execute(ByteBuffer ram, Registers regs) {}
 }
