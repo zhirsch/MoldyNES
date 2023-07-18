@@ -1,7 +1,9 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
+import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import java.nio.ByteBuffer;
+import com.zacharyhirsch.moldynes.emulator.Stack;
+
 import java.util.Arrays;
 
 public abstract class Adc implements Instruction {
@@ -20,15 +22,15 @@ public abstract class Adc implements Instruction {
     }
 
     @Override
-    public void execute(ByteBuffer ram, Registers regs) {
-      byte carry = (byte) (regs.sr.get(Registers.STATUS_REGISTER_C) ? 1 : 0);
+    public void execute(Ram ram, Registers regs, Stack stack) {
+      byte carry = (byte) (regs.sr.c ? 1 : 0);
       int value = regs.ac + immediate + carry;
       regs.ac = (byte) value;
 
-      regs.sr.set(Registers.STATUS_REGISTER_N, regs.ac < 0);
-      regs.sr.set(Registers.STATUS_REGISTER_Z, regs.ac == 0);
-      regs.sr.set(Registers.STATUS_REGISTER_C, binaryAdd(regs.ac, immediate, carry) > 255);
-      regs.sr.set(Registers.STATUS_REGISTER_V, value > 127 || value < -128);
+      regs.sr.n = regs.ac < 0;
+      regs.sr.z = regs.ac == 0;
+      regs.sr.c = binaryAdd(regs.ac, immediate, carry) > 255;
+      regs.sr.v = value > 127 || value < -128;
     }
 
     private static int binaryAdd(Byte... values) {

@@ -4,18 +4,16 @@ import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.Stack;
 
-public class Tay implements Instruction {
+public class Rti implements Instruction {
 
   @Override
   public String describe() {
-    return "TAY";
+    return "RTI";
   }
 
   @Override
   public void execute(Ram ram, Registers regs, Stack stack) {
-    regs.y = regs.ac;
-
-    regs.sr.n = regs.y < 0;
-    regs.sr.z = regs.y == 0;
+    regs.sr.fromByte(stack.pull());
+    regs.pc = stack.pullShort();
   }
 }
