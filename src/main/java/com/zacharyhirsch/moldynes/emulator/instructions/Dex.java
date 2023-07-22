@@ -7,7 +7,7 @@ import com.zacharyhirsch.moldynes.emulator.Stack;
 public class Dex implements Instruction {
 
     @Override
-    public String describe() {
+    public String toString() {
         return "DEX";
     }
 

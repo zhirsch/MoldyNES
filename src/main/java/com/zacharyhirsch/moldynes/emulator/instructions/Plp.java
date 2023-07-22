@@ -7,7 +7,7 @@ import com.zacharyhirsch.moldynes.emulator.Stack;
 public class Plp implements Instruction {
 
   @Override
-  public String describe() {
+  public String toString() {
     return "PLP";
   }
 

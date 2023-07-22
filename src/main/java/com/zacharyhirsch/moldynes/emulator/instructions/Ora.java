@@ -3,28 +3,26 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.Stack;
+import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public abstract class Ora implements Instruction {
+public final class Ora implements Instruction {
 
-  public static class Immediate implements Instruction {
+  private final ReadableAddress<Byte> address;
 
-    private final byte immediate;
+  public Ora(ReadableAddress<Byte> address) {
+    this.address = address;
+  }
 
-    public Immediate(byte immediate) {
-      this.immediate = immediate;
-    }
+  @Override
+  public String toString() {
+    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
+  }
 
-    @Override
-    public String describe() {
-      return String.format("ORA #$%02x", immediate);
-    }
+  @Override
+  public void execute(Ram ram, Registers regs, Stack stack) {
+    regs.ac = (byte) (regs.ac | address.fetch());
 
-    @Override
-    public void execute(Ram ram, Registers regs, Stack stack) {
-      regs.ac = (byte) (regs.ac | immediate);
-
-      regs.sr.n = regs.ac < 0;
-      regs.sr.z = regs.ac == 0;
-    }
+    regs.sr.n = regs.ac < 0;
+    regs.sr.z = regs.ac == 0;
   }
 }

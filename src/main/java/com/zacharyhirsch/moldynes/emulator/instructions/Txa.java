@@ -7,7 +7,7 @@ import com.zacharyhirsch.moldynes.emulator.Stack;
 public class Txa implements Instruction {
 
   @Override
-  public String describe() {
+  public String toString() {
     return "TXA";
   }
 

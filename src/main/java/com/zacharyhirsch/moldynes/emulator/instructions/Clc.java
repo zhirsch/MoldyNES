@@ -6,7 +6,7 @@ import com.zacharyhirsch.moldynes.emulator.Stack;
 
 public class Clc implements Instruction {
   @Override
-  public String describe() {
+  public String toString() {
     return "CLC";
   }
 
