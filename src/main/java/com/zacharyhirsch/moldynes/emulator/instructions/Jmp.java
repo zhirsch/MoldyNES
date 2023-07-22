@@ -3,43 +3,23 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.Stack;
+import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public abstract class Jmp implements Instruction {
+public final class Jmp implements Instruction {
 
-  public static final class Absolute extends Jmp {
-    private final short absolute;
+  private final ReadableAddress<Short> address;
 
-    public Absolute(short absolute) {
-      this.absolute = absolute;
-    }
-
-    @Override
-    public String describe() {
-      return String.format("JMP #$%04x", absolute);
-    }
-
-    @Override
-    public void execute(Ram ram, Registers regs, Stack stack) {
-      regs.pc = absolute;
-    }
+  public Jmp(ReadableAddress<Short> address) {
+    this.address = address;
   }
 
-  public static class Indirect implements Instruction {
+  @Override
+  public String toString() {
+    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
+  }
 
-    private final short indirect;
-
-    public Indirect(short indirect) {
-      this.indirect = indirect;
-    }
-
-    @Override
-    public String describe() {
-      return String.format("JMP (#$%04x)", indirect);
-    }
-
-    @Override
-    public void execute(Ram ram, Registers regs, Stack stack) {
-      regs.pc = ram.getShortAbsolute(indirect);
-    }
+  @Override
+  public void execute(Ram ram, Registers regs, Stack stack) {
+    regs.pc = address.fetch();
   }
 }

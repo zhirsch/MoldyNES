@@ -7,7 +7,7 @@ import com.zacharyhirsch.moldynes.emulator.Stack;
 public class Rts implements Instruction {
 
   @Override
-  public String describe() {
+  public String toString() {
     return "RTS";
   }
 

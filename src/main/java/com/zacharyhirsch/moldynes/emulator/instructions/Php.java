@@ -7,7 +7,7 @@ import com.zacharyhirsch.moldynes.emulator.Stack;
 public class Php implements Instruction {
 
   @Override
-  public String describe() {
+  public String toString() {
     return "PHP";
   }
 

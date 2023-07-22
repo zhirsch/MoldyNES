@@ -3,27 +3,25 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.Stack;
+import com.zacharyhirsch.moldynes.emulator.memory.Immediate;
 
-public abstract class Bcs implements Instruction {
+public class Bcs implements Instruction {
 
-  public static final class Relative extends Bcs {
+  private final Immediate<Byte> immediate;
 
-    private final byte relative;
+  public Bcs(Immediate<Byte> immediate) {
+    this.immediate = immediate;
+  }
 
-    public Relative(byte relative) {
-      this.relative = relative;
-    }
+  @Override
+  public String toString() {
+    return getClass().getSimpleName().toUpperCase() + " " + immediate.toString();
+  }
 
-    @Override
-    public String describe() {
-      return String.format("BCS #$%02x", relative);
-    }
-
-    @Override
-    public void execute(Ram ram, Registers regs, Stack stack) {
-      if (regs.sr.c) {
-        regs.pc += relative;
-      }
+  @Override
+  public void execute(Ram ram, Registers regs, Stack stack) {
+    if (regs.sr.c) {
+      regs.pc += immediate.fetch();
     }
   }
 }

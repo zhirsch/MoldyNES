@@ -3,55 +3,56 @@ package com.zacharyhirsch.moldynes.emulator;
 import static java.lang.Byte.toUnsignedInt;
 import static java.lang.Short.toUnsignedInt;
 
+import com.zacharyhirsch.moldynes.emulator.memory.Index;
 import java.nio.ByteBuffer;
 
 public class Ram {
 
-  public static final short NMI_VECTOR = (short) 0xfffe;
-
-  private final ByteBuffer ram;
+  public final ByteBuffer ram;
 
   public Ram(ByteBuffer ram) {
     this.ram = ram;
   }
 
-  public byte getAbsoluteIndexed(short address, byte index) {
-    return ram.get(toUnsignedInt(address) + toUnsignedInt(index));
+  public <T extends Number> T fetch(short address, Class<T> clazz) {
+    return fetchInternal(toUnsignedInt(address), clazz);
   }
 
-  public byte getAbsolute(short address) {
-    return getAbsoluteIndexed(address, (byte) 0);
+  public <T extends Number> T fetch(short address, Index index, Class<T> clazz) {
+    return fetchInternal(toUnsignedInt(address) + toUnsignedInt(index.get()), clazz);
   }
 
-  public byte getZeropageIndexed(byte address, byte index) {
-    return ram.get((toUnsignedInt(address) + toUnsignedInt(index)) & 0x00ff);
+  public <T extends Number> T fetchZeropage(byte address, Class<T> clazz) {
+    return fetchInternal(toUnsignedInt(address) & 0x00ff, clazz);
   }
 
-  public byte getZeropage(byte address) {
-    return getZeropageIndexed(address, (byte) 0);
+  public <T extends Number> T fetchZeropage(byte address, Index index, Class<T> clazz) {
+    return fetchInternal((toUnsignedInt(address) + toUnsignedInt(index.get())) & 0x00ff, clazz);
   }
 
-  public short getShortAbsoluteIndexed(short address, byte index) {
-    return ram.getShort(toUnsignedInt(address) + toUnsignedInt(index));
+  public void store(short address, byte value) {
+    ram.put(toUnsignedInt(address), value);
   }
 
-  public short getShortAbsolute(short address) {
-    return getShortAbsoluteIndexed(address, (byte) 0);
+  public void store(short address, Index index, byte value) {
+    ram.put(toUnsignedInt(address) + toUnsignedInt(index.get()), value);
   }
 
-  public void putAbsoluteIndexed(short address, byte index, byte value) {
-    ram.put(toUnsignedInt(address) + toUnsignedInt(index), value);
+  public void storeZeropage(byte address, byte value) {
+    this.ram.put(toUnsignedInt(address) & 0x00ff, value);
   }
 
-  public void putAbsolute(short address, byte value) {
-    putAbsoluteIndexed(address, (byte) 0, value);
+  public void storeZeropage(byte address, Index index, byte value) {
+    ram.put((toUnsignedInt(address) + toUnsignedInt(index.get())) & 0x00ff, value);
   }
 
-  public void putZeropageIndexed(byte address, byte index, byte value) {
-    ram.put((toUnsignedInt(address) + toUnsignedInt(index)) & 0x00ff, value);
-  }
-
-  public void putZeropage(byte address, byte value) {
-    putZeropageIndexed(address, (byte) 0, value);
+  private <T extends Number> T fetchInternal(int address, Class<T> clazz) {
+    if (clazz == Byte.class) {
+      return clazz.cast(ram.get(address));
+    }
+    if (clazz == Short.class) {
+      return clazz.cast(ram.getShort(address));
+    }
+    throw new IllegalArgumentException(clazz.toString());
   }
 }
