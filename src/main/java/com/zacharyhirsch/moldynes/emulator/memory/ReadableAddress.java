@@ -1,5 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
-public interface ReadableAddress<T> {
+import com.zacharyhirsch.moldynes.emulator.instructions.Instruction;
+
+public interface ReadableAddress<T> extends Instruction.Argument {
   T fetch();
 }

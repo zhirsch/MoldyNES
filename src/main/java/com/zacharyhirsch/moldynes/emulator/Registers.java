@@ -1,26 +1,29 @@
 package com.zacharyhirsch.moldynes.emulator;
 
-public class Registers {
+public final class Registers {
 
   public short pc;
-  public byte ac;
-  public byte x;
-  public byte y;
-  public final StatusRegister sr;
-  public byte sp;
+  public byte ac = 0;
+  public byte x = 0;
+  public byte y = 0;
+  public final StatusRegister sr = new StatusRegister();
+  public byte sp = 0;
 
   public Registers(short pc) {
     this.pc = pc;
-    this.ac = 0;
-    this.x = 0;
-    this.y = 0;
-    this.sr = new StatusRegister();
-    this.sp = 0;
   }
 
   @Override
   public String toString() {
     return String.format(
-        "pc = %04x\nac = %02x\nx  = %02x\ny  = %02x\nsr = %s\nsp = %02x", pc, ac, x, y, sr, sp);
+        """
+            pc = %04x
+            ac = %02x
+            x  = %02x
+            y  = %02x
+            sr = %s
+            sp = %02x
+            """,
+        pc, ac, x, y, sr, sp);
   }
 }

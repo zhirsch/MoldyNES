@@ -1,8 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
+import com.zacharyhirsch.moldynes.emulator.HaltException;
 import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.Stack;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
 public final class Jmp implements Instruction {
@@ -19,7 +19,16 @@ public final class Jmp implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs, Stack stack) {
-    regs.pc = address.fetch();
+  public void execute(Ram ram, Registers regs) {
+    short dst = address.fetch();
+    if (dst == regs.pc - 3) {
+      throw new HaltException();
+    }
+    regs.pc = dst;
+  }
+
+  @Override
+  public int getSize() {
+    return 1 + address.getSize();
   }
 }

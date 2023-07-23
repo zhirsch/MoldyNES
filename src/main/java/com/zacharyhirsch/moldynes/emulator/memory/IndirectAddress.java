@@ -21,4 +21,9 @@ public class IndirectAddress implements ReadableAddress<Short> {
   public Short fetch() {
     return ram.fetch(absolute, Short.class);
   }
+
+  @Override
+  public int getSize() {
+    return 2;
+  }
 }

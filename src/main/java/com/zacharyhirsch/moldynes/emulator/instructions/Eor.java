@@ -2,7 +2,6 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.Stack;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
 public final class Eor implements Instruction {
@@ -19,10 +18,15 @@ public final class Eor implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs, Stack stack) {
-    regs.ac = (byte) (regs.ac ^ address.fetch());
+  public void execute(Ram ram, Registers regs) {
+    regs.ac ^= address.fetch();
 
     regs.sr.n = regs.ac < 0;
     regs.sr.z = regs.ac == 0;
+  }
+
+  @Override
+  public int getSize() {
+    return 1 + address.getSize();
   }
 }

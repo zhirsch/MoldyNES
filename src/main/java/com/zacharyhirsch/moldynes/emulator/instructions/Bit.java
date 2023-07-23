@@ -4,11 +4,11 @@ import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public final class Ldx implements Instruction {
+public final class Bit implements Instruction {
 
   private final ReadableAddress<Byte> address;
 
-  public Ldx(ReadableAddress<Byte> address) {
+  public Bit(ReadableAddress<Byte> address) {
     this.address = address;
   }
 
@@ -19,10 +19,11 @@ public final class Ldx implements Instruction {
 
   @Override
   public void execute(Ram ram, Registers regs) {
-    regs.x = address.fetch();
+    byte input = address.fetch();
 
-    regs.sr.n = regs.x < 0;
-    regs.sr.z = regs.x == 0;
+    regs.sr.z = (regs.ac & input) == 0;
+    regs.sr.n = (input & 0b1000_0000) == 0b1000_0000;
+    regs.sr.v = (input & 0b0100_0000) == 0b0100_0000;
   }
 
   @Override

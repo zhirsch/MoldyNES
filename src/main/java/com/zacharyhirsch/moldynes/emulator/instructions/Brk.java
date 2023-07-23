@@ -2,18 +2,14 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.Stack;
+import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 import com.zacharyhirsch.moldynes.emulator.memory.IndirectAddress;
 
 public class Brk implements Instruction {
 
   private static final short NMI_VECTOR = (short) 0xfffe;
 
-  private final IndirectAddress address;
-
-  public Brk(Ram ram) {
-    address = new IndirectAddress(ram, NMI_VECTOR);
-  }
+  public Brk(Implicit ignored) {}
 
   @Override
   public String toString() {
@@ -21,10 +17,15 @@ public class Brk implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs, Stack stack) {
-    stack.pushShort((short) (regs.pc + 1));
-    stack.push(regs.sr.toByte());
+  public void execute(Ram ram, Registers regs) {
+    ram.push((short) (regs.pc + 1), Short.class);
+    ram.push(regs.sr.toByte(), Byte.class);
     regs.sr.i = true;
-    regs.pc = address.fetch();
+    regs.pc = new IndirectAddress(ram, NMI_VECTOR).fetch();
+  }
+
+  @Override
+  public int getSize() {
+    return 1;
   }
 }

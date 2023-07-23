@@ -2,13 +2,13 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
+import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
-public final class Ldx implements Instruction {
+public final class Lsr implements Instruction {
 
-  private final ReadableAddress<Byte> address;
+  private final Address<Byte> address;
 
-  public Ldx(ReadableAddress<Byte> address) {
+  public Lsr(Address<Byte> address) {
     this.address = address;
   }
 
@@ -19,10 +19,13 @@ public final class Ldx implements Instruction {
 
   @Override
   public void execute(Ram ram, Registers regs) {
-    regs.x = address.fetch();
+    byte input = address.fetch();
+    byte output = (byte) (Byte.toUnsignedInt(input) >>> 1);
+    address.store(output);
 
-    regs.sr.n = regs.x < 0;
-    regs.sr.z = regs.x == 0;
+    regs.sr.c = (input & 0b0000_0001) == 0b0000_0001;
+    regs.sr.n = false;
+    regs.sr.z = output == 0;
   }
 
   @Override
