@@ -2,13 +2,13 @@ package com.zacharyhirsch.moldynes.emulator.memory;
 
 import com.zacharyhirsch.moldynes.emulator.Ram;
 
-public class IndexedZeropageAddress implements Address<Byte> {
+public class IndirectYAddress implements Address<Byte> {
 
   private final Ram ram;
   private final byte zeropage;
-  private final Index index;
+  private final YIndex index;
 
-  public IndexedZeropageAddress(Ram ram, byte zeropage, Index index) {
+  public IndirectYAddress(Ram ram, byte zeropage, YIndex index) {
     this.ram = ram;
     this.zeropage = zeropage;
     this.index = index;
@@ -16,17 +16,19 @@ public class IndexedZeropageAddress implements Address<Byte> {
 
   @Override
   public String toString() {
-    return String.format("$%02x,%s", zeropage, index);
+    return String.format("($%02x),Y", zeropage);
   }
 
   @Override
   public Byte fetch() {
-    return ram.fetchZeropage(zeropage, index, Byte.class);
+    short base = ram.fetchZeropage(zeropage, Short.class);
+    return ram.fetch(base, index, Byte.class);
   }
 
   @Override
   public void store(Byte value) {
-    ram.storeZeropage(zeropage, index, value);
+    short base = ram.fetchZeropage(zeropage, Short.class);
+    ram.store(base, index, value);
   }
 
   @Override

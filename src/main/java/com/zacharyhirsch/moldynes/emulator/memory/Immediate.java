@@ -17,4 +17,9 @@ public class Immediate<T extends Number> implements ReadableAddress<T> {
   public T fetch() {
     return immediate;
   }
+
+  @Override
+  public int getSize() {
+    return immediate.getClass().equals(Byte.class) ? 1 : 2;
+  }
 }

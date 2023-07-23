@@ -2,7 +2,7 @@ package com.zacharyhirsch.moldynes.emulator.memory;
 
 import com.zacharyhirsch.moldynes.emulator.Ram;
 
-public class AbsoluteAddress implements ReadableAddress<Byte>, WritableAddress<Byte> {
+public class AbsoluteAddress implements Address<Byte> {
 
   private final Ram ram;
   private final short absolute;
@@ -25,5 +25,10 @@ public class AbsoluteAddress implements ReadableAddress<Byte>, WritableAddress<B
   @Override
   public void store(Byte value) {
     ram.store(absolute, value);
+  }
+
+  @Override
+  public int getSize() {
+    return 2;
   }
 }

@@ -2,9 +2,11 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.Ram;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.Stack;
+import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
 public class Rts implements Instruction {
+
+  public Rts(Implicit ignored) {}
 
   @Override
   public String toString() {
@@ -12,7 +14,12 @@ public class Rts implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs, Stack stack) {
-    regs.pc = (short) (stack.pullShort() + 1);
+  public void execute(Ram ram, Registers regs) {
+    regs.pc = (short) (ram.pull(Short.class) + 1);
+  }
+
+  @Override
+  public int getSize() {
+    return 1;
   }
 }
