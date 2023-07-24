@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 import com.zacharyhirsch.moldynes.emulator.memory.IndirectAddress;
@@ -17,11 +18,11 @@ public class Brk implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs) {
-    ram.push((short) (regs.pc + 1), Short.class);
-    ram.push(regs.sr.toByte(), Byte.class);
+  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
+    stack.push((short) (regs.pc + 1), Short.class);
+    stack.push(regs.sr.toByte(), Byte.class);
     regs.sr.i = true;
-    regs.pc = new IndirectAddress(ram, NMI_VECTOR).fetch();
+    regs.pc = new IndirectAddress(memory, NMI_VECTOR).fetch();
   }
 
   @Override

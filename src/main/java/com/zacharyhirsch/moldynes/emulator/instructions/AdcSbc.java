@@ -2,7 +2,8 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import static java.lang.Byte.toUnsignedInt;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
@@ -20,21 +21,18 @@ public abstract class AdcSbc implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs) {
-    if (regs.sr.d) {
-      executeBcd(regs);
-    } else {
-      executeBinary(regs);
-    }
+  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
+    // NES doesn't support BCD
+    //    if (regs.sr.d) {
+    //      executeBcd(regs);
+    //    } else {
+    executeBinary(regs);
+    //    }
   }
 
   @Override
   public int getSize() {
     return 1 + address.getSize();
-  }
-
-  private interface Function3<V1, V2, V3, R> {
-    R apply(V1 v1, V2 v2, V3 v3);
   }
 
   private void executeBinary(Registers regs) {
@@ -44,19 +42,19 @@ public abstract class AdcSbc implements Instruction {
     int sum;
     byte unsignedInput;
     if (this instanceof Adc) {
-      sum = regs.ac + input + carry;
+      sum = regs.a + input + carry;
       unsignedInput = input;
     } else {
-      sum = regs.ac - input - (1 - carry);
+      sum = regs.a - input - (1 - carry);
       unsignedInput = (byte) ~input;
     }
 
     regs.sr.n = (byte) sum < 0;
     regs.sr.z = (byte) sum == 0;
-    regs.sr.c = toUnsignedInt(regs.ac) + toUnsignedInt(unsignedInput) + carry > 255;
+    regs.sr.c = toUnsignedInt(regs.a) + toUnsignedInt(unsignedInput) + carry > 255;
     regs.sr.v = sum > 127 || sum < -128;
 
-    regs.ac = (byte) sum;
+    regs.a = (byte) sum;
   }
 
   private void executeBcd(Registers regs) {
@@ -65,9 +63,9 @@ public abstract class AdcSbc implements Instruction {
 
     int sum;
     if (this instanceof Adc) {
-      sum = fromBcd(regs.ac) + fromBcd(input) + carry;
+      sum = fromBcd(regs.a) + fromBcd(input) + carry;
     } else {
-      sum = 100 + (fromBcd(regs.ac) - fromBcd(input) - (1 - carry));
+      sum = 100 + (fromBcd(regs.a) - fromBcd(input) - (1 - carry));
     }
 
     byte sum2 = (byte) (sum % 100);
@@ -77,7 +75,7 @@ public abstract class AdcSbc implements Instruction {
     regs.sr.c = sum > 99;
     regs.sr.v = sum > 127 || sum < -128;
 
-    regs.ac = toBcd(sum2);
+    regs.a = toBcd(sum2);
   }
 
   private byte fromBcd(byte value) {

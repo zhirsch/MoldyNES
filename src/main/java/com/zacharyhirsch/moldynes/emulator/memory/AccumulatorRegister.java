@@ -17,12 +17,12 @@ public class AccumulatorRegister implements Address<Byte> {
 
   @Override
   public Byte fetch() {
-    return regs.ac;
+    return regs.a;
   }
 
   @Override
   public void store(Byte value) {
-    regs.ac = value;
+    regs.a = value;
   }
 
   @Override

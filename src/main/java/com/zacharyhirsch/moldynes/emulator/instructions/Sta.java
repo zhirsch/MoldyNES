@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.WritableAddress;
 
@@ -18,8 +19,8 @@ public final class Sta implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs) {
-    address.store(regs.ac);
+  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
+    address.store(regs.a);
   }
 
   @Override

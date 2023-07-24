@@ -10,7 +10,10 @@ public class Immediate<T extends Number> implements ReadableAddress<T> {
 
   @Override
   public String toString() {
-    return String.format("#$%04x", immediate);
+    if (immediate.getClass().equals(Byte.class)) {
+      return String.format("#$%02X", immediate.byteValue());
+    }
+    return String.format("#$%04X", immediate.shortValue());
   }
 
   @Override

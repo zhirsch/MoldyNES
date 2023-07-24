@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
@@ -18,10 +19,10 @@ public final class Bit implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs) {
+  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     byte input = address.fetch();
 
-    regs.sr.z = (regs.ac & input) == 0;
+    regs.sr.z = (regs.a & input) == 0;
     regs.sr.n = (input & 0b1000_0000) == 0b1000_0000;
     regs.sr.v = (input & 0b0100_0000) == 0b0100_0000;
   }

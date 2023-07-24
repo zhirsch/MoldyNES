@@ -1,32 +1,32 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 
 public class IndexedZeropageAddress implements Address<Byte> {
 
-  private final Ram ram;
+  private final NesCpuMemory memory;
   private final byte zeropage;
   private final Index index;
 
-  public IndexedZeropageAddress(Ram ram, byte zeropage, Index index) {
-    this.ram = ram;
+  public IndexedZeropageAddress(NesCpuMemory memory, byte zeropage, Index index) {
+    this.memory = memory;
     this.zeropage = zeropage;
     this.index = index;
   }
 
   @Override
   public String toString() {
-    return String.format("$%02x,%s", zeropage, index);
+    return String.format("$%02X,%s", zeropage, index);
   }
 
   @Override
   public Byte fetch() {
-    return ram.fetchZeropage(zeropage, index, Byte.class);
+    return memory.fetchZeropage(zeropage, index, Byte.class);
   }
 
   @Override
   public void store(Byte value) {
-    ram.storeZeropage(zeropage, index, value);
+    memory.storeZeropage(zeropage, index, value);
   }
 
   @Override
