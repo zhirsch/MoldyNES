@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
@@ -14,12 +15,13 @@ public final class Jsr implements Instruction {
 
   @Override
   public String toString() {
-    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
+    return String.format("%s $%04X", getClass().getSimpleName().toUpperCase(), address.fetch());
+    //    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
   }
 
   @Override
-  public void execute(Ram ram, Registers regs) {
-    ram.push((short) (regs.pc - 1), Short.class);
+  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
+    stack.push((short) (regs.pc - 1), Short.class);
     regs.pc = address.fetch();
   }
 

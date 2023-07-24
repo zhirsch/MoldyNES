@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
@@ -18,7 +19,7 @@ public final class Ldy implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs) {
+  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.y = address.fetch();
 
     regs.sr.n = regs.y < 0;

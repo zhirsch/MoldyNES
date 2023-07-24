@@ -1,23 +1,25 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.HaltException;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.instructions.AdcSbc.Adc;
 import com.zacharyhirsch.moldynes.emulator.instructions.AdcSbc.Sbc;
 import com.zacharyhirsch.moldynes.emulator.memory.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class Decoder {
 
-  private final Ram ram;
+  private final NesCpuMemory memory;
   private final Registers regs;
 
-  public Decoder(Ram ram, Registers regs) {
-    this.ram = ram;
+  public Decoder(NesCpuMemory memory, Registers regs) {
+    this.memory = memory;
     this.regs = regs;
   }
 
-  public record Decoded(short pc, Instruction instruction) {
+  public record Decoded(short pc, byte[] bytes, Instruction instruction) {
 
     @Override
     public String toString() {
@@ -26,8 +28,18 @@ public class Decoder {
   }
 
   public Decoded next() {
-    byte opcode = ram.fetch(regs.pc, Byte.class);
-    return new Decoded(regs.pc, decode(opcode).apply((short) (regs.pc + 1)));
+        byte opcode = memory.fetch(regs.pc, Byte.class);
+        Instruction instruction = decode(opcode).apply((short) (regs.pc + 1));
+        byte argByte1 = memory.fetch((short) (regs.pc + 1), Byte.class);
+        byte argByte2 = memory.fetch((short) (regs.pc + 2), Byte.class);
+        byte[] bytes =
+            switch (instruction.getSize()) {
+              case 1 -> new byte[] {opcode};
+              case 2 -> new byte[] {opcode, argByte1};
+              case 3 -> new byte[] {opcode, argByte1, argByte2};
+              default -> throw new RuntimeException("impossible");
+            };
+        return new Decoded(regs.pc, bytes, instruction);
   }
 
   private Function<Short, Instruction> decode(byte opcode) {
@@ -41,7 +53,7 @@ public class Decoder {
       case (byte) 0x0a -> address -> new Asl(accumulator(address));
       case (byte) 0x0d -> address -> new Ora(absolute(address));
       case (byte) 0x0e -> address -> new Asl(absolute(address));
-      case (byte) 0x10 -> address -> new Bpl(immediateByte(address));
+      case (byte) 0x10 -> address -> new Bpl(regs, immediateByte(address));
       case (byte) 0x11 -> address -> new Ora(indirectY(address));
       case (byte) 0x15 -> address -> new Ora(zeropageX(address));
       case (byte) 0x16 -> address -> new Asl(zeropageX(address));
@@ -60,8 +72,11 @@ public class Decoder {
       case (byte) 0x2c -> address -> new Bit(absolute(address));
       case (byte) 0x2d -> address -> new And(absolute(address));
       case (byte) 0x2e -> address -> new Rol(absolute(address));
-      case (byte) 0x30 -> address -> new Bmi(immediateByte(address));
+      case (byte) 0x30 -> address -> new Bmi(regs, immediateByte(address));
       case (byte) 0x31 -> address -> new And(indirectY(address));
+      case (byte) 0x32 -> address -> {
+        throw new HaltException();
+      };
       case (byte) 0x35 -> address -> new And(zeropageX(address));
       case (byte) 0x36 -> address -> new Rol(zeropageX(address));
       case (byte) 0x38 -> address -> new Sec();
@@ -78,7 +93,7 @@ public class Decoder {
       case (byte) 0x4c -> address -> new Jmp(immediateShort(address));
       case (byte) 0x4d -> address -> new Eor(absolute(address));
       case (byte) 0x4e -> address -> new Lsr(absolute(address));
-      case (byte) 0x50 -> address -> new Bvc(immediateByte(address));
+      case (byte) 0x50 -> address -> new Bvc(regs, immediateByte(address));
       case (byte) 0x51 -> address -> new Eor(indirectY(address));
       case (byte) 0x55 -> address -> new Eor(zeropageX(address));
       case (byte) 0x56 -> address -> new Lsr(zeropageX(address));
@@ -96,7 +111,7 @@ public class Decoder {
       case (byte) 0x6c -> address -> new Jmp(indirect(address));
       case (byte) 0x6d -> address -> new Adc(absolute(address));
       case (byte) 0x6e -> address -> new Ror(absolute(address));
-      case (byte) 0x70 -> address -> new Bvs(immediateByte(address));
+      case (byte) 0x70 -> address -> new Bvs(regs, immediateByte(address));
       case (byte) 0x71 -> address -> new Adc(indirectY(address));
       case (byte) 0x75 -> address -> new Adc(zeropageX(address));
       case (byte) 0x76 -> address -> new Ror(zeropageX(address));
@@ -113,7 +128,7 @@ public class Decoder {
       case (byte) 0x8a -> address -> new Txa(implicit(address));
       case (byte) 0x8c -> address -> new Sty(absolute(address));
       case (byte) 0x8e -> address -> new Stx(absolute(address));
-      case (byte) 0x90 -> address -> new Bcc(immediateByte(address));
+      case (byte) 0x90 -> address -> new Bcc(regs, immediateByte(address));
       case (byte) 0x91 -> address -> new Sta(indirectY(address));
       case (byte) 0x94 -> address -> new Sty(zeropageX(address));
       case (byte) 0x95 -> address -> new Sta(zeropageX(address));
@@ -134,7 +149,7 @@ public class Decoder {
       case (byte) 0xac -> address -> new Ldy(absolute(address));
       case (byte) 0xad -> address -> new Lda(absolute(address));
       case (byte) 0xae -> address -> new Ldx(absolute(address));
-      case (byte) 0xb0 -> address -> new Bcs(immediateByte(address));
+      case (byte) 0xb0 -> address -> new Bcs(regs, immediateByte(address));
       case (byte) 0xb1 -> address -> new Lda(indirectY(address));
       case (byte) 0xb4 -> address -> new Ldy(zeropageX(address));
       case (byte) 0xb5 -> address -> new Lda(zeropageX(address));
@@ -156,7 +171,7 @@ public class Decoder {
       case (byte) 0xcc -> address -> new Cpy(absolute(address));
       case (byte) 0xcd -> address -> new Cmp(absolute(address));
       case (byte) 0xce -> address -> new Dec(absolute(address));
-      case (byte) 0xd0 -> address -> new Bne(immediateByte(address));
+      case (byte) 0xd0 -> address -> new Bne(regs, immediateByte(address));
       case (byte) 0xd1 -> address -> new Cmp(indirectY(address));
       case (byte) 0xd5 -> address -> new Cmp(zeropageX(address));
       case (byte) 0xd6 -> address -> new Dec(zeropageX(address));
@@ -175,7 +190,7 @@ public class Decoder {
       case (byte) 0xea -> address -> new Nop(implicit(address));
       case (byte) 0xed -> address -> new Sbc(absolute(address));
       case (byte) 0xee -> address -> new Inc(absolute(address));
-      case (byte) 0xf0 -> address -> new Beq(immediateByte(address));
+      case (byte) 0xf0 -> address -> new Beq(regs, immediateByte(address));
       case (byte) 0xf1 -> address -> new Sbc(indirectY(address));
       case (byte) 0xf5 -> address -> new Sbc(zeropageX(address));
       case (byte) 0xf6 -> address -> new Inc(zeropageX(address));
@@ -183,7 +198,11 @@ public class Decoder {
       case (byte) 0xf9 -> address -> new Sbc(absoluteY(address));
       case (byte) 0xfd -> address -> new Sbc(absoluteX(address));
       case (byte) 0xfe -> address -> new Inc(absoluteX(address));
-      default -> throw new UnknownOpcodeException(opcode);
+        //      default -> throw new UnknownOpcodeException(opcode);
+      default -> address -> {
+        System.out.printf("invalid opcode %02x at %04x\n", opcode, address - 1);
+        return new Nop(new Implicit());
+      };
     };
   }
 
@@ -196,46 +215,46 @@ public class Decoder {
   }
 
   private Immediate<Byte> immediateByte(short address) {
-    return new Immediate<>(ram.fetch(address, Byte.class));
+    return new Immediate<>(memory.fetch(address, Byte.class));
   }
 
   private Immediate<Short> immediateShort(short address) {
-    return new Immediate<>(ram.fetch(address, Short.class));
+    return new Immediate<>(memory.fetch(address, Short.class));
   }
 
   private ZeropageAddress zeropage(short address) {
-    return new ZeropageAddress(ram, ram.fetch(address, Byte.class));
+    return new ZeropageAddress(memory, memory.fetch(address, Byte.class));
   }
 
   private IndexedZeropageAddress zeropageX(short address) {
-    return new IndexedZeropageAddress(ram, ram.fetch(address, Byte.class), new XIndex(regs));
+    return new IndexedZeropageAddress(memory, memory.fetch(address, Byte.class), new XIndex(regs));
   }
 
   private IndexedZeropageAddress zeropageY(short address) {
-    return new IndexedZeropageAddress(ram, ram.fetch(address, Byte.class), new YIndex(regs));
+    return new IndexedZeropageAddress(memory, memory.fetch(address, Byte.class), new YIndex(regs));
   }
 
   private AbsoluteAddress absolute(short address) {
-    return new AbsoluteAddress(ram, ram.fetch(address, Short.class));
+    return new AbsoluteAddress(memory, memory.fetch(address, Short.class));
   }
 
   private IndexedAbsoluteAddress absoluteX(short address) {
-    return new IndexedAbsoluteAddress(ram, ram.fetch(address, Short.class), new XIndex(regs));
+    return new IndexedAbsoluteAddress(memory, memory.fetch(address, Short.class), new XIndex(regs));
   }
 
   private IndexedAbsoluteAddress absoluteY(short address) {
-    return new IndexedAbsoluteAddress(ram, ram.fetch(address, Short.class), new YIndex(regs));
+    return new IndexedAbsoluteAddress(memory, memory.fetch(address, Short.class), new YIndex(regs));
   }
 
   private IndirectAddress indirect(short address) {
-    return new IndirectAddress(ram, ram.fetch(address, Short.class));
+    return new IndirectAddress(memory, memory.fetch(address, Short.class));
   }
 
   private IndirectXAddress indirectX(short address) {
-    return new IndirectXAddress(ram, ram.fetch(address, Byte.class), new XIndex(regs));
+    return new IndirectXAddress(memory, memory.fetch(address, Byte.class), new XIndex(regs));
   }
 
   private IndirectYAddress indirectY(short address) {
-    return new IndirectYAddress(ram, ram.fetch(address, Byte.class), new YIndex(regs));
+    return new IndirectYAddress(memory, memory.fetch(address, Byte.class), new YIndex(regs));
   }
 }

@@ -1,30 +1,30 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 
 public class AbsoluteAddress implements Address<Byte> {
 
-  private final Ram ram;
+  private final NesCpuMemory memory;
   private final short absolute;
 
-  public AbsoluteAddress(Ram ram, short absolute) {
-    this.ram = ram;
+  public AbsoluteAddress(NesCpuMemory memory, short absolute) {
+    this.memory = memory;
     this.absolute = absolute;
   }
 
   @Override
   public String toString() {
-    return String.format("$%04x", absolute);
+    return String.format("$%04X = 00", absolute);
   }
 
   @Override
   public Byte fetch() {
-    return ram.fetch(absolute, Byte.class);
+    return memory.fetch(absolute, Byte.class);
   }
 
   @Override
   public void store(Byte value) {
-    ram.store(absolute, value);
+    memory.store(absolute, value);
   }
 
   @Override

@@ -5,7 +5,7 @@ public class StatusRegister {
   public boolean n = false;
   public boolean v = false;
   public boolean d = false;
-  public boolean i = false;
+  public boolean i = true;
   public boolean z = false;
   public boolean c = false;
 

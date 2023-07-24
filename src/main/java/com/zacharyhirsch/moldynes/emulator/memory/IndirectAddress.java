@@ -1,14 +1,14 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 
 public class IndirectAddress implements ReadableAddress<Short> {
 
-  private final Ram ram;
+  private final NesCpuMemory memory;
   private final short absolute;
 
-  public IndirectAddress(Ram ram, short absolute) {
-    this.ram = ram;
+  public IndirectAddress(NesCpuMemory memory, short absolute) {
+    this.memory = memory;
     this.absolute = absolute;
   }
 
@@ -19,7 +19,7 @@ public class IndirectAddress implements ReadableAddress<Short> {
 
   @Override
   public Short fetch() {
-    return ram.fetch(absolute, Short.class);
+    return memory.fetch(absolute, Short.class);
   }
 
   @Override

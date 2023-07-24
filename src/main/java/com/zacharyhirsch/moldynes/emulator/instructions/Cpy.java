@@ -1,8 +1,11 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.Ram;
+import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
+
+import static java.lang.Byte.toUnsignedInt;
 
 public class Cpy implements Instruction {
 
@@ -18,12 +21,24 @@ public class Cpy implements Instruction {
   }
 
   @Override
-  public void execute(Ram ram, Registers regs) {
-    byte result = (byte) (regs.y - address.fetch());
+  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
+    int unsignedY = toUnsignedInt(regs.y);
+    int unsignedInput = toUnsignedInt(address.fetch());
+    int result = unsignedY - unsignedInput;
 
-    regs.sr.n = result < 0;
-    regs.sr.z = result == 0;
-    regs.sr.c = result >= 0;
+    if (unsignedY < unsignedInput) {
+      regs.sr.n = (result & 0b1000_0000) == 0b1000_0000;
+      regs.sr.z = false;
+      regs.sr.c = false;
+    } else if (unsignedY == unsignedInput) {
+      regs.sr.n = false;
+      regs.sr.z = true;
+      regs.sr.c = true;
+    } else if (unsignedY > unsignedInput) {
+      regs.sr.n = (result & 0b1000_0000) == 0b1000_0000;
+      regs.sr.z = false;
+      regs.sr.c = true;
+    }
   }
 
   @Override
