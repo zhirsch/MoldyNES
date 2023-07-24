@@ -3,8 +3,7 @@ package com.zacharyhirsch.moldynes.emulator;
 import com.zacharyhirsch.moldynes.emulator.instructions.Decoder;
 import com.zacharyhirsch.moldynes.emulator.instructions.Decoder.Decoded;
 import com.zacharyhirsch.moldynes.emulator.instructions.Instruction;
-
-import java.util.concurrent.CompletableFuture;
+import com.zacharyhirsch.moldynes.emulator.instructions.Undocumented;
 
 final class Emulator {
 
@@ -27,9 +26,10 @@ final class Emulator {
       regs.pc += decoded.instruction().getSize();
       if (DEBUG) {
         System.out.printf(
-            "%04X  %-8s  %-30s  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:  0,  0 CYC:%d\n",
+            "%04X  %-8s %s%-30s  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:  0,  0 CYC:%d\n",
             decoded.pc(),
             formatBytes(decoded.bytes()),
+            decoded.instruction() instanceof Undocumented ? "*" : " ",
             decoded.instruction(),
             regs.a,
             regs.x,

@@ -16,7 +16,7 @@ public class Plp implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.sr.fromByte(stack.pull(Byte.class));
+    regs.sr.fromByte(stack.pullByte());
   }
 
   @Override

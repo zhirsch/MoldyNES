@@ -16,18 +16,18 @@ public class IndirectYAddress implements Address<Byte> {
 
   @Override
   public String toString() {
-    return String.format("($%02X),Y = 0000 @ 0000 = 00", zeropage);
+    return String.format("($%02X),Y", zeropage);
   }
 
   @Override
   public Byte fetch() {
-    short base = memory.fetchZeropage(zeropage, Short.class);
-    return memory.fetch(base, index, Byte.class);
+    short base = memory.fetchZeropageShort(zeropage);
+    return memory.fetchByte(base, index.get());
   }
 
   @Override
   public void store(Byte value) {
-    short base = memory.fetchZeropage(zeropage, Short.class);
+    short base = memory.fetchZeropageShort(zeropage);
     memory.store(base, index, value);
   }
 

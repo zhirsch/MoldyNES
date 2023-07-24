@@ -16,18 +16,18 @@ public class IndirectXAddress implements Address<Byte> {
 
   @Override
   public String toString() {
-    return String.format("($%02X,X) @ 00 = 0000 = 00", zeropage);
+    return String.format("($%02X,X)", zeropage);
   }
 
   @Override
   public Byte fetch() {
-    short address = memory.fetchZeropage(zeropage, index, Short.class);
-    return memory.fetch(address, Byte.class);
+    short addr = memory.fetchZeropageShort(zeropage, index.get());
+    return memory.fetchByte(addr);
   }
 
   @Override
   public void store(Byte value) {
-    short address = memory.fetchZeropage(zeropage, index, Short.class);
+    short address = memory.fetchZeropageShort(zeropage, index.get());
     memory.store(address, value);
   }
 

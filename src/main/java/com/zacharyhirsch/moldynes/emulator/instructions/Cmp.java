@@ -1,7 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import static java.lang.Byte.toUnsignedInt;
-
+import com.zacharyhirsch.moldynes.emulator.NesAlu;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
@@ -22,23 +21,10 @@ public class Cmp implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    int unsignedA = toUnsignedInt(regs.a);
-    int unsignedInput = toUnsignedInt(address.fetch());
-    int result = unsignedA - unsignedInput;
-
-    if (unsignedA < unsignedInput) {
-      regs.sr.n = (result & 0b1000_0000) == 0b1000_0000;
-      regs.sr.z = false;
-      regs.sr.c = false;
-    } else if (unsignedA == unsignedInput) {
-      regs.sr.n = false;
-      regs.sr.z = true;
-      regs.sr.c = true;
-    } else if (unsignedA > unsignedInput) {
-      regs.sr.n = (result & 0b1000_0000) == 0b1000_0000;
-      regs.sr.z = false;
-      regs.sr.c = true;
-    }
+    NesAlu.Result result = NesAlu.sub(regs.a, address.fetch(), true);
+    regs.sr.n = result.n();
+    regs.sr.z = result.z();
+    regs.sr.c = result.c();
   }
 
   @Override

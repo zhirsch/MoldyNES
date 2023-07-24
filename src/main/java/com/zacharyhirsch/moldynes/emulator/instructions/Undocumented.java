@@ -3,25 +3,27 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Rti implements Instruction {
+public class Undocumented implements Instruction {
 
-  public Rti(Implicit ignored) {}
+  private final Instruction instr;
+
+  public Undocumented(Instruction instr) {
+    this.instr = instr;
+  }
 
   @Override
   public String toString() {
-    return "RTI";
+    return instr.toString();
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.sr.fromByte(stack.pullByte());
-    regs.pc = stack.pullShort();
+    instr.execute(memory, stack, regs);
   }
 
   @Override
   public int getSize() {
-    return 1;
+    return instr.getSize();
   }
 }

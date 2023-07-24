@@ -1,7 +1,5 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import static java.lang.Short.toUnsignedInt;
-
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
@@ -19,8 +17,7 @@ public class Bne implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BNE $%04X", toUnsignedInt((short) (regs.pc + immediate.fetch())));
-    //    return getClass().getSimpleName().toUpperCase() + " " + immediate.toString();
+    return String.format("BNE $%04X", (short) (regs.pc + immediate.fetch()));
   }
 
   @Override

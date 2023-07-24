@@ -21,7 +21,7 @@ public class IndexedZeropageAddress implements Address<Byte> {
 
   @Override
   public Byte fetch() {
-    return memory.fetchZeropage(zeropage, index, Byte.class);
+    return memory.fetchZeropageByte(zeropage, index.get());
   }
 
   @Override

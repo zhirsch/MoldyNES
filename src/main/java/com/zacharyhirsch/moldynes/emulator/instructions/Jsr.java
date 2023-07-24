@@ -15,8 +15,7 @@ public final class Jsr implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("%s $%04X", getClass().getSimpleName().toUpperCase(), address.fetch());
-    //    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
+    return String.format("JSR $%04X", address.fetch());
   }
 
   @Override

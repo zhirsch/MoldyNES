@@ -5,8 +5,6 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Immediate;
 
-import static java.lang.Short.toUnsignedInt;
-
 public class Bcs implements Instruction {
 
   private final Registers regs;
@@ -19,8 +17,7 @@ public class Bcs implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BCS $%04X", toUnsignedInt((short) (regs.pc + immediate.fetch())));
-    //    return getClass().getSimpleName().toUpperCase() + " " + immediate.toString();
+    return String.format("BCS $%04X", (short) (regs.pc + immediate.fetch()));
   }
 
   @Override

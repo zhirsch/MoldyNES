@@ -67,21 +67,58 @@ public class NesCpuMemory {
     }
   }
 
-  public <T extends Number> T fetch(short address, Class<T> clazz) {
-    return fetch(regions, toUnsignedInt(address), clazz);
+  public byte fetchByte(short address) {
+    byte adl = (byte) address;
+    byte adh = (byte) (address >>> 8);
+    return fetch(adl, adh);
   }
 
-  public <T extends Number> T fetch(short address, Index index, Class<T> clazz) {
-    short addr = (short) (toUnsignedInt(address) + toUnsignedInt(index.get()));
-    return fetch(regions, addr, clazz);
+  public Byte fetchByte(short address, byte index) {
+    NesAlu.Result r = NesAlu.add((byte) address, index, false);
+    byte adl = r.output();
+    byte adh = NesAlu.add((byte) (address >>> 8), (byte) (r.c() ? 1 : 0), false).output();
+    return fetch(adl, adh);
   }
 
-  public <T extends Number> T fetchZeropage(byte zeropage, Class<T> clazz) {
-    return fetch(regions, toUnsignedInt(zeropage) & 0x00ff, clazz);
+  public short fetchShort(short address) {
+    // TODO: check for same page
+    byte lsb = fetchByte(address);
+    byte msb = fetchByte((short) (address + 1));
+    return ByteUtil.compose(lsb, msb);
   }
 
-  public <T extends Number> T fetchZeropage(byte zeropage, Index index, Class<T> clazz) {
-    return fetch(regions, (toUnsignedInt(zeropage) + toUnsignedInt(index.get())) & 0x00ff, clazz);
+  public byte fetchZeropageByte(byte zeropage) {
+    byte adl = zeropage;
+    byte adh = 0x00;
+    return fetch(adl, adh);
+  }
+
+  public byte fetchZeropageByte(byte zeropage, byte index) {
+    byte adl = NesAlu.add(zeropage, index, false).output();
+    byte adh = 0x00;
+    return fetch(adl, adh);
+  }
+
+  public short fetchZeropageShort(byte zeropage) {
+    byte lsbAddr = zeropage;
+    byte msbAddr = NesAlu.add(zeropage, (byte) 1, false).output();
+
+    // TODO: check for same page
+
+    byte lsb = fetchZeropageByte(lsbAddr);
+    byte msb = fetchZeropageByte(msbAddr);
+    return ByteUtil.compose(lsb, msb);
+  }
+
+  public short fetchZeropageShort(byte zeropage, byte index) {
+    byte lsbAddr = NesAlu.add(zeropage, index, false).output();
+    byte msbAddr = NesAlu.add(zeropage, (byte) (index + 1), false).output();
+
+    // TODO: check for same page
+
+    byte lsb = fetchZeropageByte(lsbAddr);
+    byte msb = fetchZeropageByte(msbAddr);
+    return ByteUtil.compose(lsb, msb);
   }
 
   public <T extends Number> void store(short address, T value) {
@@ -98,6 +135,12 @@ public class NesCpuMemory {
 
   public <T extends Number> void storeZeropage(byte zeropage, Index index, T value) {
     store(regions, (toUnsignedInt(zeropage) + toUnsignedInt(index.get())) & 0x00ff, value);
+  }
+
+  private byte fetch(byte adl, byte adh) {
+    int addr = toUnsignedInt(ByteUtil.compose(adl, adh));
+    Map.Entry<Range<Integer>, Region> entry = Objects.requireNonNull(regions.getEntry(addr));
+    return entry.getValue().fetch(addr - entry.getKey().lowerEndpoint(), Byte.class);
   }
 
   private static <T extends Number> T fetch(

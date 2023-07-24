@@ -20,10 +20,16 @@ public class NesCpuStack {
     regs.sp -= offset + 1;
   }
 
-  public <T extends Number> T pull(Class<T> clazz) {
-    int offset = offset(clazz);
+  public byte pullByte() {
+    int offset = offset(Byte.class);
     regs.sp += offset + 1;
-    return memory.fetch((short) (STACK_BASE + toUnsignedInt(regs.sp) - offset), clazz);
+    return memory.fetchByte((short) (STACK_BASE + toUnsignedInt(regs.sp) - offset));
+  }
+
+  public short pullShort() {
+    int offset = offset(Short.class);
+    regs.sp += offset + 1;
+    return memory.fetchShort((short) (STACK_BASE + toUnsignedInt(regs.sp) - offset));
   }
 
   private static <T extends Number> int offset(Class<T> clazz) {

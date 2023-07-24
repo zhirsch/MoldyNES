@@ -19,8 +19,7 @@ public final class Bvs implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BVS $%04X", toUnsignedInt((short) (regs.pc + immediate.fetch())));
-    //    return getClass().getSimpleName().toUpperCase() + " " + immediate.toString();
+    return String.format("BVS $%04X", (short) (regs.pc + immediate.fetch()));
   }
 
   @Override
