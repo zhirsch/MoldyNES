@@ -4,6 +4,7 @@ import com.zacharyhirsch.moldynes.emulator.HaltException;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.memory.IndirectAddress;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
 public final class Jmp implements Instruction {
@@ -16,8 +17,10 @@ public final class Jmp implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("%s $%04X", getClass().getSimpleName().toUpperCase(), address.fetch());
-    //    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
+    if (address instanceof IndirectAddress) {
+      return "JMP " + address;
+    }
+    return String.format("JMP $%04X", address.fetch());
   }
 
   @Override

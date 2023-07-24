@@ -19,8 +19,7 @@ public class Beq implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BEQ $%04X", toUnsignedInt((short) (regs.pc + immediate.fetch())));
-    //    return getClass().getSimpleName().toUpperCase() + " " + immediate.toString();
+    return String.format("BEQ $%04X", (short) (regs.pc + immediate.fetch()));
   }
 
   @Override

@@ -14,12 +14,12 @@ public class ZeropageAddress implements Address<Byte> {
 
   @Override
   public String toString() {
-    return String.format("$%02X = 00", zeropage);
+    return String.format("$%02X", zeropage);
   }
 
   @Override
   public Byte fetch() {
-    return memory.fetchZeropage(zeropage, Byte.class);
+    return memory.fetchZeropageByte(zeropage);
   }
 
   @Override

@@ -1,5 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
+import com.zacharyhirsch.moldynes.emulator.ByteUtil;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 
 public class IndirectAddress implements ReadableAddress<Short> {
@@ -14,12 +15,17 @@ public class IndirectAddress implements ReadableAddress<Short> {
 
   @Override
   public String toString() {
-    return String.format("($%04x)", absolute);
+    return String.format("($%04X)", absolute);
   }
 
   @Override
   public Short fetch() {
-    return memory.fetch(absolute, Short.class);
+    byte ial = (byte) absolute;
+    byte iah = (byte) (absolute >>> 8);
+
+    byte lsb = memory.fetchByte(ByteUtil.compose(ial, iah));
+    byte msb = memory.fetchByte(ByteUtil.compose((byte) (ial + 1), iah));
+    return ByteUtil.compose(lsb, msb);
   }
 
   @Override

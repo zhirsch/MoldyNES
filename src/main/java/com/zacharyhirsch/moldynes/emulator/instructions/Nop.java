@@ -3,11 +3,16 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
+import com.zacharyhirsch.moldynes.emulator.instructions.Instruction.Argument;
+import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
 public class Nop implements Instruction {
 
-  public Nop(Implicit ignored) {}
+  private final Argument argument;
+
+  public Nop(Argument argument) {
+    this.argument = argument;
+  }
 
   @Override
   public String toString() {
@@ -19,6 +24,6 @@ public class Nop implements Instruction {
 
   @Override
   public int getSize() {
-    return 1;
+    return 1 + argument.getSize();
   }
 }

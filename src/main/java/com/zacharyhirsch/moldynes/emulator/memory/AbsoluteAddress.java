@@ -14,12 +14,12 @@ public class AbsoluteAddress implements Address<Byte> {
 
   @Override
   public String toString() {
-    return String.format("$%04X = 00", absolute);
+    return String.format("$%04X", absolute);
   }
 
   @Override
   public Byte fetch() {
-    return memory.fetch(absolute, Byte.class);
+      return memory.fetchByte(absolute);
   }
 
   @Override

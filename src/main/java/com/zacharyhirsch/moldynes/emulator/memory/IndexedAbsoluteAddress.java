@@ -21,7 +21,7 @@ public class IndexedAbsoluteAddress implements Address<Byte> {
 
   @Override
   public Byte fetch() {
-    return memory.fetch(absolute, index, Byte.class);
+    return memory.fetchByte(absolute, index.get());
   }
 
   @Override
