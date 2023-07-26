@@ -1,9 +1,11 @@
 package com.zacharyhirsch.moldynes.emulator;
 
+import static java.lang.Byte.toUnsignedInt;
+
 public record UInt16(short value) implements Comparable<UInt16> {
 
   public UInt16(UInt8 lsb, UInt8 msb) {
-    this(ByteUtil.compose(lsb.value(), msb.value()));
+    this((short) ((toUnsignedInt(msb.value()) << 8) | toUnsignedInt(lsb.value())));
   }
 
   public static UInt16 cast(int value) {
