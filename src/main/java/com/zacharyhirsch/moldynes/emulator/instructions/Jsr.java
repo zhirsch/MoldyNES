@@ -1,26 +1,24 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
 public final class Jsr implements Instruction {
 
-  private final ReadableAddress<Short> address;
+  private final ReadableAddress<UInt16> address;
 
-  public Jsr(ReadableAddress<Short> address) {
+  public Jsr(ReadableAddress<UInt16> address) {
     this.address = address;
   }
 
   @Override
   public String toString() {
-    return String.format("JSR $%04X", address.fetch());
+    return String.format("JSR $%s", address.fetch());
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.push((short) (regs.pc - 1), Short.class);
+    stack.pushWord(regs.pc.sub(UInt8.cast(1)));
     regs.pc = address.fetch();
   }
 

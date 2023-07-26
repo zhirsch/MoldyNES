@@ -16,7 +16,7 @@ public class Pha implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.push(regs.a, Byte.class);
+    stack.pushByte(regs.a);
   }
 
   @Override

@@ -1,6 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
+import com.zacharyhirsch.moldynes.emulator.UInt8;
+
 public interface Index {
 
-  byte get();
+  UInt8 get();
 }

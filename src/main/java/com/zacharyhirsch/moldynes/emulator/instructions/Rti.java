@@ -17,7 +17,7 @@ public class Rti implements Instruction {
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.sr.fromByte(stack.pullByte());
-    regs.pc = stack.pullShort();
+    regs.pc = stack.pullWord();
   }
 
   @Override

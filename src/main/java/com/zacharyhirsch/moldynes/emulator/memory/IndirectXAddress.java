@@ -1,14 +1,16 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.UInt16;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
-public class IndirectXAddress implements Address<Byte> {
+public class IndirectXAddress implements Address<UInt8> {
 
   private final NesCpuMemory memory;
-  private final byte zeropage;
+  private final UInt8 zeropage;
   private final XIndex index;
 
-  public IndirectXAddress(NesCpuMemory memory, byte zeropage, XIndex index) {
+  public IndirectXAddress(NesCpuMemory memory, UInt8 zeropage, XIndex index) {
     this.memory = memory;
     this.zeropage = zeropage;
     this.index = index;
@@ -16,19 +18,19 @@ public class IndirectXAddress implements Address<Byte> {
 
   @Override
   public String toString() {
-    return String.format("($%02X,X)", zeropage);
+    return String.format("($%s,X)", zeropage);
   }
 
   @Override
-  public Byte fetch() {
-    short addr = memory.fetchZeropageShort(zeropage, index.get());
+  public UInt8 fetch() {
+    UInt16 addr = memory.fetchZeropageWord(zeropage, index.get());
     return memory.fetchByte(addr);
   }
 
   @Override
-  public void store(Byte value) {
-    short address = memory.fetchZeropageShort(zeropage, index.get());
-    memory.store(address, value);
+  public void store(UInt8 value) {
+    UInt16 address = memory.fetchZeropageWord(zeropage, index.get());
+    memory.storeByte(address, value);
   }
 
   @Override

@@ -3,13 +3,14 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
 public final class Ldy implements Instruction {
 
-  private final ReadableAddress<Byte> address;
+  private final ReadableAddress<UInt8> address;
 
-  public Ldy(ReadableAddress<Byte> address) {
+  public Ldy(ReadableAddress<UInt8> address) {
     this.address = address;
   }
 
@@ -22,8 +23,8 @@ public final class Ldy implements Instruction {
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.y = address.fetch();
 
-    regs.sr.n = regs.y < 0;
-    regs.sr.z = regs.y == 0;
+    regs.sr.n = regs.y.bit(7) == 1;
+    regs.sr.z = regs.y.isZero();
   }
 
   @Override

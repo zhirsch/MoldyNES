@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public class YIndex implements Index {
 
@@ -16,7 +17,7 @@ public class YIndex implements Index {
   }
 
   @Override
-  public byte get() {
+  public UInt8 get() {
     return regs.y;
   }
 }

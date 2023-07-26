@@ -1,14 +1,12 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 import com.zacharyhirsch.moldynes.emulator.memory.IndirectAddress;
 
 public class Brk implements Instruction {
 
-  private static final short NMI_VECTOR = (short) 0xfffe;
+  private static final UInt16 NMI_VECTOR = UInt16.cast(0xfffe);
 
   public Brk(Implicit ignored) {}
 
@@ -19,8 +17,8 @@ public class Brk implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.push((short) (regs.pc + 1), Short.class);
-    stack.push(regs.sr.toByte(), Byte.class);
+    stack.pushWord(regs.pc.add(UInt8.cast(1)));
+    stack.pushByte(regs.sr.toByte());
     regs.sr.i = true;
     regs.pc = new IndirectAddress(memory, NMI_VECTOR).fetch();
   }
