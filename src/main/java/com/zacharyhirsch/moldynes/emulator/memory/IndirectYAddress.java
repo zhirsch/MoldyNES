@@ -23,14 +23,16 @@ public class IndirectYAddress implements Address<UInt8> {
 
   @Override
   public UInt8 fetch() {
-    UInt16 base = memory.fetchZeropageWord(zeropage);
-    return memory.fetchByte(base, index.get());
+    UInt8 bal = memory.fetchZeropageByte(zeropage);
+    UInt8 bah = memory.fetchZeropageByte(UInt8.cast(zeropage.value() + 1));
+    return memory.fetchByte(new UInt16(bal, bah), index.get());
   }
 
   @Override
   public void store(UInt8 value) {
-    UInt16 base = memory.fetchZeropageWord(zeropage);
-    memory.storeByte(base, index.get(), value);
+    UInt8 bal = memory.fetchZeropageByte(zeropage);
+    UInt8 bah = memory.fetchZeropageByte(UInt8.cast(zeropage.value() + 1));
+    memory.storeByte(new UInt16(bal, bah), index.get(), value);
   }
 
   @Override

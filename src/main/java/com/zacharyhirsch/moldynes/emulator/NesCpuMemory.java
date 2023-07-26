@@ -71,49 +71,26 @@ public final class NesCpuMemory {
   }
 
   public UInt8 fetchByte(UInt16 address) {
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(address));
-    return entry.getValue().fetchByte(subRegionOffset(entry.getKey().lowerEndpoint(), address));
+    return fetchByte(regions, address);
   }
 
   public UInt8 fetchByte(UInt16 address, UInt8 index) {
-    UInt16 addr = addIndex(address, index);
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(addr));
-    return entry.getValue().fetchByte(subRegionOffset(entry.getKey().lowerEndpoint(), addr));
+    return fetchByte(regions, addIndex(address, index));
   }
 
   public UInt16 fetchWord(UInt16 address) {
     // TODO: check for same page
     UInt8 lsb = fetchByte(address);
-    UInt8 rhs = UInt8.cast(1);
-    UInt8 msb = fetchByte(addIndex(address, rhs));
+    UInt8 msb = fetchByte(UInt16.cast(Short.toUnsignedInt(address.value()) + 1));
     return new UInt16(lsb, msb);
   }
 
   public UInt8 fetchZeropageByte(UInt8 zeropage) {
-    UInt16 addr = UInt16.cast(zeropage);
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(addr));
-    return entry.getValue().fetchByte(subRegionOffset(entry.getKey().lowerEndpoint(), addr));
+    return fetchByte(regions, UInt16.cast(zeropage));
   }
 
   public UInt8 fetchZeropageByte(UInt8 zeropage, UInt8 index) {
-    UInt16 addr = UInt16.cast(NesAlu.add(zeropage, index).output());
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(addr));
-    return entry.getValue().fetchByte(subRegionOffset(entry.getKey().lowerEndpoint(), addr));
-  }
-
-  public UInt16 fetchZeropageWord(UInt8 zeropage) {
-    // TODO: check for same page
-    UInt8 lsb = fetchZeropageByte(zeropage);
-    UInt8 msb = fetchZeropageByte(NesAlu.add(zeropage, UInt8.cast(1)).output());
-    return new UInt16(lsb, msb);
-  }
-
-  public UInt16 fetchZeropageWord(UInt8 zeropage, UInt8 index) {
-    UInt8 address = NesAlu.add(zeropage, index).output();
-    // TODO: check for same page
-    UInt8 lsb = fetchZeropageByte(address);
-    UInt8 msb = fetchZeropageByte(NesAlu.add(address, UInt8.cast(1)).output());
-    return new UInt16(lsb, msb);
+    return fetchByte(regions, UInt16.cast(addZeropageIndex(zeropage, index)));
   }
 
   public void storeByte(UInt16 address, UInt8 value) {
@@ -136,9 +113,9 @@ public final class NesCpuMemory {
     storeByte(regions, UInt16.cast(NesAlu.add(zeropage, index).output()), value);
   }
 
-  private static UInt8 fetchByte(RangeMap<UInt16, Region> regions, UInt16 addr) {
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(addr));
-    return entry.getValue().fetchByte(subRegionOffset(entry.getKey().lowerEndpoint(), addr));
+  private static UInt8 fetchByte(RangeMap<UInt16, Region> regions, UInt16 address) {
+    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(address));
+    return entry.getValue().fetchByte(subRegionOffset(entry.getKey().lowerEndpoint(), address));
   }
 
   private static UInt16 fetchWord(RangeMap<UInt16, Region> regions, UInt16 addr) {
@@ -158,6 +135,10 @@ public final class NesCpuMemory {
 
   private static UInt16 addIndex(UInt16 address, UInt8 index) {
     return UInt16.cast(Short.toUnsignedInt(address.value()) + Byte.toUnsignedInt(index.value()));
+  }
+
+  private static UInt8 addZeropageIndex(UInt8 zeropage, UInt8 index) {
+    return UInt8.cast(Byte.toUnsignedInt(zeropage.value()) + Byte.toUnsignedInt(index.value()));
   }
 
   private static UInt16 subRegionOffset(UInt16 base, UInt16 address) {
