@@ -1,9 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.UInt16;
+import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.IndirectAddress;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
@@ -25,7 +22,7 @@ public final class Jmp implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.pc = address.fetch();
+    regs.pc = new ProgramCounter(address.fetch());
   }
 
   @Override

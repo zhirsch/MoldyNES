@@ -18,8 +18,8 @@ public class Tya implements Instruction {
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.a = regs.y;
 
-    regs.sr.n = regs.a < 0;
-    regs.sr.z = regs.a == 0;
+    regs.sr.n = regs.a.bit(7) == 1;
+    regs.sr.z = regs.a.isZero();
   }
 
   @Override

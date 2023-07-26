@@ -22,7 +22,7 @@ public class Cmp implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.sub(regs.a, address.fetch(), true);
+    NesAlu.Result result = NesAlu.sub(regs.a, address.fetch());
     regs.sr.n = result.n();
     regs.sr.z = result.z();
     regs.sr.c = result.c();

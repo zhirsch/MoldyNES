@@ -13,7 +13,7 @@ final class Emulator {
   private final NesCpuMemory memory;
   private final NesCpuStack stack;
 
-  public Emulator(NesCpuMemory memory, UInt16 pc) {
+  public Emulator(NesCpuMemory memory, ProgramCounter pc) {
     this.regs = new Registers(pc);
     this.memory = memory;
     this.stack = new NesCpuStack(memory, regs);
@@ -23,7 +23,7 @@ final class Emulator {
     Decoder decoder = new Decoder(memory, regs);
     for (int cycle = 1; cycle < 10_000; cycle++) {
       Decoded decoded = decoder.next();
-      regs.pc = regs.pc.add(UInt8.cast(decoded.instruction().getSize()));
+      regs.pc = regs.pc.offset(UInt8.cast(decoded.instruction().getSize()));
       if (DEBUG) {
         System.out.printf(
             "%s  %-8s %s%-30s  A:%s X:%s Y:%s P:%s SP:%s PPU:  0,  0 CYC:%d\n",

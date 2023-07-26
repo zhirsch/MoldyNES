@@ -17,13 +17,13 @@ public class Bcc implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BCC $%s", regs.pc.add(immediate.fetch()));
+    return String.format("BCC $%s", regs.pc.offset(immediate.fetch()));
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     if (!regs.sr.c) {
-      regs.pc = regs.pc.add(immediate.fetch());
+      regs.pc = regs.pc.offset(immediate.fetch());
     }
   }
 

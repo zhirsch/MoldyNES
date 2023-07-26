@@ -17,9 +17,8 @@ public class Tay implements Instruction {
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.y = regs.a;
-
-    regs.sr.n = regs.y < 0;
-    regs.sr.z = regs.y == 0;
+    regs.sr.n = regs.y.bit(7) == 1;
+    regs.sr.z = regs.y.isZero();
   }
 
   @Override

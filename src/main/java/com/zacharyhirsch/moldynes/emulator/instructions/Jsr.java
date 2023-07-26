@@ -18,8 +18,8 @@ public final class Jsr implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.pushWord(regs.pc.sub(UInt8.cast(1)));
-    regs.pc = address.fetch();
+    stack.pushWord(regs.pc.dec().address());
+    regs.pc = new ProgramCounter(address.fetch());
   }
 
   @Override
