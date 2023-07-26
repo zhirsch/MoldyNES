@@ -3,13 +3,14 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 import com.zacharyhirsch.moldynes.emulator.memory.*;
 
 public class Stx implements Instruction {
 
-  private final WritableAddress<Byte> address;
+  private final WritableAddress<UInt8> address;
 
-  public Stx(WritableAddress<Byte> address) {
+  public Stx(WritableAddress<UInt8> address) {
     this.address = address;
   }
 

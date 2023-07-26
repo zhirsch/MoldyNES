@@ -27,8 +27,8 @@ public abstract class NesCpuMemoryMap {
         throw new IllegalArgumentException("trainer not implemented");
       }
       return new NesCpuMemory.Builder()
-          //.load(0x8000, 0x4000, buffer.slice(16, prgRomSize).asReadOnlyBuffer())
-          .load(0x8000, 0x4000, buffer.slice(16, prgRomSize))
+          // .rom(0x8000, 0x4000, buffer.slice(16, prgRomSize).asReadOnlyBuffer())
+          .rom(0x8000, 0x4000, buffer.slice(16, prgRomSize))
           .mirror(0xc000, 0x4000, 0x8000)
           .build();
     }

@@ -2,6 +2,8 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.UInt16;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 import com.zacharyhirsch.moldynes.emulator.memory.*;
 import java.util.function.Function;
 
@@ -15,31 +17,34 @@ public class Decoder {
     this.regs = regs;
   }
 
-  public record Decoded(short pc, byte[] bytes, Instruction instruction) {
+  public record Decoded(UInt16 pc, UInt8[] bytes, Instruction instruction) {
 
     @Override
     public String toString() {
-      return String.format("%04x : %s", pc, instruction);
+      return String.format("%s : %s", pc, instruction);
     }
   }
 
   public Decoded next() {
-    byte opcode = memory.fetchByte(regs.pc);
-    Instruction instruction = decode(opcode).apply((short) (regs.pc + 1));
-    byte argByte1 = memory.fetchByte((short) (regs.pc + 1));
-    byte argByte2 = memory.fetchByte((short) (regs.pc + 2));
-    byte[] bytes =
+    UInt8 opcode = memory.fetchByte(regs.pc);
+    Instruction instruction = decode(opcode).apply(regs.pc.add(UInt8.cast(1)));
+
+    // TODO: these are redundant fetches. Get the values from Instruction instead.
+    UInt8 argByte1 = memory.fetchByte(regs.pc.add(UInt8.cast(1)));
+    UInt8 argByte2 = memory.fetchByte(regs.pc.add(UInt8.cast(2)));
+    UInt8[] bytes =
         switch (instruction.getSize()) {
-          case 1 -> new byte[] {opcode};
-          case 2 -> new byte[] {opcode, argByte1};
-          case 3 -> new byte[] {opcode, argByte1, argByte2};
+          case 1 -> new UInt8[] {opcode};
+          case 2 -> new UInt8[] {opcode, argByte1};
+          case 3 -> new UInt8[] {opcode, argByte1, argByte2};
           default -> throw new RuntimeException("impossible");
         };
+
     return new Decoded(regs.pc, bytes, instruction);
   }
 
-  private Function<Short, Instruction> decode(byte opcode) {
-    return switch (opcode) {
+  private Function<UInt16, Instruction> decode(UInt8 opcode) {
+    return switch (opcode.value()) {
       case (byte) 0x00 -> address -> new Brk(implicit());
       case (byte) 0x01 -> address -> new Ora(indirectX(address));
       case (byte) 0x04 -> address -> new Undocumented(new Nop(zeropage(address)));
@@ -228,51 +233,51 @@ public class Decoder {
     return new Implicit();
   }
 
-  private AccumulatorRegister accumulator(short ignored) {
+  private AccumulatorRegister accumulator(UInt16 ignored) {
     return new AccumulatorRegister(regs);
   }
 
-  private Immediate<Byte> immediateByte(short address) {
-    return new Immediate<>(memory.fetchByte(address));
+  private ImmediateByte immediateByte(UInt16 address) {
+    return new ImmediateByte(memory.fetchByte(address));
   }
 
-  private Immediate<Short> immediateShort(short address) {
-    return new Immediate<>(memory.fetchShort(address));
+  private ImmediateWord immediateShort(UInt16 address) {
+    return new ImmediateWord(memory.fetchWord(address));
   }
 
-  private ZeropageAddress zeropage(short address) {
+  private ZeropageAddress zeropage(UInt16 address) {
     return new ZeropageAddress(memory, memory.fetchByte(address));
   }
 
-  private IndexedZeropageAddress zeropageX(short address) {
+  private IndexedZeropageAddress zeropageX(UInt16 address) {
     return new IndexedZeropageAddress(memory, memory.fetchByte(address), new XIndex(regs));
   }
 
-  private IndexedZeropageAddress zeropageY(short address) {
+  private IndexedZeropageAddress zeropageY(UInt16 address) {
     return new IndexedZeropageAddress(memory, memory.fetchByte(address), new YIndex(regs));
   }
 
-  private AbsoluteAddress absolute(short address) {
-    return new AbsoluteAddress(memory, memory.fetchShort(address));
+  private AbsoluteAddress absolute(UInt16 address) {
+    return new AbsoluteAddress(memory, memory.fetchWord(address));
   }
 
-  private IndexedAbsoluteAddress absoluteX(short address) {
-    return new IndexedAbsoluteAddress(memory, memory.fetchShort(address), new XIndex(regs));
+  private IndexedAbsoluteAddress absoluteX(UInt16 address) {
+    return new IndexedAbsoluteAddress(memory, memory.fetchWord(address), new XIndex(regs));
   }
 
-  private IndexedAbsoluteAddress absoluteY(short address) {
-    return new IndexedAbsoluteAddress(memory, memory.fetchShort(address), new YIndex(regs));
+  private IndexedAbsoluteAddress absoluteY(UInt16 address) {
+    return new IndexedAbsoluteAddress(memory, memory.fetchWord(address), new YIndex(regs));
   }
 
-  private IndirectAddress indirect(short address) {
-    return new IndirectAddress(memory, memory.fetchShort(address));
+  private IndirectAddress indirect(UInt16 address) {
+    return new IndirectAddress(memory, memory.fetchWord(address));
   }
 
-  private IndirectXAddress indirectX(short address) {
+  private IndirectXAddress indirectX(UInt16 address) {
     return new IndirectXAddress(memory, memory.fetchByte(address), new XIndex(regs));
   }
 
-  private IndirectYAddress indirectY(short address) {
+  private IndirectYAddress indirectY(UInt16 address) {
     return new IndirectYAddress(memory, memory.fetchByte(address), new YIndex(regs));
   }
 }

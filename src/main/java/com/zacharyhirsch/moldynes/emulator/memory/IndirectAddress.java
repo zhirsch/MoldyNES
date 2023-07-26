@@ -1,31 +1,34 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
-import com.zacharyhirsch.moldynes.emulator.ByteUtil;
+import com.zacharyhirsch.moldynes.emulator.NesAlu;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.UInt16;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
-public class IndirectAddress implements ReadableAddress<Short> {
+public class IndirectAddress implements ReadableAddress<UInt16> {
 
   private final NesCpuMemory memory;
-  private final short absolute;
+  private final UInt16 absolute;
 
-  public IndirectAddress(NesCpuMemory memory, short absolute) {
+  public IndirectAddress(NesCpuMemory memory, UInt16 absolute) {
     this.memory = memory;
     this.absolute = absolute;
   }
 
   @Override
   public String toString() {
-    return String.format("($%04X)", absolute);
+    return String.format("($%s)", absolute);
   }
 
   @Override
-  public Short fetch() {
-    byte ial = (byte) absolute;
-    byte iah = (byte) (absolute >>> 8);
+  public UInt16 fetch() {
+    UInt8 ial = absolute.lsb();
+    UInt8 iah = absolute.msb();
 
-    byte lsb = memory.fetchByte(ByteUtil.compose(ial, iah));
-    byte msb = memory.fetchByte(ByteUtil.compose((byte) (ial + 1), iah));
-    return ByteUtil.compose(lsb, msb);
+    UInt8 lsb = memory.fetchByte(absolute);
+    UInt8 rhs = UInt8.cast(1);
+    UInt8 msb = memory.fetchByte(new UInt16(NesAlu.add(ial, rhs, false).output(), iah));
+    return new UInt16(lsb, msb);
   }
 
   @Override

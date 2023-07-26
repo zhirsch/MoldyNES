@@ -1,14 +1,16 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
+import com.zacharyhirsch.moldynes.emulator.UInt16;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
-public class IndexedAbsoluteAddress implements Address<Byte> {
+public class IndexedAbsoluteAddress implements Address<UInt8> {
 
   private final NesCpuMemory memory;
-  private final short absolute;
+  private final UInt16 absolute;
   private final Index index;
 
-  public IndexedAbsoluteAddress(NesCpuMemory memory, short absolute, Index index) {
+  public IndexedAbsoluteAddress(NesCpuMemory memory, UInt16 absolute, Index index) {
     this.memory = memory;
     this.absolute = absolute;
     this.index = index;
@@ -16,17 +18,17 @@ public class IndexedAbsoluteAddress implements Address<Byte> {
 
   @Override
   public String toString() {
-    return String.format("$%04X,%s", absolute, index);
+    return String.format("$%s,%s", absolute, index);
   }
 
   @Override
-  public Byte fetch() {
+  public UInt8 fetch() {
     return memory.fetchByte(absolute, index.get());
   }
 
   @Override
-  public void store(Byte value) {
-    memory.store(absolute, index, value);
+  public void store(UInt8 value) {
+    memory.storeByte(absolute, index.get(), value);
   }
 
   @Override

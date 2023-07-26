@@ -1,10 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator;
 
-import static java.lang.Byte.toUnsignedInt;
-
 public class NesCpuStack {
 
-  private static final short STACK_BASE = 0x0100;
+  private static final UInt16 STACK_BASE = UInt16.cast(0x0100);
 
   private final NesCpuMemory memory;
   private final Registers regs;
@@ -14,31 +12,29 @@ public class NesCpuStack {
     this.regs = regs;
   }
 
-  public <T extends Number> void push(T value, Class<T> clazz) {
-    int offset = offset(clazz);
-    memory.store((short) (STACK_BASE + toUnsignedInt(regs.sp) - offset), value);
-    regs.sp -= offset + 1;
+  public void pushByte(UInt8 value) {
+    memory.storeByte(STACK_BASE.add(regs.sp), value);
+    UInt8 rhs = UInt8.cast(1);
+    regs.sp = NesAlu.sub(regs.sp, rhs, false).output();
   }
 
-  public byte pullByte() {
-    int offset = offset(Byte.class);
-    regs.sp += offset + 1;
-    return memory.fetchByte((short) (STACK_BASE + toUnsignedInt(regs.sp) - offset));
+  public void pushWord(UInt16 value) {
+    UInt8 offset = UInt8.cast(1);
+    memory.storeWord(STACK_BASE.add(regs.sp).sub(offset), value);
+    UInt8 rhs = UInt8.cast(1);
+    regs.sp = NesAlu.sub(NesAlu.sub(regs.sp, offset, false).output(), rhs, false).output();
   }
 
-  public short pullShort() {
-    int offset = offset(Short.class);
-    regs.sp += offset + 1;
-    return memory.fetchShort((short) (STACK_BASE + toUnsignedInt(regs.sp) - offset));
+  public UInt8 pullByte() {
+    UInt8 rhs = UInt8.cast(1);
+    regs.sp = NesAlu.add(regs.sp, rhs, false).output();
+    return memory.fetchByte(STACK_BASE.add(regs.sp));
   }
 
-  private static <T extends Number> int offset(Class<T> clazz) {
-    if (clazz.equals(Byte.class)) {
-      return 0;
-    }
-    if (clazz.equals(Short.class)) {
-      return 1;
-    }
-    throw new IllegalArgumentException(clazz.toString());
+  public UInt16 pullWord() {
+    UInt8 offset = UInt8.cast(1);
+    UInt8 rhs = UInt8.cast(1);
+    regs.sp = NesAlu.add(NesAlu.add(regs.sp, offset, false).output(), rhs, false).output();
+    return memory.fetchWord(STACK_BASE.add(regs.sp).sub(offset));
   }
 }

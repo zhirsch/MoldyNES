@@ -16,7 +16,7 @@ public class Rts implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.pc = (short) (stack.pullShort() + 1);
+    regs.pc = (short) (stack.pullWord() + 1);
   }
 
   @Override

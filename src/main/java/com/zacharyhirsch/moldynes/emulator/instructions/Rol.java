@@ -3,13 +3,14 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
 public final class Rol implements Instruction {
 
-  private final Address<Byte> address;
+  private final Address<UInt8> address;
 
-  public Rol(Address<Byte> address) {
+  public Rol(Address<UInt8> address) {
     this.address = address;
   }
 

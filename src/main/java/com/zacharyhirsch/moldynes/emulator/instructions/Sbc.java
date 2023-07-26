@@ -4,13 +4,14 @@ import com.zacharyhirsch.moldynes.emulator.NesAlu;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
 public final class Sbc implements Instruction {
 
-  private final ReadableAddress<Byte> address;
+  private final ReadableAddress<UInt8> address;
 
-  public Sbc(ReadableAddress<Byte> address) {
+  public Sbc(ReadableAddress<UInt8> address) {
     this.address = address;
   }
 

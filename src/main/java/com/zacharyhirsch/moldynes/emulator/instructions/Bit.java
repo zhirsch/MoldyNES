@@ -1,15 +1,13 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
 public final class Bit implements Instruction {
 
-  private final ReadableAddress<Byte> address;
+  private final ReadableAddress<UInt8> address;
 
-  public Bit(ReadableAddress<Byte> address) {
+  public Bit(ReadableAddress<UInt8> address) {
     this.address = address;
   }
 
@@ -20,11 +18,11 @@ public final class Bit implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    byte input = address.fetch();
-
-    regs.sr.z = (regs.a & input) == 0;
-    regs.sr.n = (input & 0b1000_0000) == 0b1000_0000;
-    regs.sr.v = (input & 0b0100_0000) == 0b0100_0000;
+    UInt8 input = address.fetch();
+    NesAlu.Result result = NesAlu.and(regs.a, input);
+    regs.sr.z = result.z();
+    regs.sr.n = input.bit(7) == 1;
+    regs.sr.v = input.bit(6) == 1;
   }
 
   @Override

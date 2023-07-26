@@ -3,8 +3,6 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.instructions.Instruction.Argument;
-import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
 public class Nop implements Instruction {
 

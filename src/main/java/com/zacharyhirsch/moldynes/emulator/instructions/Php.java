@@ -16,7 +16,7 @@ public class Php implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.push(regs.sr.toByte(), Byte.class);
+    stack.pushByte(regs.sr.toByte());
   }
 
   @Override

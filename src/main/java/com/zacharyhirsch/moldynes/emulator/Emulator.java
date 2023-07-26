@@ -13,7 +13,7 @@ final class Emulator {
   private final NesCpuMemory memory;
   private final NesCpuStack stack;
 
-  public Emulator(NesCpuMemory memory, short pc) {
+  public Emulator(NesCpuMemory memory, UInt16 pc) {
     this.regs = new Registers(pc);
     this.memory = memory;
     this.stack = new NesCpuStack(memory, regs);
@@ -23,10 +23,10 @@ final class Emulator {
     Decoder decoder = new Decoder(memory, regs);
     for (int cycle = 1; cycle < 10_000; cycle++) {
       Decoded decoded = decoder.next();
-      regs.pc += decoded.instruction().getSize();
+      regs.pc = regs.pc.add(UInt8.cast(decoded.instruction().getSize()));
       if (DEBUG) {
         System.out.printf(
-            "%04X  %-8s %s%-30s  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:  0,  0 CYC:%d\n",
+            "%s  %-8s %s%-30s  A:%s X:%s Y:%s P:%s SP:%s PPU:  0,  0 CYC:%d\n",
             decoded.pc(),
             formatBytes(decoded.bytes()),
             decoded.instruction() instanceof Undocumented ? "*" : " ",
@@ -34,7 +34,7 @@ final class Emulator {
             regs.a,
             regs.x,
             regs.y,
-            regs.sr.toByte() & 0b1110_1111,
+            NesAlu.and(regs.sr.toByte(), UInt8.cast(0b1110_1111)).output(),
             regs.sp,
             cycle);
       }
@@ -47,11 +47,11 @@ final class Emulator {
     }
   }
 
-  private String formatBytes(byte[] bytes) {
+  private String formatBytes(UInt8[] bytes) {
     return switch (bytes.length) {
-      case 1 -> String.format("%02X", bytes[0]);
-      case 2 -> String.format("%02X %02X", bytes[0], bytes[1]);
-      case 3 -> String.format("%02X %02X %02X", bytes[0], bytes[1], bytes[2]);
+      case 1 -> String.format("%s", bytes[0]);
+      case 2 -> String.format("%s %s", bytes[0], bytes[1]);
+      case 3 -> String.format("%s %s %s", bytes[0], bytes[1], bytes[2]);
       default -> "<oops>";
     };
   }

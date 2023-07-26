@@ -2,14 +2,14 @@ package com.zacharyhirsch.moldynes.emulator;
 
 public final class Registers {
 
-  public short pc;
-  public byte a = 0;
-  public byte x = 0;
-  public byte y = 0;
+  public UInt16 pc;
+  public UInt8 a = UInt8.cast(0);
+  public UInt8 x = UInt8.cast(0);
+  public UInt8 y = UInt8.cast(0);
   public final StatusRegister sr = new StatusRegister();
-  public byte sp = (byte) 0xfd;
+  public UInt8 sp = UInt8.cast(0xfd);
 
-  public Registers(short pc) {
+  public Registers(UInt16 pc) {
     this.pc = pc;
   }
 
@@ -17,12 +17,12 @@ public final class Registers {
   public String toString() {
     return String.format(
         """
-            pc = %04x
-            a  = %02x
-            x  = %02x
-            y  = %02x
+            pc = %s
+            a  = %s
+            x  = %s
+            y  = %s
             sr = %s
-            sp = %02x
+            sp = %s
             """,
         pc, a, x, y, sr, sp);
   }

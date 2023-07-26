@@ -1,8 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
 public class Inx implements Instruction {
@@ -16,10 +14,10 @@ public class Inx implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.x += 1;
-
-    regs.sr.n = regs.x < 0;
-    regs.sr.z = regs.x == 0;
+    NesAlu.Result result = NesAlu.inc(regs.x);
+    regs.x = result.output();
+    regs.sr.n = result.n();
+    regs.sr.z = result.z();
   }
 
   @Override
