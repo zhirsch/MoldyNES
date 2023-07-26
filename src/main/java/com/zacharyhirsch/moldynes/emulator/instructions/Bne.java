@@ -17,13 +17,13 @@ public class Bne implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BNE $%s", regs.pc.add(immediate.fetch()));
+    return String.format("BNE $%s", regs.pc.offset(immediate.fetch()));
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     if (!regs.sr.z) {
-      regs.pc = regs.pc.add(immediate.fetch());
+      regs.pc = regs.pc.offset(immediate.fetch());
     }
   }
 

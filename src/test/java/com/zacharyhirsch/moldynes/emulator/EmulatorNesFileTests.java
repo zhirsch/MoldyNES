@@ -45,7 +45,7 @@ public class EmulatorNesFileTests {
   @Test
   void functionalTest() throws IOException {
     NesCpuMemory memory = load("nestest.nes");
-    Emulator emulator = new Emulator(memory, (short) 0xc000);
+    Emulator emulator = new Emulator(memory, new ProgramCounter(UInt16.cast(0xc000)));
     emulator.run();
   }
 }

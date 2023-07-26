@@ -1,9 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
 public final class Ror implements Instruction {
@@ -21,13 +18,11 @@ public final class Ror implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    byte input = address.fetch();
-    byte output = (byte) ((Byte.toUnsignedInt(input) >>> 1) | (regs.sr.c ? 0b1000_0000 : 0));
-    address.store(output);
-
-    regs.sr.c = (input & 0b0000_0001) == 0b0000_0001;
-    regs.sr.n = output < 0;
-    regs.sr.z = output == 0;
+    NesAlu.Result result = NesAlu.ror(address.fetch(), regs.sr.c);
+    address.store(result.output());
+    regs.sr.c = result.c();
+    regs.sr.n = result.n();
+    regs.sr.z = result.z();
   }
 
   @Override

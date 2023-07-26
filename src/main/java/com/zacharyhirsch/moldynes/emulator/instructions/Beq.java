@@ -17,13 +17,13 @@ public class Beq implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BEQ $%s", regs.pc.add(immediate.fetch()));
+    return String.format("BEQ $%s", regs.pc.offset(immediate.fetch()));
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     if (regs.sr.z) {
-      regs.pc = regs.pc.add(immediate.fetch());
+      regs.pc = regs.pc.offset(immediate.fetch());
     }
   }
 

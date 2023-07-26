@@ -1,9 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.UInt16;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.*;
 import java.util.function.Function;
 
@@ -17,7 +14,7 @@ public class Decoder {
     this.regs = regs;
   }
 
-  public record Decoded(UInt16 pc, UInt8[] bytes, Instruction instruction) {
+  public record Decoded(ProgramCounter pc, UInt8[] bytes, Instruction instruction) {
 
     @Override
     public String toString() {
@@ -26,12 +23,12 @@ public class Decoder {
   }
 
   public Decoded next() {
-    UInt8 opcode = memory.fetchByte(regs.pc);
-    Instruction instruction = decode(opcode).apply(regs.pc.add(UInt8.cast(1)));
+    UInt8 opcode = memory.fetchByte(regs.pc.address());
+    Instruction instruction = decode(opcode).apply(regs.pc.inc().address());
 
     // TODO: these are redundant fetches. Get the values from Instruction instead.
-    UInt8 argByte1 = memory.fetchByte(regs.pc.add(UInt8.cast(1)));
-    UInt8 argByte2 = memory.fetchByte(regs.pc.add(UInt8.cast(2)));
+    UInt8 argByte1 = memory.fetchByte(regs.pc.inc().address());
+    UInt8 argByte2 = memory.fetchByte(regs.pc.inc().inc().address());
     UInt8[] bytes =
         switch (instruction.getSize()) {
           case 1 -> new UInt8[] {opcode};

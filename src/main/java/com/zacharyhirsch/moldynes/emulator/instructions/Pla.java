@@ -17,9 +17,8 @@ public class Pla implements Instruction {
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.a = stack.pullByte();
-
-    regs.sr.n = regs.a < 0;
-    regs.sr.z = regs.a == 0;
+    regs.sr.n = regs.a.bit(7) == 1;
+    regs.sr.z = regs.a.isZero();
   }
 
   @Override

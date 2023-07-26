@@ -17,9 +17,8 @@ public class Tax implements Instruction {
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.x = regs.a;
-
-    regs.sr.n = regs.x < 0;
-    regs.sr.z = regs.x == 0;
+    regs.sr.n = regs.x.bit(7) == 1;
+    regs.sr.z = regs.x.isZero();
   }
 
   @Override

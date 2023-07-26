@@ -17,13 +17,13 @@ public final class Bvs implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BVS $%s", regs.pc.add(immediate.fetch()));
+    return String.format("BVS $%s", regs.pc.offset(immediate.fetch()));
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     if (regs.sr.v) {
-      regs.pc = regs.pc.add(immediate.fetch());
+      regs.pc = regs.pc.offset(immediate.fetch());
     }
   }
 

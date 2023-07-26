@@ -2,7 +2,7 @@ package com.zacharyhirsch.moldynes.emulator;
 
 public class NesCpuStack {
 
-  private static final UInt16 STACK_BASE = UInt16.cast(0x0100);
+  private static final int STACK_BASE = 0x0100;
 
   private final NesCpuMemory memory;
   private final Registers regs;
@@ -13,28 +13,22 @@ public class NesCpuStack {
   }
 
   public void pushByte(UInt8 value) {
-    memory.storeByte(STACK_BASE.add(regs.sp), value);
-    UInt8 rhs = UInt8.cast(1);
-    regs.sp = NesAlu.sub(regs.sp, rhs, false).output();
+    memory.storeByte(UInt16.cast(STACK_BASE + Byte.toUnsignedInt(regs.sp.value())), value);
+    regs.sp = UInt8.cast(regs.sp.value() - 1);
   }
 
   public void pushWord(UInt16 value) {
-    UInt8 offset = UInt8.cast(1);
-    memory.storeWord(STACK_BASE.add(regs.sp).sub(offset), value);
-    UInt8 rhs = UInt8.cast(1);
-    regs.sp = NesAlu.sub(NesAlu.sub(regs.sp, offset, false).output(), rhs, false).output();
+    memory.storeWord(UInt16.cast(STACK_BASE + Byte.toUnsignedInt(regs.sp.value()) - 1), value);
+    regs.sp = UInt8.cast(Byte.toUnsignedInt(regs.sp.value()) - 2);
   }
 
   public UInt8 pullByte() {
-    UInt8 rhs = UInt8.cast(1);
-    regs.sp = NesAlu.add(regs.sp, rhs, false).output();
-    return memory.fetchByte(STACK_BASE.add(regs.sp));
+    regs.sp = UInt8.cast(Byte.toUnsignedInt(regs.sp.value()) + 1);
+    return memory.fetchByte(UInt16.cast(STACK_BASE + Byte.toUnsignedInt(regs.sp.value())));
   }
 
   public UInt16 pullWord() {
-    UInt8 offset = UInt8.cast(1);
-    UInt8 rhs = UInt8.cast(1);
-    regs.sp = NesAlu.add(NesAlu.add(regs.sp, offset, false).output(), rhs, false).output();
-    return memory.fetchWord(STACK_BASE.add(regs.sp).sub(offset));
+    regs.sp = UInt8.cast(Byte.toUnsignedInt(regs.sp.value()) + 2);
+    return memory.fetchWord(UInt16.cast(STACK_BASE + Byte.toUnsignedInt(regs.sp.value()) - 1));
   }
 }

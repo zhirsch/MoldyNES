@@ -17,10 +17,10 @@ public class Brk implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.pushWord(regs.pc.add(UInt8.cast(1)));
+    stack.pushWord(regs.pc.inc().address());
     stack.pushByte(regs.sr.toByte());
     regs.sr.i = true;
-    regs.pc = new IndirectAddress(memory, NMI_VECTOR).fetch();
+    regs.pc = new ProgramCounter(new IndirectAddress(memory, NMI_VECTOR).fetch());
   }
 
   @Override

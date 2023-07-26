@@ -17,13 +17,13 @@ public final class Bmi implements Instruction {
 
   @Override
   public String toString() {
-    return String.format("BMI $%s", regs.pc.add(immediate.fetch()));
+    return String.format("BMI $%s", regs.pc.offset(immediate.fetch()));
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     if (regs.sr.n) {
-      regs.pc = regs.pc.add(immediate.fetch());
+      regs.pc = regs.pc.offset(immediate.fetch());
     }
   }
 

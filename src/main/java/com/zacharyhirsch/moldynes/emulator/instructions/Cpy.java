@@ -22,7 +22,7 @@ public class Cpy implements Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.sub(regs.y, address.fetch(), true);
+    NesAlu.Result result = NesAlu.sub(regs.y, address.fetch());
     regs.sr.n = result.n();
     regs.sr.z = result.z();
     regs.sr.c = result.c();
