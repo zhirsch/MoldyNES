@@ -3,13 +3,12 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Iny implements Instruction {
+public class Iny extends Instruction {
 
-  public Iny(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "INY";
+  public Iny(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
@@ -19,9 +18,9 @@ public class Iny implements Instruction {
     regs.sr.n = result.n();
     regs.sr.z = result.z();
   }
-
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
 }

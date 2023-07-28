@@ -3,17 +3,12 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public final class Eor implements Instruction {
+public final class Eor extends Instruction {
 
   private final ReadableAddress<UInt8> address;
 
   public Eor(ReadableAddress<UInt8> address) {
     this.address = address;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
   }
 
   @Override
@@ -25,7 +20,7 @@ public final class Eor implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1 + address.getSize();
+  public Argument getArgument() {
+    return address;
   }
 }

@@ -5,22 +5,19 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
-import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
+import com.zacharyhirsch.moldynes.emulator.memory.WritableAddress;
 
-public class Cmp extends Instruction {
+public final class Sax extends Instruction {
 
-  private final ReadableAddress<UInt8> address;
+  private final WritableAddress<UInt8> address;
 
-  public Cmp(ReadableAddress<UInt8> address) {
-        this.address = address;
+  public Sax(WritableAddress<UInt8> address) {
+    this.address = address;
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.sub(regs.a, address.fetch());
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
-    regs.sr.c = result.c();
+    address.store(NesAlu.and(regs.a, regs.x).output());
   }
 
   @Override

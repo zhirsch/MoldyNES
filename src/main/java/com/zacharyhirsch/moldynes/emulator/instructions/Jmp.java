@@ -1,32 +1,32 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.*;
-import com.zacharyhirsch.moldynes.emulator.memory.IndirectAddress;
+import com.zacharyhirsch.moldynes.emulator.memory.ImmediateWord;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public final class Jmp implements Instruction {
+public final class Jmp extends Instruction {
 
   private final ReadableAddress<UInt16> address;
 
   public Jmp(ReadableAddress<UInt16> address) {
-    this.address = address;
+        this.address = address;
   }
 
   @Override
   public String toString() {
-    if (address instanceof IndirectAddress) {
-      return "JMP " + address;
+    if (address instanceof ImmediateWord) {
+      return "JMP $" + address.fetch();
     }
-    return String.format("JMP $%s", address.fetch());
+    return "JMP " + address;
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.pc = new ProgramCounter(address.fetch());
+    regs.pc.set(address.fetch());
   }
 
   @Override
-  public int getSize() {
-    return 1 + address.getSize();
+  public Argument getArgument() {
+    return address;
   }
 }

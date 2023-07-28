@@ -7,17 +7,12 @@ import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public class Cpx implements Instruction {
+public class Cpx extends Instruction {
 
   private final ReadableAddress<UInt8> address;
 
   public Cpx(ReadableAddress<UInt8> address) {
-    this.address = address;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
+        this.address = address;
   }
 
   @Override
@@ -27,9 +22,9 @@ public class Cpx implements Instruction {
     regs.sr.z = result.z();
     regs.sr.c = result.c();
   }
-
   @Override
-  public int getSize() {
-    return 1 + address.getSize();
+  public Argument getArgument() {
+    return address;
   }
+
 }

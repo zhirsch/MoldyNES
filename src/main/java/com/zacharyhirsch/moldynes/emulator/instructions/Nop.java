@@ -4,7 +4,7 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 
-public class Nop implements Instruction {
+public class Nop extends Instruction {
 
   private final Argument argument;
 
@@ -13,15 +13,10 @@ public class Nop implements Instruction {
   }
 
   @Override
-  public String toString() {
-    return "NOP";
-  }
-
-  @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {}
 
   @Override
-  public int getSize() {
-    return 1 + argument.getSize();
+  public Argument getArgument() {
+    return argument;
   }
 }

@@ -4,26 +4,26 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 
-public class Undocumented implements Instruction {
+public class Undocumented extends Instruction {
 
-  private final Instruction instr;
+  private final Instruction instruction;
 
-  public Undocumented(Instruction instr) {
-    this.instr = instr;
+  public Undocumented(Instruction instruction) {
+        this.instruction = instruction;
   }
 
   @Override
   public String toString() {
-    return instr.toString();
+    return instruction.toString();
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    instr.execute(memory, stack, regs);
+    instruction.execute(memory, stack, regs);
   }
 
   @Override
-  public int getSize() {
-    return instr.getSize();
+  public Argument getArgument() {
+    return instruction.getArgument();
   }
 }

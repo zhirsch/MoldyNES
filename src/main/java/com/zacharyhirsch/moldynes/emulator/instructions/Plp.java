@@ -5,22 +5,21 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Plp implements Instruction {
+public class Plp extends Instruction {
 
-  public Plp(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "PLP";
+  public Plp(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.sr.fromByte(stack.pullByte());
   }
-
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
 }

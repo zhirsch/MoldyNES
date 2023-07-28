@@ -5,13 +5,12 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Tya implements Instruction {
+public class Tya extends Instruction {
 
-  public Tya(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "TYA";
+  public Tya(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
@@ -23,7 +22,8 @@ public class Tya implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
 }

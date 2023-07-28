@@ -6,17 +6,12 @@ import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
 import com.zacharyhirsch.moldynes.emulator.memory.WritableAddress;
 
-public final class Sta implements Instruction {
+public final class Sta extends Instruction {
 
   private final WritableAddress<UInt8> address;
 
   public Sta(WritableAddress<UInt8> address) {
-    this.address = address;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName().toUpperCase() + " " + address;
+        this.address = address;
   }
 
   @Override
@@ -25,7 +20,8 @@ public final class Sta implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1 + address.getSize();
+  public Argument getArgument() {
+    return address;
   }
+
 }

@@ -3,9 +3,13 @@ package com.zacharyhirsch.moldynes.emulator.memory;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
 import com.zacharyhirsch.moldynes.emulator.instructions.Instruction;
 
-public final class Implicit implements Instruction.Argument {
+public final class Ignore implements Instruction.Argument {
 
-  public Implicit() {}
+  private final UInt8[] bytes;
+
+  public Ignore(UInt8... bytes) {
+    this.bytes = bytes;
+  }
 
   @Override
   public String toString() {
@@ -14,6 +18,6 @@ public final class Implicit implements Instruction.Argument {
 
   @Override
   public UInt8[] getBytes() {
-    return new UInt8[] {};
+    return bytes;
   }
 }

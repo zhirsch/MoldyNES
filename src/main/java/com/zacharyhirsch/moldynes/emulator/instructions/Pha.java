@@ -5,13 +5,12 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Pha implements Instruction {
+public class Pha extends Instruction {
 
-  public Pha(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "PHA";
+  public Pha(Implicit implicit) {
+    this.implicit = implicit;
   }
 
   @Override
@@ -20,7 +19,7 @@ public class Pha implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
 }

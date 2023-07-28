@@ -3,15 +3,21 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
-public interface Instruction {
+public abstract class Instruction {
 
-  void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs);
+  public abstract void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs);
 
-  int getSize();
+  @Override
+  public String toString() {
+    return getClass().getSimpleName().toUpperCase() + " " + getArgument();
+  }
 
-  interface Argument {
+  public abstract Argument getArgument();
 
-    int getSize();
+  public interface Argument {
+
+    UInt8[] getBytes();
   }
 }

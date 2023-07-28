@@ -1,9 +1,5 @@
 package com.zacharyhirsch.moldynes.emulator;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import org.junit.jupiter.api.Test;
 
 class EmulatorBinaryFileTests {
 

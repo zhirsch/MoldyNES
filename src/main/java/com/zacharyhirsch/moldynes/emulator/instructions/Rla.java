@@ -3,26 +3,28 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
-public final class Asl extends Instruction {
+public final class Rla extends Instruction {
 
   private final Address<UInt8> address;
 
-  public Asl(Address<UInt8> address) {
-        this.address = address;
+  public Rla(Address<UInt8> address) {
+    this.address = address;
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.asl(address.fetch());
-    address.store(result.output());
-    regs.sr.c = result.c();
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
+    NesAlu.Result rol = NesAlu.rol(address.fetch(), regs.sr.c);
+    address.store(rol.output());
+    regs.sr.c = rol.c();
+
+    NesAlu.Result and = NesAlu.and(regs.a, rol.output());
+    regs.a = and.output();
+    regs.sr.n = and.n();
+    regs.sr.z = and.z();
   }
 
   @Override
   public Argument getArgument() {
     return address;
   }
-
 }

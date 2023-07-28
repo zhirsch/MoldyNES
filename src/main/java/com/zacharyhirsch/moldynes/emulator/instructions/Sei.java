@@ -5,13 +5,12 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Sei implements Instruction {
+public class Sei extends Instruction {
 
-  public Sei(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "SEI";
+  public Sei(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
@@ -20,7 +19,8 @@ public class Sei implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
 }

@@ -5,13 +5,12 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Sed implements Instruction {
+public class Sed extends Instruction {
 
-  public Sed(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "SED";
+  public Sed(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
@@ -20,7 +19,8 @@ public class Sed implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
 }

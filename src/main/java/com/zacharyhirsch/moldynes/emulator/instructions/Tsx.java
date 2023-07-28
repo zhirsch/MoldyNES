@@ -5,13 +5,12 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Tsx implements Instruction {
+public class Tsx extends Instruction {
 
-  public Tsx(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "TSX";
+  public Tsx(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
@@ -21,9 +20,9 @@ public class Tsx implements Instruction {
     regs.sr.n = regs.x.bit(7) == 1;
     regs.sr.z = regs.x.isZero();
   }
-
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
 }

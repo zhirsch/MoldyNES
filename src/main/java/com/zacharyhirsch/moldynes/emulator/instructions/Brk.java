@@ -1,30 +1,29 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.*;
-import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
+import com.zacharyhirsch.moldynes.emulator.memory.ImmediateByte;
 import com.zacharyhirsch.moldynes.emulator.memory.IndirectAddress;
 
-public class Brk implements Instruction {
+public class Brk extends Instruction {
 
   private static final UInt16 NMI_VECTOR = UInt16.cast(0xfffe);
 
-  public Brk(Implicit ignored) {}
+  private final ImmediateByte ignore;
 
-  @Override
-  public String toString() {
-    return getClass().getSimpleName().toUpperCase();
+  public Brk(ImmediateByte ignore) {
+    this.ignore = ignore;
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.pushWord(regs.pc.inc().address());
+    stack.pushWord(regs.pc.address());
     stack.pushByte(regs.sr.toByte());
     regs.sr.i = true;
-    regs.pc = new ProgramCounter(new IndirectAddress(memory, NMI_VECTOR).fetch());
+    regs.pc.set(new IndirectAddress(memory, NMI_VECTOR).fetch());
   }
 
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return ignore;
   }
 }
