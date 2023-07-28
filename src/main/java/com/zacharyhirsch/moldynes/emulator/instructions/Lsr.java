@@ -3,17 +3,12 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
-public final class Lsr implements Instruction {
+public final class Lsr extends Instruction {
 
   private final Address<UInt8> address;
 
   public Lsr(Address<UInt8> address) {
-    this.address = address;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
+        this.address = address;
   }
 
   @Override
@@ -24,9 +19,9 @@ public final class Lsr implements Instruction {
     regs.sr.n = result.n();
     regs.sr.z = result.z();
   }
-
   @Override
-  public int getSize() {
-    return 1 + address.getSize();
+  public Argument getArgument() {
+    return address;
   }
+
 }

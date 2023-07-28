@@ -32,7 +32,8 @@ public class IndexedAbsoluteAddress implements Address<UInt8> {
   }
 
   @Override
-  public int getSize() {
-    return 2;
+  public UInt8[] getBytes() {
+    return new UInt8[] {absolute.lsb(), absolute.msb()};
   }
+
 }

@@ -27,7 +27,8 @@ public class AccumulatorRegister implements Address<UInt8> {
   }
 
   @Override
-  public int getSize() {
-    return 0;
+  public UInt8[] getBytes() {
+    return new UInt8[0];
   }
+
 }

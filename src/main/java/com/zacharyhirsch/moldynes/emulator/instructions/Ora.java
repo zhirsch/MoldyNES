@@ -3,17 +3,12 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public final class Ora implements Instruction {
+public final class Ora extends Instruction {
 
   private final ReadableAddress<UInt8> address;
 
   public Ora(ReadableAddress<UInt8> address) {
-    this.address = address;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
+        this.address = address;
   }
 
   @Override
@@ -23,9 +18,9 @@ public final class Ora implements Instruction {
     regs.sr.n = result.n();
     regs.sr.z = result.z();
   }
-
   @Override
-  public int getSize() {
-    return 1 + address.getSize();
+  public Argument getArgument() {
+    return address;
   }
+
 }

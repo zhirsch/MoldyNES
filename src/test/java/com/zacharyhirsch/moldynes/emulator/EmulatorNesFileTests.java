@@ -1,5 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -47,5 +49,8 @@ public class EmulatorNesFileTests {
     NesCpuMemory memory = load("nestest.nes");
     Emulator emulator = new Emulator(memory, new ProgramCounter(UInt16.cast(0xc000)));
     emulator.run();
+
+    assertThat(memory.fetchByte(UInt16.cast(0x0002))).isEqualTo(UInt8.cast(0x0));
+    assertThat(memory.fetchByte(UInt16.cast(0x0003))).isEqualTo(UInt8.cast(0x0));
   }
 }

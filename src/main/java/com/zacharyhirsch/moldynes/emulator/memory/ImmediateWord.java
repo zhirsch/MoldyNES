@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
 import com.zacharyhirsch.moldynes.emulator.UInt16;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public class ImmediateWord implements ReadableAddress<UInt16> {
 
@@ -21,7 +22,8 @@ public class ImmediateWord implements ReadableAddress<UInt16> {
   }
 
   @Override
-  public int getSize() {
-    return 2;
+  public UInt8[] getBytes() {
+    return new UInt8[] {immediate.lsb(), immediate.msb()};
   }
+
 }

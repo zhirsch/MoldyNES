@@ -5,13 +5,12 @@ import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Tax implements Instruction {
+public class Tax extends Instruction {
 
-  public Tax(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "TAX";
+  public Tax(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
@@ -20,9 +19,9 @@ public class Tax implements Instruction {
     regs.sr.n = regs.x.bit(7) == 1;
     regs.sr.z = regs.x.isZero();
   }
-
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
 }

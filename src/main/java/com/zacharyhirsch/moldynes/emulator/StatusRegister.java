@@ -31,14 +31,6 @@ public class StatusRegister {
 
   @Override
   public String toString() {
-    return ""
-        + (n ? "N" : "n")
-        + (v ? "V" : "v")
-        + "-"
-        + "b"
-        + (d ? "D" : "d")
-        + (i ? "I" : "i")
-        + (z ? "Z" : "z")
-        + (c ? "C" : "c");
+    return UInt8.cast(Byte.toUnsignedInt(toByte().value()) & 0b1110_1111).toString();
   }
 }

@@ -3,14 +3,14 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
 import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
 import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Sec implements Instruction {
+public class Sec extends Instruction {
 
-  public Sec() {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "SEC";
+  public Sec(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
@@ -19,7 +19,9 @@ public class Sec implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
+
 }

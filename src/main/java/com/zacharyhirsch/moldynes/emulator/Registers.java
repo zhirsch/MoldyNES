@@ -2,7 +2,7 @@ package com.zacharyhirsch.moldynes.emulator;
 
 public final class Registers {
 
-  public ProgramCounter pc;
+  public final ProgramCounter pc;
   public UInt8 a = UInt8.cast(0);
   public UInt8 x = UInt8.cast(0);
   public UInt8 y = UInt8.cast(0);
@@ -15,15 +15,6 @@ public final class Registers {
 
   @Override
   public String toString() {
-    return String.format(
-        """
-            pc = %s
-            a  = %s
-            x  = %s
-            y  = %s
-            sr = %s
-            sp = %s
-            """,
-        pc, a, x, y, sr, sp);
+    return String.format("A:%s X:%s Y:%s P:%s SP:%s", a, x, y, sr, sp);
   }
 }

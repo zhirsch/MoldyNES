@@ -3,22 +3,23 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Rts implements Instruction {
+public class Rts extends Instruction {
 
-  public Rts(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "RTS";
+  public Rts(Implicit implicit) {
+        this.implicit = implicit;
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.pc = new ProgramCounter(stack.pullWord()).inc();
+    regs.pc.set(stack.pullWord());
+    regs.pc.inc();
   }
 
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
+
 }

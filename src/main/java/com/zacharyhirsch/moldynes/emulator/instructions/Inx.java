@@ -3,13 +3,12 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
 
-public class Inx implements Instruction {
+public class Inx extends Instruction {
 
-  public Inx(Implicit ignored) {}
+  private final Implicit implicit;
 
-  @Override
-  public String toString() {
-    return "INX";
+  public Inx(Implicit implicit) {
+    this.implicit = implicit;
   }
 
   @Override
@@ -21,7 +20,7 @@ public class Inx implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1;
+  public Argument getArgument() {
+    return implicit;
   }
 }

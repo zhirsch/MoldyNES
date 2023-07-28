@@ -31,7 +31,8 @@ public class IndirectAddress implements ReadableAddress<UInt16> {
   }
 
   @Override
-  public int getSize() {
-    return 2;
+  public UInt8[] getBytes() {
+    return new UInt8[] {absolute.lsb(), absolute.msb()};
   }
+
 }

@@ -43,6 +43,7 @@ public final class NesCpuMemory {
       //   mirror(off, off + 0x08, 0x2000);
       // }
       // 0x4000 - 0x4017    = NES APU and I/O registers
+      devnull(0x4000, 0x4017);
       // 0x4018 - 0x401f    = APU and I/O functionality that is normally disabled
       // 0x4020 - 0xffff    = Cartridge space
     }
@@ -62,6 +63,12 @@ public final class NesCpuMemory {
     public Builder mirror(int offset, int len, int dst) {
       Range<UInt16> range = Range.closed(UInt16.cast(offset), UInt16.cast(offset + len - 1));
       regions.put(range, new MirrorRegion(regions, UInt16.cast(dst)));
+      return this;
+    }
+
+    public Builder devnull(int offset, int len) {
+      Range<UInt16> range = Range.closed(UInt16.cast(offset), UInt16.cast(offset + len - 1));
+      regions.put(range, new DevNullRegion());
       return this;
     }
 
@@ -216,5 +223,24 @@ public final class NesCpuMemory {
     public void storeWord(UInt16 address, UInt16 value) {
       NesCpuMemory.storeWord(regions, NesCpuMemory.addRegionOffset(dst, address), value);
     }
+  }
+
+  private record DevNullRegion() implements Region {
+
+    @Override
+    public UInt8 fetchByte(UInt16 address) {
+      return UInt8.cast(0);
+    }
+
+    @Override
+    public UInt16 fetchWord(UInt16 address) {
+      return UInt16.cast(0);
+    }
+
+    @Override
+    public void storeByte(UInt16 address, UInt8 value) {}
+
+    @Override
+    public void storeWord(UInt16 address, UInt16 value) {}
   }
 }

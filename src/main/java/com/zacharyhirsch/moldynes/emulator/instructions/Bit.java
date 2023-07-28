@@ -3,17 +3,12 @@ package com.zacharyhirsch.moldynes.emulator.instructions;
 import com.zacharyhirsch.moldynes.emulator.*;
 import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public final class Bit implements Instruction {
+public final class Bit extends Instruction {
 
   private final ReadableAddress<UInt8> address;
 
   public Bit(ReadableAddress<UInt8> address) {
     this.address = address;
-  }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName().toUpperCase() + " " + address.toString();
   }
 
   @Override
@@ -26,7 +21,7 @@ public final class Bit implements Instruction {
   }
 
   @Override
-  public int getSize() {
-    return 1 + address.getSize();
+  public Argument getArgument() {
+    return address;
   }
 }
