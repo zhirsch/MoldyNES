@@ -17,12 +17,12 @@ public final class Sbc extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.sub(regs.a, address.fetch(), regs.sr.c);
+    NesAlu.Result result = NesAlu.sub(regs.a, address.fetch(), regs.p.c);
     regs.a = result.output();
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
-    regs.sr.c = result.c();
-    regs.sr.v = result.v();
+    regs.p.n = result.n();
+    regs.p.z = result.z();
+    regs.p.c = result.c();
+    regs.p.v = result.v();
   }
 
   @Override

@@ -15,7 +15,7 @@ public class Cld extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.sr.d = false;
+    regs.p.d = false;
   }
 
   @Override

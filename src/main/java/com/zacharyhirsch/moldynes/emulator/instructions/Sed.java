@@ -15,7 +15,7 @@ public class Sed extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.sr.d = true;
+    regs.p.d = true;
   }
 
   @Override

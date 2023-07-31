@@ -1,6 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator;
 
-public class StatusRegister {
+public final class StatusRegister {
 
   public boolean n = false;
   public boolean v = false;
@@ -32,5 +32,11 @@ public class StatusRegister {
   @Override
   public String toString() {
     return UInt8.cast(Byte.toUnsignedInt(toByte().value()) & 0b1110_1111).toString();
+  }
+
+  public StatusRegister copy() {
+    StatusRegister copy = new StatusRegister();
+    copy.fromByte(toByte());
+    return copy;
   }
 }

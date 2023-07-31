@@ -21,15 +21,15 @@ public final class ProgramCounter {
     this.pc = pc;
   }
 
-  public void offset(UInt8 offset) {
-    pc = UInt16.cast(pc.value() + offset.value());
-  }
-
   public void inc() {
-    offset(UInt8.cast(1));
+    pc = UInt16.cast(Short.toUnsignedInt(pc.value()) + 1);
   }
 
   public void dec() {
-    offset(UInt8.cast(-1));
+    pc = UInt16.cast(Short.toUnsignedInt(pc.value()) - 1);
+  }
+
+  public ProgramCounter copy() {
+    return new ProgramCounter(pc);
   }
 }

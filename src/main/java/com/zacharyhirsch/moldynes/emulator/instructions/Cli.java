@@ -15,7 +15,7 @@ public class Cli extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.sr.i = false;
+    regs.p.i = false;
   }
 
   @Override

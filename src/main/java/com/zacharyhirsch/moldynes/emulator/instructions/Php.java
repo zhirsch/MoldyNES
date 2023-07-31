@@ -15,7 +15,7 @@ public class Php extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.pushByte(regs.sr.toByte());
+    stack.pushByte(regs.p.toByte());
   }
   @Override
   public Argument getArgument() {

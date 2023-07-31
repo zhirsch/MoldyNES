@@ -16,8 +16,8 @@ public class Tax extends Instruction {
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.x = regs.a;
-    regs.sr.n = regs.x.bit(7) == 1;
-    regs.sr.z = regs.x.isZero();
+    regs.p.n = regs.x.bit(7) == 1;
+    regs.p.z = regs.x.isZero();
   }
   @Override
   public Argument getArgument() {

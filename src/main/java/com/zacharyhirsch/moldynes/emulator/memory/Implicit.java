@@ -13,7 +13,7 @@ public final class Implicit implements Instruction.Argument {
   }
 
   @Override
-  public UInt8[] getBytes() {
+  public UInt8[] bytes() {
     return new UInt8[] {};
   }
 }

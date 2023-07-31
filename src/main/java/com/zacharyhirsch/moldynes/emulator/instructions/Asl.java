@@ -15,9 +15,9 @@ public final class Asl extends Instruction {
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     NesAlu.Result result = NesAlu.asl(address.fetch());
     address.store(result.output());
-    regs.sr.c = result.c();
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
+    regs.p.c = result.c();
+    regs.p.n = result.n();
+    regs.p.z = result.z();
   }
 
   @Override

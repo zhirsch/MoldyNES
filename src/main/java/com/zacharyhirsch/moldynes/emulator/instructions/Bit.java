@@ -15,9 +15,9 @@ public final class Bit extends Instruction {
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     UInt8 input = address.fetch();
     NesAlu.Result result = NesAlu.and(regs.a, input);
-    regs.sr.z = result.z();
-    regs.sr.n = input.bit(7) == 1;
-    regs.sr.v = input.bit(6) == 1;
+    regs.p.z = result.z();
+    regs.p.n = input.bit(7) == 1;
+    regs.p.v = input.bit(6) == 1;
   }
 
   @Override

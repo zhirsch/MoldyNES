@@ -26,12 +26,12 @@ public class IndirectAddress implements ReadableAddress<UInt16> {
     UInt8 iah = absolute.msb();
 
     UInt8 lsb = memory.fetch(absolute);
-    UInt8 msb = memory.fetch(new UInt16(NesAlu.add(ial, UInt8.cast(1)).output(), iah));
-    return new UInt16(lsb, msb);
+    UInt8 msb = memory.fetch(new UInt16(iah, NesAlu.add(ial, UInt8.cast(1)).output()));
+    return new UInt16(msb, lsb);
   }
 
   @Override
-  public UInt8[] getBytes() {
+  public UInt8[] bytes() {
     return new UInt8[] {absolute.lsb(), absolute.msb()};
   }
 
