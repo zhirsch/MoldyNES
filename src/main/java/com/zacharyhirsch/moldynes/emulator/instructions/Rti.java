@@ -18,11 +18,11 @@ public class Rti extends Instruction {
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     UInt8 p = stack.pullByte();
-    regs.sr.fromByte(p);
+    regs.p.fromByte(p);
 
     UInt8 pcl = stack.pullByte();
     UInt8 pch = stack.pullByte();
-    regs.pc.set(new UInt16(pcl, pch));
+    regs.pc.set(new UInt16(pch, pcl));
   }
 
   @Override

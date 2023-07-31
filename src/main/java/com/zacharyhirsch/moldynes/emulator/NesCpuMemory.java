@@ -64,7 +64,7 @@ public final class NesCpuMemory {
   }
 
   public UInt8 fetch(UInt8 zeropage) {
-    UInt16 address = new UInt16(zeropage, UInt8.cast(0x00));
+    UInt16 address = new UInt16(UInt8.cast(0x00), zeropage);
     return getRegion(address).fetchByte(address);
   }
 
@@ -83,7 +83,7 @@ public final class NesCpuMemory {
   }
 
   public void store(UInt8 zeropage, UInt8 value) {
-    UInt16 address = new UInt16(zeropage, UInt8.cast(0x00));
+    UInt16 address = new UInt16(UInt8.cast(0x00), zeropage);
     getRegion(address).storeByte(address, value);
   }
 
@@ -103,8 +103,8 @@ public final class NesCpuMemory {
 
   private static UInt16 addIndex(UInt8 zeropage, UInt8 index) {
     return new UInt16(
-        UInt8.cast(Byte.toUnsignedInt(zeropage.value()) + Byte.toUnsignedInt(index.value())),
-        UInt8.cast(0x00));
+        UInt8.cast(0x00), UInt8.cast(Byte.toUnsignedInt(zeropage.value()) + Byte.toUnsignedInt(index.value()))
+    );
   }
 
   private interface Region {

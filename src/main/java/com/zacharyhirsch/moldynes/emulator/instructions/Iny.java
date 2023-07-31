@@ -15,8 +15,8 @@ public class Iny extends Instruction {
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     NesAlu.Result result = NesAlu.inc(regs.y);
     regs.y = result.output();
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
+    regs.p.n = result.n();
+    regs.p.z = result.z();
   }
   @Override
   public Argument getArgument() {

@@ -15,7 +15,7 @@ public class Clv extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.sr.v = false;
+    regs.p.v = false;
   }
 
   @Override

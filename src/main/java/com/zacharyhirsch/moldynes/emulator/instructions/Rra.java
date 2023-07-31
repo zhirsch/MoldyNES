@@ -13,15 +13,15 @@ public final class Rra extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result ror = NesAlu.ror(address.fetch(), regs.sr.c);
+    NesAlu.Result ror = NesAlu.ror(address.fetch(), regs.p.c);
     address.store(ror.output());
 
     NesAlu.Result add = NesAlu.add(regs.a, ror.output(), ror.c());
     regs.a = add.output();
-    regs.sr.n = add.n();
-    regs.sr.z = add.z();
-    regs.sr.c = add.c();
-    regs.sr.v = add.v();
+    regs.p.n = add.n();
+    regs.p.z = add.z();
+    regs.p.c = add.c();
+    regs.p.v = add.v();
   }
 
   @Override

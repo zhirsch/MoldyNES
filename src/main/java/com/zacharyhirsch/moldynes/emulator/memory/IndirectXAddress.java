@@ -25,18 +25,18 @@ public class IndirectXAddress implements Address<UInt8> {
   public UInt8 fetch() {
     UInt8 adl = memory.fetch(zeropage, index.get());
     UInt8 adh = memory.fetch(UInt8.cast(zeropage.value() + 1), index.get());
-    return memory.fetch(new UInt16(adl, adh));
+    return memory.fetch(new UInt16(adh, adl));
   }
 
   @Override
   public void store(UInt8 value) {
     UInt8 adl = memory.fetch(zeropage, index.get());
     UInt8 adh = memory.fetch(UInt8.cast(zeropage.value() + 1), index.get());
-    memory.store(new UInt16(adl, adh), value);
+    memory.store(new UInt16(adh, adl), value);
   }
 
   @Override
-  public UInt8[] getBytes() {
+  public UInt8[] bytes() {
     return new UInt8[] {zeropage};
   }
 

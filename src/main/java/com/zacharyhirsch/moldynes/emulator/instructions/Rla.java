@@ -13,14 +13,14 @@ public final class Rla extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result rol = NesAlu.rol(address.fetch(), regs.sr.c);
+    NesAlu.Result rol = NesAlu.rol(address.fetch(), regs.p.c);
     address.store(rol.output());
-    regs.sr.c = rol.c();
+    regs.p.c = rol.c();
 
     NesAlu.Result and = NesAlu.and(regs.a, rol.output());
     regs.a = and.output();
-    regs.sr.n = and.n();
-    regs.sr.z = and.z();
+    regs.p.n = and.n();
+    regs.p.z = and.z();
   }
 
   @Override

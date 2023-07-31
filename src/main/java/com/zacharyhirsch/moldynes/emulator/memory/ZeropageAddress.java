@@ -29,7 +29,7 @@ public class ZeropageAddress implements Address<UInt8> {
   }
 
   @Override
-  public UInt8[] getBytes() {
+  public UInt8[] bytes() {
     return new UInt8[] {zeropage};
   }
 

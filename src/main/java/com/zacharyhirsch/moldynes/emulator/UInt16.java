@@ -4,7 +4,7 @@ import static java.lang.Byte.toUnsignedInt;
 
 public record UInt16(short value) {
 
-  public UInt16(UInt8 lsb, UInt8 msb) {
+  public UInt16(UInt8 msb, UInt8 lsb) {
     this((short) ((toUnsignedInt(msb.value()) << 8) | toUnsignedInt(lsb.value())));
   }
 

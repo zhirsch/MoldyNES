@@ -19,8 +19,8 @@ public final class Lax extends Instruction {
     UInt8 value = address.fetch();
     regs.a = value;
     regs.x = value;
-    regs.sr.n = value.bit(7) == 1;
-    regs.sr.z = value.isZero();
+    regs.p.n = value.bit(7) == 1;
+    regs.p.z = value.isZero();
   }
   @Override
   public Argument getArgument() {

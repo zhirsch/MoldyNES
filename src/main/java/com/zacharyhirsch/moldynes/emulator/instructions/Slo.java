@@ -1,7 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.*;
-import com.zacharyhirsch.moldynes.emulator.NesAlu.Result;
 import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
 public final class Slo extends Instruction {
@@ -14,14 +13,14 @@ public final class Slo extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    Result asl = NesAlu.asl(address.fetch());
+    NesAlu.Result asl = NesAlu.asl(address.fetch());
     address.store(asl.output());
-    regs.sr.c = asl.c();
+    regs.p.c = asl.c();
 
     NesAlu.Result or = NesAlu.or(regs.a, asl.output());
     regs.a = or.output();
-    regs.sr.n = or.n();
-    regs.sr.z = or.z();
+    regs.p.n = or.n();
+    regs.p.z = or.z();
   }
 
   @Override

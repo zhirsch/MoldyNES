@@ -18,8 +18,8 @@ public final class Ldy extends Instruction {
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     regs.y = address.fetch();
 
-    regs.sr.n = regs.y.bit(7) == 1;
-    regs.sr.z = regs.y.isZero();
+    regs.p.n = regs.y.bit(7) == 1;
+    regs.p.z = regs.y.isZero();
   }
 
   @Override

@@ -15,7 +15,7 @@ public class Plp extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.sr.fromByte(stack.pullByte());
+    regs.p.fromByte(stack.pullByte());
   }
   @Override
   public Argument getArgument() {

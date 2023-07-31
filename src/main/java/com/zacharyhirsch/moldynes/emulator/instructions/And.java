@@ -19,8 +19,8 @@ public final class And extends Instruction {
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     NesAlu.Result result = NesAlu.and(regs.a, address.fetch());
     regs.a = result.output();
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
+    regs.p.n = result.n();
+    regs.p.z = result.z();
   }
 
   @Override

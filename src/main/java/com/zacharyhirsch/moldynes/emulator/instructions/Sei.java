@@ -15,7 +15,7 @@ public class Sei extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.sr.i = true;
+    regs.p.i = true;
   }
 
   @Override

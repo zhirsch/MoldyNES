@@ -15,12 +15,12 @@ public final class Sre extends Instruction {
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
     NesAlu.Result lsr = NesAlu.lsr(address.fetch());
     address.store(lsr.output());
-    regs.sr.c = lsr.c();
+    regs.p.c = lsr.c();
 
     NesAlu.Result eor = NesAlu.xor(regs.a, lsr.output());
     regs.a = eor.output();
-    regs.sr.n = eor.n();
-    regs.sr.z = eor.z();
+    regs.p.n = eor.n();
+    regs.p.z = eor.z();
   }
   @Override
   public Argument getArgument() {

@@ -1,11 +1,10 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.memory.ImmediateByte;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public final class Bvs extends BranchInstruction {
 
-  public Bvs(Registers regs, ImmediateByte immediate) {
-    super(regs, immediate, sr -> sr.v);
+  public Bvs(UInt8 opcode) {
+    super(opcode, sr -> sr.v);
   }
 }

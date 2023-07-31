@@ -21,9 +21,9 @@ public final class Dcp extends Instruction {
     address.store(output);
 
     NesAlu.Result result = NesAlu.sub(regs.a, output);
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
-    regs.sr.c = result.c();
+    regs.p.n = result.n();
+    regs.p.z = result.z();
+    regs.p.c = result.c();
   }
 
   @Override

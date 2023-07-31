@@ -20,12 +20,12 @@ public final class Isb extends Instruction {
     UInt8 output = NesAlu.inc(address.fetch()).output();
     address.store(output);
 
-    NesAlu.Result result = NesAlu.sub(regs.a, output, regs.sr.c);
+    NesAlu.Result result = NesAlu.sub(regs.a, output, regs.p.c);
     regs.a = result.output();
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
-    regs.sr.c = result.c();
-    regs.sr.v = result.v();
+    regs.p.n = result.n();
+    regs.p.z = result.z();
+    regs.p.c = result.c();
+    regs.p.v = result.v();
   }
 
   @Override

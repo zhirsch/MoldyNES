@@ -13,11 +13,11 @@ public final class Rol extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.rol(address.fetch(), regs.sr.c);
+    NesAlu.Result result = NesAlu.rol(address.fetch(), regs.p.c);
     address.store(result.output());
-    regs.sr.c = result.c();
-    regs.sr.n = result.n();
-    regs.sr.z = result.z();
+    regs.p.c = result.c();
+    regs.p.n = result.n();
+    regs.p.z = result.z();
   }
 
   @Override
