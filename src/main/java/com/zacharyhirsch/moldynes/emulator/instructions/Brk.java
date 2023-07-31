@@ -16,7 +16,8 @@ public class Brk extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.pushWord(regs.pc.address());
+    stack.pushByte(regs.pc.address().msb());
+    stack.pushByte(regs.pc.address().lsb());
     stack.pushByte(regs.sr.toByte());
     regs.sr.i = true;
     regs.pc.set(new IndirectAddress(memory, NMI_VECTOR).fetch());

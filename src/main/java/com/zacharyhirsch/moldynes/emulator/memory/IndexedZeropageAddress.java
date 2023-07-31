@@ -22,12 +22,12 @@ public class IndexedZeropageAddress implements Address<UInt8> {
 
   @Override
   public UInt8 fetch() {
-    return memory.fetchZeropageByte(zeropage, index.get());
+    return memory.fetch(zeropage, index.get());
   }
 
   @Override
   public void store(UInt8 value) {
-    memory.storeZeropageByte(zeropage, index.get(), value);
+    memory.store(zeropage, index.get(), value);
   }
 
   @Override

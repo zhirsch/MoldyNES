@@ -20,12 +20,12 @@ public class ZeropageAddress implements Address<UInt8> {
 
   @Override
   public UInt8 fetch() {
-    return memory.fetchZeropageByte(zeropage);
+    return memory.fetch(zeropage);
   }
 
   @Override
   public void store(UInt8 value) {
-    memory.storeZeropageByte(zeropage, value);
+    memory.store(zeropage, value);
   }
 
   @Override

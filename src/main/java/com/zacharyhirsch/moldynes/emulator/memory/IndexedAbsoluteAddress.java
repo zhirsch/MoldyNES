@@ -23,12 +23,12 @@ public class IndexedAbsoluteAddress implements Address<UInt8> {
 
   @Override
   public UInt8 fetch() {
-    return memory.fetchByte(absolute, index.get());
+    return memory.fetch(absolute, index.get());
   }
 
   @Override
   public void store(UInt8 value) {
-    memory.storeByte(absolute, index.get(), value);
+    memory.store(absolute, index.get(), value);
   }
 
   @Override

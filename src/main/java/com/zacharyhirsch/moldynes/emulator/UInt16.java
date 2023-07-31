@@ -2,7 +2,7 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import static java.lang.Byte.toUnsignedInt;
 
-public record UInt16(short value) implements Comparable<UInt16> {
+public record UInt16(short value) {
 
   public UInt16(UInt8 lsb, UInt8 msb) {
     this((short) ((toUnsignedInt(msb.value()) << 8) | toUnsignedInt(lsb.value())));
@@ -12,18 +12,9 @@ public record UInt16(short value) implements Comparable<UInt16> {
     return new UInt16((short) value);
   }
 
-  public static UInt16 cast(UInt8 lsb) {
-    return new UInt16(lsb, UInt8.cast(0x00));
-  }
-
   @Override
   public String toString() {
     return String.format("%04x", value());
-  }
-
-  @Override
-  public int compareTo(UInt16 o) {
-    return Short.compareUnsigned(value, o.value);
   }
 
   public UInt8 lsb() {

@@ -21,12 +21,12 @@ public class AbsoluteAddress implements Address<UInt8> {
 
   @Override
   public UInt8 fetch() {
-    return memory.fetchByte(absolute);
+    return memory.fetch(absolute);
   }
 
   @Override
   public void store(UInt8 value) {
-    memory.storeByte(absolute, value);
+    memory.store(absolute, value);
   }
 
   @Override

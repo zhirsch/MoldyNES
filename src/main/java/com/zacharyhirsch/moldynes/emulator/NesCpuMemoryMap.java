@@ -18,19 +18,23 @@ public abstract class NesCpuMemoryMap {
 
     @Override
     public NesCpuMemory load(byte[] header, ByteBuffer buffer) {
-      int prgRomSize = header[4] << 14;
-      if (prgRomSize != 0x4000) {
-        throw new IllegalArgumentException(String.format("bad prg rom size: %04x", prgRomSize));
-      }
+      ByteBuffer prgRom = getPrgRom(header, buffer);
       int chrRomSize = header[5] << 13;
       if ((header[6] & 0b0000_0100) == 0b0000_0100) {
         throw new IllegalArgumentException("trainer not implemented");
       }
       return new NesCpuMemory.Builder()
-          // .rom(0x8000, 0x4000, buffer.slice(16, prgRomSize).asReadOnlyBuffer())
-          .rom(0x8000, 0x4000, buffer.slice(16, prgRomSize))
-          .mirror(0xc000, 0x4000, 0x8000)
+          .bytes(0x8000, 0x4000, prgRom)
+          .bytes(0xc000, 0x4000, prgRom)
           .build();
+    }
+
+    private static ByteBuffer getPrgRom(byte[] header, ByteBuffer buffer) {
+      int prgRomSize = header[4] << 14;
+      if (prgRomSize != 0x4000) {
+        throw new IllegalArgumentException(String.format("bad prg rom size: %04x", prgRomSize));
+      }
+      return buffer.slice(16, prgRomSize).asReadOnlyBuffer();
     }
   }
 }

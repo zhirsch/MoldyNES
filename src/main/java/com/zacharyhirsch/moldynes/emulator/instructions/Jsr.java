@@ -1,13 +1,13 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.*;
-import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
+import com.zacharyhirsch.moldynes.emulator.memory.ImmediateWord;
 
 public final class Jsr extends Instruction {
 
-  private final ReadableAddress<UInt16> address;
+  private final ImmediateWord address;
 
-  public Jsr(ReadableAddress<UInt16> address) {
+  public Jsr(ImmediateWord address) {
     this.address = address;
   }
 
@@ -18,7 +18,9 @@ public final class Jsr extends Instruction {
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.pushWord(UInt16.cast(regs.pc.address().value() - 1));
+    UInt16 pc = UInt16.cast(regs.pc.address().value() - 1);
+    stack.pushByte(pc.msb());
+    stack.pushByte(pc.lsb());
     regs.pc.set(address.fetch());
   }
 

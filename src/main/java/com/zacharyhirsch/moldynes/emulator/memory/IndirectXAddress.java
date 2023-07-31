@@ -23,16 +23,16 @@ public class IndirectXAddress implements Address<UInt8> {
 
   @Override
   public UInt8 fetch() {
-    UInt8 adl = memory.fetchZeropageByte(zeropage, index.get());
-    UInt8 adh = memory.fetchZeropageByte(UInt8.cast(zeropage.value() + 1), index.get());
-    return memory.fetchByte(new UInt16(adl, adh));
+    UInt8 adl = memory.fetch(zeropage, index.get());
+    UInt8 adh = memory.fetch(UInt8.cast(zeropage.value() + 1), index.get());
+    return memory.fetch(new UInt16(adl, adh));
   }
 
   @Override
   public void store(UInt8 value) {
-    UInt8 adl = memory.fetchZeropageByte(zeropage, index.get());
-    UInt8 adh = memory.fetchZeropageByte(UInt8.cast(zeropage.value() + 1), index.get());
-    memory.storeByte(new UInt16(adl, adh), value);
+    UInt8 adl = memory.fetch(zeropage, index.get());
+    UInt8 adh = memory.fetch(UInt8.cast(zeropage.value() + 1), index.get());
+    memory.store(new UInt16(adl, adh), value);
   }
 
   @Override
