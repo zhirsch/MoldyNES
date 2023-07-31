@@ -8,18 +8,19 @@ public class Rts extends Instruction {
   private final Implicit implicit;
 
   public Rts(Implicit implicit) {
-        this.implicit = implicit;
+    this.implicit = implicit;
   }
 
   @Override
   public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.pc.set(stack.pullWord());
-    regs.pc.inc();
+    UInt8 pcl = stack.pullByte();
+    UInt8 pch = stack.pullByte();
+    UInt16 pc = UInt16.cast(Short.toUnsignedInt(new UInt16(pcl, pch).value()) + 1);
+    regs.pc.set(pc);
   }
 
   @Override
   public Argument getArgument() {
     return implicit;
   }
-
 }

@@ -39,7 +39,7 @@ public class Decoder {
   }
 
   private UInt8 fetchOpcode() {
-    UInt8 opcode = memory.fetchByte(regs.pc.address());
+    UInt8 opcode = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return opcode;
   }
@@ -75,7 +75,7 @@ public class Decoder {
       case (byte) 0x1d -> new Ora(absoluteX());
       case (byte) 0x1e -> new Asl(absoluteX());
       case (byte) 0x1f -> new Undocumented(new Slo(absoluteX()));
-      case (byte) 0x20 -> new Jsr(immediateShort());
+      case (byte) 0x20 -> new Jsr(immediateWord());
       case (byte) 0x21 -> new And(indirectX());
       case (byte) 0x23 -> new Undocumented(new Rla(indirectX()));
       case (byte) 0x24 -> new Bit(zeropage());
@@ -115,7 +115,7 @@ public class Decoder {
       case (byte) 0x48 -> new Pha(implicit());
       case (byte) 0x49 -> new Eor(immediateByte());
       case (byte) 0x4a -> new Lsr(accumulator());
-      case (byte) 0x4c -> new Jmp(immediateShort());
+      case (byte) 0x4c -> new Jmp(immediateWord());
       case (byte) 0x4d -> new Eor(absolute());
       case (byte) 0x4e -> new Lsr(absolute());
       case (byte) 0x4f -> new Undocumented(new Sre(absolute()));
@@ -284,15 +284,15 @@ public class Decoder {
   }
 
   private Ignore ignore1() {
-    UInt8 byte1 = memory.fetchByte(regs.pc.address());
+    UInt8 byte1 = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new Ignore(byte1);
   }
 
   private Ignore ignore2() {
-    UInt8 byte1 = memory.fetchByte(regs.pc.address());
+    UInt8 byte1 = memory.fetch(regs.pc.address());
     regs.pc.inc();
-    UInt8 byte2 = memory.fetchByte(regs.pc.address());
+    UInt8 byte2 = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new Ignore(byte1, byte2);
   }
@@ -302,77 +302,77 @@ public class Decoder {
   }
 
   private ImmediateByte immediateByte() {
-    ImmediateByte immediate = new ImmediateByte(memory.fetchByte(regs.pc.address()));
+    ImmediateByte immediate = new ImmediateByte(memory.fetch(regs.pc.address()));
     regs.pc.inc();
     return immediate;
   }
 
-  private ImmediateWord immediateShort() {
-    UInt8 lsb = memory.fetchByte(regs.pc.address());
+  private ImmediateWord immediateWord() {
+    UInt8 lsb = memory.fetch(regs.pc.address());
     regs.pc.inc();
-    UInt8 msb = memory.fetchByte(regs.pc.address());
+    UInt8 msb = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new ImmediateWord(new UInt16(lsb, msb));
   }
 
   private ZeropageAddress zeropage() {
-    UInt8 zeropage = memory.fetchByte(regs.pc.address());
+    UInt8 zeropage = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new ZeropageAddress(memory, zeropage);
   }
 
   private IndexedZeropageAddress zeropageX() {
-    UInt8 zeropage = memory.fetchByte(regs.pc.address());
+    UInt8 zeropage = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new IndexedZeropageAddress(memory, zeropage, new XIndex(regs));
   }
 
   private IndexedZeropageAddress zeropageY() {
-    UInt8 zeropage = memory.fetchByte(regs.pc.address());
+    UInt8 zeropage = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new IndexedZeropageAddress(memory, zeropage, new YIndex(regs));
   }
 
   private AbsoluteAddress absolute() {
-    UInt8 lsb = memory.fetchByte(regs.pc.address());
+    UInt8 lsb = memory.fetch(regs.pc.address());
     regs.pc.inc();
-    UInt8 msb = memory.fetchByte(regs.pc.address());
+    UInt8 msb = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new AbsoluteAddress(memory, new UInt16(lsb, msb));
   }
 
   private IndexedAbsoluteAddress absoluteX() {
-    UInt8 lsb = memory.fetchByte(regs.pc.address());
+    UInt8 lsb = memory.fetch(regs.pc.address());
     regs.pc.inc();
-    UInt8 msb = memory.fetchByte(regs.pc.address());
+    UInt8 msb = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new IndexedAbsoluteAddress(memory, new UInt16(lsb, msb), new XIndex(regs));
   }
 
   private IndexedAbsoluteAddress absoluteY() {
-    UInt8 lsb = memory.fetchByte(regs.pc.address());
+    UInt8 lsb = memory.fetch(regs.pc.address());
     regs.pc.inc();
-    UInt8 msb = memory.fetchByte(regs.pc.address());
+    UInt8 msb = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new IndexedAbsoluteAddress(memory, new UInt16(lsb, msb), new YIndex(regs));
   }
 
   private IndirectAddress indirect() {
-    UInt8 lsb = memory.fetchByte(regs.pc.address());
+    UInt8 lsb = memory.fetch(regs.pc.address());
     regs.pc.inc();
-    UInt8 msb = memory.fetchByte(regs.pc.address());
+    UInt8 msb = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new IndirectAddress(memory, new UInt16(lsb, msb));
   }
 
   private IndirectXAddress indirectX() {
-    UInt8 zeropage = memory.fetchByte(regs.pc.address());
+    UInt8 zeropage = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new IndirectXAddress(memory, zeropage, new XIndex(regs));
   }
 
   private IndirectYAddress indirectY() {
-    UInt8 zeropage = memory.fetchByte(regs.pc.address());
+    UInt8 zeropage = memory.fetch(regs.pc.address());
     regs.pc.inc();
     return new IndirectYAddress(memory, zeropage, new YIndex(regs));
   }

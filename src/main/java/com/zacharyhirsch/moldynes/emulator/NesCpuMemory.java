@@ -5,70 +5,47 @@ import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Map;
 import java.util.Objects;
 
 // https://www.nesdev.org/wiki/CPU_memory_map
 public final class NesCpuMemory {
 
-  private interface Region {
+  private final ImmutableRangeMap<Integer, Region> regions;
 
-    UInt8 fetchByte(UInt16 address);
-
-    UInt16 fetchWord(UInt16 address);
-
-    void storeByte(UInt16 address, UInt8 value);
-
-    void storeWord(UInt16 address, UInt16 value);
-  }
-
-  private final ImmutableRangeMap<UInt16, Region> regions;
-
-  private NesCpuMemory(ImmutableRangeMap<UInt16, Region> regions) {
+  private NesCpuMemory(ImmutableRangeMap<Integer, Region> regions) {
     this.regions = regions;
   }
 
   public static final class Builder {
 
-    private final RangeMap<UInt16, Region> regions = TreeRangeMap.create();
+    private final RangeMap<Integer, Region> regions = TreeRangeMap.create();
 
     public Builder() {
-      ram(0x0000, 0x0800, ByteBuffer.allocateDirect(0x0800).order(ByteOrder.LITTLE_ENDIAN));
-      mirror(0x0800, 0x1000, 0x0000);
-      mirror(0x1000, 0x1800, 0x0000);
-      mirror(0x1800, 0x2000, 0x0000);
-      // 0x2000 - 0x2007    = NES PPU registers
-      // for (int off = 0x2008; off < 0x4000; off += 0x08) {
-      //   mirror(off, off + 0x08, 0x2000);
-      // }
-      // 0x4000 - 0x4017    = NES APU and I/O registers
-      devnull(0x4000, 0x4017);
-      // 0x4018 - 0x401f    = APU and I/O functionality that is normally disabled
-      // 0x4020 - 0xffff    = Cartridge space
+      // Internal memory
+      ByteBuffer internalMemory = ByteBuffer.allocateDirect(0x0800);
+      for (int off = 0x0000; off < 0x2000; off += 0x0800) {
+        bytes(off, 0x0800, internalMemory);
+      }
+
+      // PPU registers
+      NesPpu ppu = new NesPpu();
+      for (int off = 0x2000; off < 0x4000; off += 0x0008) {
+        registers(off, 0x0008, ppu);
+      }
+
+      // APU registers
+      registers(0x4000, 0x0018, new NesApu());
     }
 
-    public Builder ram(int offset, int len, ByteBuffer buffer) {
-      Range<UInt16> range = Range.closed(UInt16.cast(offset), UInt16.cast(offset + len - 1));
-      regions.put(range, new RamRegion(buffer.order(ByteOrder.LITTLE_ENDIAN)));
+    public Builder bytes(int offset, int len, ByteBuffer buffer) {
+      Range<Integer> range = Range.closed(offset, offset + len - 1);
+      regions.put(range, new BytesRegion(UInt16.cast(offset), buffer));
       return this;
     }
 
-    public Builder rom(int offset, int len, ByteBuffer buffer) {
-      Range<UInt16> range = Range.closed(UInt16.cast(offset), UInt16.cast(offset + len - 1));
-      regions.put(range, new RomRegion(buffer.order(ByteOrder.LITTLE_ENDIAN)));
-      return this;
-    }
-
-    public Builder mirror(int offset, int len, int dst) {
-      Range<UInt16> range = Range.closed(UInt16.cast(offset), UInt16.cast(offset + len - 1));
-      regions.put(range, new MirrorRegion(regions, UInt16.cast(dst)));
-      return this;
-    }
-
-    public Builder devnull(int offset, int len) {
-      Range<UInt16> range = Range.closed(UInt16.cast(offset), UInt16.cast(offset + len - 1));
-      regions.put(range, new DevNullRegion());
+    public Builder registers(int offset, int len, NesDevice device) {
+      Range<Integer> range = Range.closed(offset, offset + len - 1);
+      regions.put(range, new RegistersRegion(device));
       return this;
     }
 
@@ -77,170 +54,91 @@ public final class NesCpuMemory {
     }
   }
 
-  public UInt8 fetchByte(UInt16 address) {
-    return fetchByte(regions, address);
+  public UInt8 fetch(UInt16 address) {
+    return getRegion(address).fetchByte(address);
   }
 
-  public UInt8 fetchByte(UInt16 address, UInt8 index) {
-    return fetchByte(regions, addIndex(address, index));
+  public UInt8 fetch(UInt16 base, UInt8 index) {
+    UInt16 address = addIndex(base, index);
+    return getRegion(address).fetchByte(address);
   }
 
-  public UInt16 fetchWord(UInt16 address) {
-    // TODO: check for same page
-    UInt8 lsb = fetchByte(address);
-    UInt8 msb = fetchByte(UInt16.cast(Short.toUnsignedInt(address.value()) + 1));
-    return new UInt16(lsb, msb);
+  public UInt8 fetch(UInt8 zeropage) {
+    UInt16 address = new UInt16(zeropage, UInt8.cast(0x00));
+    return getRegion(address).fetchByte(address);
   }
 
-  public UInt8 fetchZeropageByte(UInt8 zeropage) {
-    return fetchByte(regions, UInt16.cast(zeropage));
+  public UInt8 fetch(UInt8 zeropage, UInt8 index) {
+    UInt16 address = addIndex(zeropage, index);
+    return getRegion(address).fetchByte(address);
   }
 
-  public UInt8 fetchZeropageByte(UInt8 zeropage, UInt8 index) {
-    return fetchByte(regions, UInt16.cast(addZeropageIndex(zeropage, index)));
+  public void store(UInt16 address, UInt8 value) {
+    getRegion(address).storeByte(address, value);
   }
 
-  public void storeByte(UInt16 address, UInt8 value) {
-    storeByte(regions, address, value);
+  public void store(UInt16 base, UInt8 index, UInt8 value) {
+    UInt16 address = addIndex(base, index);
+    getRegion(address).storeByte(address, value);
   }
 
-  public void storeByte(UInt16 address, UInt8 index, UInt8 value) {
-    storeByte(regions, addIndex(address, index), value);
+  public void store(UInt8 zeropage, UInt8 value) {
+    UInt16 address = new UInt16(zeropage, UInt8.cast(0x00));
+    getRegion(address).storeByte(address, value);
   }
 
-  public void storeWord(UInt16 address, UInt16 value) {
-    storeWord(regions, address, value);
+  public void store(UInt8 zeropage, UInt8 index, UInt8 value) {
+    UInt16 address = addIndex(zeropage, index);
+    getRegion(address).storeByte(address, value);
   }
 
-  public void storeZeropageByte(UInt8 zeropage, UInt8 value) {
-    storeByte(regions, UInt16.cast(zeropage), value);
+  private Region getRegion(UInt16 address) {
+    int key = Short.toUnsignedInt(address.value());
+    return Objects.requireNonNull(regions.get(key), address::toString);
   }
 
-  public void storeZeropageByte(UInt8 zeropage, UInt8 index, UInt8 value) {
-    storeByte(regions, UInt16.cast(NesAlu.add(zeropage, index).output()), value);
+  private static UInt16 addIndex(UInt16 base, UInt8 index) {
+    return UInt16.cast(Short.toUnsignedInt(base.value()) + Byte.toUnsignedInt(index.value()));
   }
 
-  private static UInt8 fetchByte(RangeMap<UInt16, Region> regions, UInt16 address) {
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(address));
-    return entry.getValue().fetchByte(subRegionOffset(entry.getKey().lowerEndpoint(), address));
+  private static UInt16 addIndex(UInt8 zeropage, UInt8 index) {
+    return new UInt16(
+        UInt8.cast(Byte.toUnsignedInt(zeropage.value()) + Byte.toUnsignedInt(index.value())),
+        UInt8.cast(0x00));
   }
 
-  private static UInt16 fetchWord(RangeMap<UInt16, Region> regions, UInt16 addr) {
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(addr));
-    return entry.getValue().fetchWord(subRegionOffset(entry.getKey().lowerEndpoint(), addr));
+  private interface Region {
+
+    UInt8 fetchByte(UInt16 address);
+
+    void storeByte(UInt16 address, UInt8 value);
   }
 
-  private static void storeByte(RangeMap<UInt16, Region> regions, UInt16 addr, UInt8 value) {
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(addr));
-    entry.getValue().storeByte(subRegionOffset(entry.getKey().lowerEndpoint(), addr), value);
-  }
-
-  private static void storeWord(RangeMap<UInt16, Region> regions, UInt16 addr, UInt16 value) {
-    Map.Entry<Range<UInt16>, Region> entry = Objects.requireNonNull(regions.getEntry(addr));
-    entry.getValue().storeWord(subRegionOffset(entry.getKey().lowerEndpoint(), addr), value);
-  }
-
-  private static UInt16 addIndex(UInt16 address, UInt8 index) {
-    return UInt16.cast(Short.toUnsignedInt(address.value()) + Byte.toUnsignedInt(index.value()));
-  }
-
-  private static UInt8 addZeropageIndex(UInt8 zeropage, UInt8 index) {
-    return UInt8.cast(Byte.toUnsignedInt(zeropage.value()) + Byte.toUnsignedInt(index.value()));
-  }
-
-  private static UInt16 subRegionOffset(UInt16 base, UInt16 address) {
-    return UInt16.cast(Short.toUnsignedInt(address.value()) - Short.toUnsignedInt(base.value()));
-  }
-
-  private static UInt16 addRegionOffset(UInt16 base, UInt16 address) {
-    return UInt16.cast(Short.toUnsignedInt(address.value()) + Short.toUnsignedInt(base.value()));
-  }
-
-  private record RamRegion(ByteBuffer ram) implements Region {
+  private record BytesRegion(UInt16 base, ByteBuffer ram) implements Region {
 
     @Override
     public UInt8 fetchByte(UInt16 address) {
-      return UInt8.cast(ram.get(Short.toUnsignedInt(address.value())));
-    }
-
-    @Override
-    public UInt16 fetchWord(UInt16 address) {
-      return UInt16.cast(ram.getShort(Short.toUnsignedInt(address.value())));
+      int index = Short.toUnsignedInt(address.value()) - Short.toUnsignedInt(base.value());
+      return UInt8.cast(ram.get(index));
     }
 
     @Override
     public void storeByte(UInt16 address, UInt8 value) {
-      ram.put(Short.toUnsignedInt(address.value()), value.value());
-    }
-
-    @Override
-    public void storeWord(UInt16 address, UInt16 value) {
-      ram.putShort(Short.toUnsignedInt(address.value()), value.value());
+      int index = Short.toUnsignedInt(address.value()) - Short.toUnsignedInt(base.value());
+      ram.put(index, value.value());
     }
   }
 
-  private record RomRegion(ByteBuffer rom) implements Region {
+  private record RegistersRegion(NesDevice device) implements Region {
 
     @Override
     public UInt8 fetchByte(UInt16 address) {
-      return UInt8.cast(rom.get(Short.toUnsignedInt(address.value())));
-    }
-
-    @Override
-    public UInt16 fetchWord(UInt16 address) {
-      return UInt16.cast(rom.getShort(Short.toUnsignedInt(address.value())));
+      return device.readRegister(address);
     }
 
     @Override
     public void storeByte(UInt16 address, UInt8 value) {
-      rom.put(Short.toUnsignedInt(address.value()), value.value());
+      device.writeRegister(address, value);
     }
-
-    @Override
-    public void storeWord(UInt16 address, UInt16 value) {
-      rom.putShort(Short.toUnsignedInt(address.value()), value.value());
-    }
-  }
-
-  private record MirrorRegion(RangeMap<UInt16, Region> regions, UInt16 dst) implements Region {
-
-    @Override
-    public UInt8 fetchByte(UInt16 address) {
-      return NesCpuMemory.fetchByte(regions, NesCpuMemory.addRegionOffset(dst, address));
-    }
-
-    @Override
-    public UInt16 fetchWord(UInt16 address) {
-      return NesCpuMemory.fetchWord(regions, NesCpuMemory.addRegionOffset(dst, address));
-    }
-
-    @Override
-    public void storeByte(UInt16 address, UInt8 value) {
-      NesCpuMemory.storeByte(regions, NesCpuMemory.addRegionOffset(dst, address), value);
-    }
-
-    @Override
-    public void storeWord(UInt16 address, UInt16 value) {
-      NesCpuMemory.storeWord(regions, NesCpuMemory.addRegionOffset(dst, address), value);
-    }
-  }
-
-  private record DevNullRegion() implements Region {
-
-    @Override
-    public UInt8 fetchByte(UInt16 address) {
-      return UInt8.cast(0);
-    }
-
-    @Override
-    public UInt16 fetchWord(UInt16 address) {
-      return UInt16.cast(0);
-    }
-
-    @Override
-    public void storeByte(UInt16 address, UInt8 value) {}
-
-    @Override
-    public void storeWord(UInt16 address, UInt16 value) {}
   }
 }
