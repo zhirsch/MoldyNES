@@ -4,7 +4,7 @@ public final class NesApu implements NesDevice {
 
   @Override
   public UInt8 readRegister(UInt16 address) {
-    return null;
+    return UInt8.cast(0xff);
   }
 
   @Override

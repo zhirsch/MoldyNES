@@ -18,4 +18,8 @@ public record UInt8(byte value) {
   public int bit(int i) {
     return (Byte.toUnsignedInt(value()) >> i) & 1;
   }
+
+  public UInt8 signum() {
+    return UInt8.cast(value >= 0 ? 1 : -1);
+  }
 }

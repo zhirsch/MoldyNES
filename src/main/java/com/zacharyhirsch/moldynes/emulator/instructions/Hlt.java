@@ -1,26 +1,18 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.HaltException;
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public class Hlt extends Instruction {
 
-  private final Implicit implicit;
+  private final UInt8 opcode;
 
-  public Hlt(Implicit implicit) {
-    this.implicit = implicit;
+  public Hlt(UInt8 opcode) {
+    this.opcode = opcode;
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    throw new HaltException();
-  }
-
-  @Override
-  public Argument getArgument() {
-    return implicit;
+  public Result execute(NesCpuCycleContext context) {
+    return new Result(true, () -> new UInt8[] {opcode}, () -> "HLT");
   }
 }

@@ -1,26 +1,34 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.*;
-import com.zacharyhirsch.moldynes.emulator.memory.Address;
+import com.zacharyhirsch.moldynes.emulator.NesAlu;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
-public class Dec extends Instruction {
+public final class Dec extends Instruction {
 
-  private final Address<UInt8> address;
+  private final UInt8 opcode;
+  private final ReadModifyWriteInstructionHelper helper;
 
-  public Dec(Address<UInt8> address) {
-        this.address = address;
+  public Dec(UInt8 opcode) {
+    this.opcode = opcode;
+    this.helper = new ReadModifyWriteInstructionHelper("DEC", opcode, this::dec);
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.dec(address.fetch());
-    address.store(result.output());
-    regs.p.n = result.n();
-    regs.p.z = result.z();
-  }
-  @Override
-  public Argument getArgument() {
-    return address;
+  public Result execute(NesCpuCycleContext context) {
+    return switch (Byte.toUnsignedInt(opcode.value())) {
+      case 0xc6 -> helper.executeZeropage(context);
+      case 0xce -> helper.executeAbsolute(context);
+      case 0xd6 -> helper.executeZeropageX(context);
+      case 0xde -> helper.executeAbsoluteX(context);
+      default -> throw new UnknownOpcodeException(opcode);
+    };
   }
 
+  private UInt8 dec(NesCpuCycleContext context, UInt8 data) {
+    NesAlu.Result result = NesAlu.dec(data);
+    context.registers().p.n = result.n();
+    context.registers().p.z = result.z();
+    return result.output();
+  }
 }

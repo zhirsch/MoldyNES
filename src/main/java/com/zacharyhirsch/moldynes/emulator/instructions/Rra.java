@@ -1,31 +1,43 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.*;
-import com.zacharyhirsch.moldynes.emulator.memory.Address;
+import com.zacharyhirsch.moldynes.emulator.NesAlu;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public final class Rra extends Instruction {
 
-  private final Address<UInt8> address;
+  private final UInt8 opcode;
+  private final ReadModifyWriteInstructionHelper helper;
 
-  public Rra(Address<UInt8> address) {
-    this.address = address;
+  public Rra(UInt8 opcode) {
+    this.opcode = opcode;
+    this.helper = new ReadModifyWriteInstructionHelper("RRA", opcode, this::rra);
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result ror = NesAlu.ror(address.fetch(), regs.p.c);
-    address.store(ror.output());
-
-    NesAlu.Result add = NesAlu.add(regs.a, ror.output(), ror.c());
-    regs.a = add.output();
-    regs.p.n = add.n();
-    regs.p.z = add.z();
-    regs.p.c = add.c();
-    regs.p.v = add.v();
+  public Result execute(NesCpuCycleContext context) {
+    return switch (Byte.toUnsignedInt(opcode.value())) {
+      case 0x63 -> helper.executeIndirectX(context);
+      case 0x67 -> helper.executeZeropage(context);
+      case 0x6f -> helper.executeAbsolute(context);
+      case 0x73 -> helper.executeIndirectY(context);
+      case 0x77 -> helper.executeZeropageX(context);
+      case 0x7b -> helper.executeAbsoluteY(context);
+      case 0x7f -> helper.executeAbsoluteX(context);
+      default -> throw new UnknownOpcodeException(opcode);
+    };
   }
 
-  @Override
-  public Argument getArgument() {
-    return address;
+  private UInt8 rra(NesCpuCycleContext context, UInt8 data) {
+    NesAlu.Result ror = NesAlu.ror(data, context.registers().p.c);
+
+    NesAlu.Result add = NesAlu.add(context.registers().a, ror.output(), ror.c());
+    context.registers().a = add.output();
+    context.registers().p.n = add.n();
+    context.registers().p.z = add.z();
+    context.registers().p.c = add.c();
+    context.registers().p.v = add.v();
+
+    return ror.output();
   }
 }

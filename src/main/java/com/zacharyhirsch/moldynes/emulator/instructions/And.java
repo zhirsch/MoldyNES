@@ -1,30 +1,38 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.NesAlu;
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
-import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
 public final class And extends Instruction {
 
-  private final ReadableAddress<UInt8> address;
+  private final UInt8 opcode;
+  private final FetchInstructionHelper helper;
 
-  public And(ReadableAddress<UInt8> address) {
-    this.address = address;
+  public And(UInt8 opcode) {
+    this.opcode = opcode;
+    this.helper = new FetchInstructionHelper("AND", opcode, this::and);
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.and(regs.a, address.fetch());
-    regs.a = result.output();
-    regs.p.n = result.n();
-    regs.p.z = result.z();
+  public Result execute(NesCpuCycleContext context) {
+    return switch (Byte.toUnsignedInt(opcode.value())) {
+      case 0x21 -> helper.fetchIndirectX(context);
+      case 0x25 -> helper.fetchZeropage(context);
+      case 0x29 -> helper.fetchImmediate(context);
+      case 0x2d -> helper.fetchAbsolute(context);
+      case 0x31 -> helper.fetchIndirectY(context);
+      case 0x35 -> helper.fetchZeropageX(context);
+      case 0x39 -> helper.fetchAbsoluteY(context);
+      case 0x3d -> helper.fetchAbsoluteX(context);
+      default -> throw new UnknownOpcodeException(opcode);
+    };
   }
 
-  @Override
-  public Argument getArgument() {
-    return address;
+  private void and(NesCpuCycleContext context, UInt8 data) {
+    NesAlu.Result result = NesAlu.and(context.registers().a, data);
+    context.registers().a = result.output();
+    context.registers().p.n = result.n();
+    context.registers().p.z = result.z();
   }
 }

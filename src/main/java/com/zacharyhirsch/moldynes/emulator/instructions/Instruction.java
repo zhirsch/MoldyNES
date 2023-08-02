@@ -1,54 +1,17 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.HaltException;
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
 import java.util.function.Supplier;
 
 public abstract class Instruction {
 
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {}
+  public abstract Result execute(NesCpuCycleContext context);
 
-  public Result execute2(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    try {
-      execute(memory, stack, regs);
-      return new Result(
-          1,
-          false,
-          () -> {
-            throw new RuntimeException();
-          },
-          this::toString);
-    } catch (HaltException ignored) {
-      return new Result(
-          1,
-          true,
-          () -> {
-            throw new RuntimeException();
-          },
-          this::toString);
+  public record Result(boolean halt, Supplier<UInt8[]> bytes, Supplier<String> text) {
+
+    public Result(Supplier<UInt8[]> bytes, Supplier<String> text) {
+      this(false, bytes, text);
     }
   }
-
-  @Override
-  public String toString() {
-    Argument argument = getArgument();
-    if (argument == null) {
-      return getClass().getSimpleName().toUpperCase();
-    }
-    return getClass().getSimpleName().toUpperCase() + " " + argument;
-  }
-
-  public Argument getArgument() {
-    return null;
-  }
-
-  public interface Argument {
-
-    UInt8[] bytes();
-  }
-
-  public record Result(int cycles, boolean halt, Supplier<UInt8[]> bytes, Supplier<String> text) {}
 }

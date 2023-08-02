@@ -1,25 +1,24 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public class Pha extends Instruction {
 
-  private final Implicit implicit;
+  private final UInt8 opcode;
 
-  public Pha(Implicit implicit) {
-    this.implicit = implicit;
+  public Pha(UInt8 opcode) {
+    this.opcode = opcode;
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.pushByte(regs.a);
-  }
+  public Result execute(NesCpuCycleContext context) {
+    // Cycle 2
+    UInt8 ignored = context.fetch(context.registers().pc.address());
 
-  @Override
-  public Argument getArgument() {
-    return implicit;
+    // Cycle 3
+    context.store(context.registers().sp.getAddressAndDecrement(), context.registers().a);
+
+    return new Result(() -> new UInt8[] {opcode}, () -> "PHA");
   }
 }

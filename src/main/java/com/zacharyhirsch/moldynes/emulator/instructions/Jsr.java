@@ -1,6 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.*;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
+import com.zacharyhirsch.moldynes.emulator.UInt16;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public final class Jsr extends Instruction {
 
@@ -11,30 +13,28 @@ public final class Jsr extends Instruction {
   }
 
   @Override
-  public Result execute2(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
+  public Result execute(NesCpuCycleContext context) {
     // Cycle 2
-    UInt8 adl = memory.fetch(regs.pc.address());
-    regs.pc.inc();
+    UInt8 adl = context.fetch(context.registers().pc.getAddressAndIncrement());
 
-    // Cycle 3 -- Do Nothing
+    // Cycle 3
+    UInt8 ignored = context.fetch(context.registers().sp.address());
 
     // Cycle 4
-    stack.pushByte(regs.pc.address().msb());
+    context.store(
+        context.registers().sp.getAddressAndDecrement(), context.registers().pc.address().msb());
 
     // Cycle 5
-    stack.pushByte(regs.pc.address().lsb());
+    context.store(
+        context.registers().sp.getAddressAndDecrement(), context.registers().pc.address().lsb());
 
     // Cycle 6
-    UInt8 adh = memory.fetch(regs.pc.address());
-    regs.pc.inc();
+    UInt8 adh = context.fetch(context.registers().pc.getAddressAndIncrement());
 
     // Cycle 7
-    regs.pc.set(new UInt16(adh, adl));
+    context.registers().pc.set(new UInt16(adh, adl));
 
     return new Result(
-        6,
-        false,
-        () -> new UInt8[] {opcode, adl, adh},
-        () -> String.format("JSR $%s", new UInt16(adh, adl)));
+        () -> new UInt8[] {opcode, adl, adh}, () -> String.format("JSR $%s", new UInt16(adh, adl)));
   }
 }

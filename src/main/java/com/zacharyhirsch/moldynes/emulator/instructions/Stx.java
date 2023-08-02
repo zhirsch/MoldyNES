@@ -1,31 +1,25 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public class Stx extends Instruction {
 
   private final UInt8 opcode;
-  private final InstructionHelper helper;
+  private final StoreInstructionHelper helper;
 
   public Stx(UInt8 opcode) {
     this.opcode = opcode;
-    this.helper = new InstructionHelper("STX", opcode, this::stx);
+    this.helper = new StoreInstructionHelper("STX", opcode);
   }
 
   @Override
-  public Result execute2(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
+  public Result execute(NesCpuCycleContext context) {
     return switch (Byte.toUnsignedInt(opcode.value())) {
-      case 0x86 -> helper.executeZeropage(memory, stack, regs);
-      case 0x8e -> helper.executeAbsolute(memory, stack, regs);
-      case 0x96 -> helper.executeZeropageY(memory, stack, regs);
+      case 0x86 -> helper.storeZeropage(context, () -> context.registers().x);
+      case 0x8e -> helper.storeAbsolute(context, () -> context.registers().x);
+      case 0x96 -> helper.storeZeropageY(context, () -> context.registers().x);
       default -> throw new UnknownOpcodeException(opcode);
     };
-  }
-
-  private void stx(NesCpuMemory memory, NesCpuStack stack, Registers regs, UInt8 data) {
-    memory.store(data, regs.x);
   }
 }
