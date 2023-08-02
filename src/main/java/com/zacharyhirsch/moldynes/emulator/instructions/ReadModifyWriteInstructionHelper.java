@@ -25,14 +25,14 @@ final class ReadModifyWriteInstructionHelper {
     UInt8 adl = context.fetch(context.registers().pc.getAddressAndIncrement());
 
     // Cycle 3
-    UInt8 ignored = context.fetch(adl);
+    UInt8 ignored = context.fetch(new UInt16(UInt8.cast(0x00), adl));
 
     // Cycle 4
-    UInt8 data = context.fetch(adl);
+    UInt8 data = context.fetch(new UInt16(UInt8.cast(0x00), adl));
 
     // Cycle 5
     UInt8 result = impl.apply(context, data);
-    context.store(adl, result);
+    context.store(new UInt16(UInt8.cast(0x00), adl), result);
 
     return new Result(
         () -> new UInt8[] {opcode, adl}, () -> String.format("%s $%s = %s", name, adl, data));
@@ -74,17 +74,17 @@ final class ReadModifyWriteInstructionHelper {
 
     // Cycle 3
     UInt8 adl = NesAlu.add(bal, context.registers().x).output();
-    UInt8 ignored1 = context.fetch(bal);
+    UInt8 ignored1 = context.fetch(new UInt16(UInt8.cast(0x00), bal));
 
     // Cycle 4
-    UInt8 data = context.fetch(adl);
+    UInt8 data = context.fetch(new UInt16(UInt8.cast(0x00), adl));
 
     // Cycle 5
     UInt8 result = impl.apply(context, data);
-    UInt8 ignored2 = context.fetch(adl);
+    UInt8 ignored2 = context.fetch(new UInt16(UInt8.cast(0x00), adl));
 
     // Cycle 6
-    context.store(adl, result);
+    context.store(new UInt16(UInt8.cast(0x00), adl), result);
 
     return new Result(
         () -> new UInt8[] {opcode, bal},
@@ -136,14 +136,14 @@ final class ReadModifyWriteInstructionHelper {
 
     // Cycle 3
     UInt8 balX = NesAlu.add(bal, context.registers().x).output();
-    UInt8 ignored = context.fetch(bal);
+    UInt8 ignored = context.fetch(new UInt16(UInt8.cast(0x00), bal));
 
     // Cycle 4
     UInt8 balX1 = NesAlu.add(balX, UInt8.cast(1)).output();
-    UInt8 adl = context.fetch(balX);
+    UInt8 adl = context.fetch(new UInt16(UInt8.cast(0x00), balX));
 
     // Cycle 5
-    UInt8 adh = context.fetch(balX1);
+    UInt8 adh = context.fetch(new UInt16(UInt8.cast(0x00), balX1));
 
     // Cycle 6
     UInt8 data = context.fetch(new UInt16(adh, adl));
@@ -168,13 +168,13 @@ final class ReadModifyWriteInstructionHelper {
 
     // Cycle 3
     UInt8 ial1 = NesAlu.add(ial, UInt8.cast(1)).output();
-    UInt8 bal = context.fetch(ial);
+    UInt8 bal = context.fetch(new UInt16(UInt8.cast(0x00), ial));
 
     // Cycle 4
     NesAlu.Result offset = NesAlu.add(bal, context.registers().y);
     UInt8 adl = offset.output();
     boolean pageCrossed = offset.c();
-    UInt8 bah = context.fetch(ial1);
+    UInt8 bah = context.fetch(new UInt16(UInt8.cast(0x00), ial1));
 
     UInt8 adh;
     if (pageCrossed) {

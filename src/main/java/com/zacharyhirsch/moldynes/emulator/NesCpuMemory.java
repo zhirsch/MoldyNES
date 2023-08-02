@@ -55,41 +55,11 @@ public final class NesCpuMemory {
   }
 
   public UInt8 fetch(UInt16 address) {
-    return getRegion(address).fetchByte(address);
-  }
-
-  public UInt8 fetch(UInt16 base, UInt8 index) {
-    UInt16 address = addIndex(base, index);
-    return getRegion(address).fetchByte(address);
-  }
-
-  public UInt8 fetch(UInt8 zeropage) {
-    UInt16 address = new UInt16(UInt8.cast(0x00), zeropage);
-    return getRegion(address).fetchByte(address);
-  }
-
-  public UInt8 fetch(UInt8 zeropage, UInt8 index) {
-    UInt16 address = addIndex(zeropage, index);
-    return getRegion(address).fetchByte(address);
+    return getRegion(address).fetch(address);
   }
 
   public void store(UInt16 address, UInt8 value) {
-    getRegion(address).storeByte(address, value);
-  }
-
-  public void store(UInt16 base, UInt8 index, UInt8 value) {
-    UInt16 address = addIndex(base, index);
-    getRegion(address).storeByte(address, value);
-  }
-
-  public void store(UInt8 zeropage, UInt8 value) {
-    UInt16 address = new UInt16(UInt8.cast(0x00), zeropage);
-    getRegion(address).storeByte(address, value);
-  }
-
-  public void store(UInt8 zeropage, UInt8 index, UInt8 value) {
-    UInt16 address = addIndex(zeropage, index);
-    getRegion(address).storeByte(address, value);
+    getRegion(address).store(address, value);
   }
 
   private Region getRegion(UInt16 address) {
@@ -97,33 +67,23 @@ public final class NesCpuMemory {
     return Objects.requireNonNull(regions.get(key), address::toString);
   }
 
-  private static UInt16 addIndex(UInt16 base, UInt8 index) {
-    return UInt16.cast(Short.toUnsignedInt(base.value()) + Byte.toUnsignedInt(index.value()));
-  }
-
-  private static UInt16 addIndex(UInt8 zeropage, UInt8 index) {
-    return new UInt16(
-        UInt8.cast(0x00), UInt8.cast(Byte.toUnsignedInt(zeropage.value()) + Byte.toUnsignedInt(index.value()))
-    );
-  }
-
   private interface Region {
 
-    UInt8 fetchByte(UInt16 address);
+    UInt8 fetch(UInt16 address);
 
-    void storeByte(UInt16 address, UInt8 value);
+    void store(UInt16 address, UInt8 value);
   }
 
   private record BytesRegion(UInt16 base, ByteBuffer ram) implements Region {
 
     @Override
-    public UInt8 fetchByte(UInt16 address) {
+    public UInt8 fetch(UInt16 address) {
       int index = Short.toUnsignedInt(address.value()) - Short.toUnsignedInt(base.value());
       return UInt8.cast(ram.get(index));
     }
 
     @Override
-    public void storeByte(UInt16 address, UInt8 value) {
+    public void store(UInt16 address, UInt8 value) {
       int index = Short.toUnsignedInt(address.value()) - Short.toUnsignedInt(base.value());
       ram.put(index, value.value());
     }
@@ -132,12 +92,12 @@ public final class NesCpuMemory {
   private record RegistersRegion(NesDevice device) implements Region {
 
     @Override
-    public UInt8 fetchByte(UInt16 address) {
+    public UInt8 fetch(UInt16 address) {
       return device.readRegister(address);
     }
 
     @Override
-    public void storeByte(UInt16 address, UInt8 value) {
+    public void store(UInt16 address, UInt8 value) {
       device.writeRegister(address, value);
     }
   }

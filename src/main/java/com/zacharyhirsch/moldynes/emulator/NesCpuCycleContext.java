@@ -13,19 +13,9 @@ public final class NesCpuCycleContext {
     this.cycles = 0;
   }
 
-  public UInt8 fetch(UInt8 zeropage) {
-    cycles++;
-    return memory.fetch(zeropage);
-  }
-
   public UInt8 fetch(UInt16 address) {
     cycles++;
     return memory.fetch(address);
-  }
-
-  public void store(UInt8 address, UInt8 value) {
-    cycles++;
-    memory.store(address, value);
   }
 
   public void store(UInt16 address, UInt8 value) {

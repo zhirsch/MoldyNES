@@ -22,10 +22,11 @@ final class StoreInstructionHelper {
     UInt8 adl = context.fetch(context.registers().pc.getAddressAndIncrement());
 
     // *** FOR DEBUGGING ONLY ***
-    UInt8 oldValue = context.memory().fetch(adl);
+    UInt8 oldValue = context.memory().fetch(new UInt16(UInt8.cast(0x00), adl));
 
     // Cycle 3
-    context.store(adl, valueSupplier.get());
+    UInt8 value = valueSupplier.get();
+    context.store(new UInt16(UInt8.cast(0x00), adl), value);
 
     return new Result(
         () -> new UInt8[] {opcode, adl}, () -> String.format("%s $%s = %s", name, adl, oldValue));
@@ -64,13 +65,14 @@ final class StoreInstructionHelper {
 
     // Cycle 3
     UInt8 adl = NesAlu.add(bal, index).output();
-    UInt8 ignored = context.fetch(bal);
+    UInt8 ignored = context.fetch(new UInt16(UInt8.cast(0x00), bal));
 
     // *** FOR DEBUGGING ONLY ***
-    UInt8 oldValue = context.memory().fetch(adl);
+    UInt8 oldValue = context.memory().fetch(new UInt16(UInt8.cast(0x00), adl));
 
     // Cycle 4
-    context.store(adl, valueSupplier.get());
+    UInt8 value = valueSupplier.get();
+    context.store(new UInt16(UInt8.cast(0x00), adl), value);
 
     return new Result(
         () -> new UInt8[] {opcode, bal},
@@ -119,14 +121,14 @@ final class StoreInstructionHelper {
 
     // Cycle 3
     UInt8 balX = NesAlu.add(bal, context.registers().x).output();
-    UInt8 ignored1 = context.fetch(bal);
+    UInt8 ignored1 = context.fetch(new UInt16(UInt8.cast(0x00), bal));
 
     // Cycle 4
     UInt8 balX1 = NesAlu.add(balX, UInt8.cast(1)).output();
-    UInt8 adl = context.fetch(balX);
+    UInt8 adl = context.fetch(new UInt16(UInt8.cast(0x00), balX));
 
     // Cycle 5
-    UInt8 adh = context.fetch(balX1);
+    UInt8 adh = context.fetch(new UInt16(UInt8.cast(0x00), balX1));
 
     // *** FOR DEBUGGING ONLY ***
     UInt8 oldValue = context.memory().fetch(new UInt16(adh, adl));
@@ -147,11 +149,11 @@ final class StoreInstructionHelper {
 
     // Cycle 3
     UInt8 ial1 = NesAlu.add(ial, UInt8.cast(1)).output();
-    UInt8 bal = context.fetch(ial);
+    UInt8 bal = context.fetch(new UInt16(UInt8.cast(0x00), ial));
 
     // Cycle 4
     UInt8 adl = NesAlu.add(bal, context.registers().y).output();
-    UInt8 adh = context.fetch(ial1);
+    UInt8 adh = context.fetch(new UInt16(UInt8.cast(0x00), ial1));
 
     // Cycle 5
     UInt8 ignored = context.fetch(new UInt16(adh, adl));
