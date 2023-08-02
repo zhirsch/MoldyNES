@@ -13,20 +13,18 @@ public final class ProgramCounter {
     return pc.toString();
   }
 
+  public UInt16 getAddressAndIncrement() {
+    UInt16 address = pc;
+    pc = UInt16.cast(Short.toUnsignedInt(pc.value()) + 1);
+    return address;
+  }
+
   public UInt16 address() {
     return pc;
   }
 
-  public void set(UInt16 pc) {
-    this.pc = pc;
-  }
-
-  public void inc() {
-    pc = UInt16.cast(Short.toUnsignedInt(pc.value()) + 1);
-  }
-
-  public void dec() {
-    pc = UInt16.cast(Short.toUnsignedInt(pc.value()) - 1);
+  public void set(UInt16 address) {
+    this.pc = address;
   }
 
   public ProgramCounter copy() {

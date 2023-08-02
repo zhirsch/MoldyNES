@@ -1,30 +1,44 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.*;
-import com.zacharyhirsch.moldynes.emulator.memory.ImmediateByte;
-import com.zacharyhirsch.moldynes.emulator.memory.IndirectAddress;
 
 public class Brk extends Instruction {
 
-  private static final UInt16 NMI_VECTOR = UInt16.cast(0xfffe);
+  private static final UInt16 NMI_VECTOR_LSB_ADDRESS = UInt16.cast(0xfffe);
+  private static final UInt16 NMI_VECTOR_MSB_ADDRESS = UInt16.cast(0xffff);
 
-  private final ImmediateByte ignore;
+  private final UInt8 opcode;
 
-  public Brk(ImmediateByte ignore) {
-    this.ignore = ignore;
+  public Brk(UInt8 opcode) {
+    this.opcode = opcode;
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    stack.pushByte(regs.pc.address().msb());
-    stack.pushByte(regs.pc.address().lsb());
-    stack.pushByte(regs.p.toByte());
-    regs.p.i = true;
-    regs.pc.set(new IndirectAddress(memory, NMI_VECTOR).fetch());
-  }
+  public Result execute(NesCpuCycleContext context) {
+    // Cycle 2
+    UInt8 ignored = context.fetch(context.registers().pc.getAddressAndIncrement());
 
-  @Override
-  public Argument getArgument() {
-    return ignore;
+    // Cycle 3
+    context.store(
+        context.registers().sp.getAddressAndDecrement(), context.registers().pc.address().msb());
+
+    // Cycle 4
+    context.store(
+        context.registers().sp.getAddressAndDecrement(), context.registers().pc.address().lsb());
+
+    // Cycle 5
+    context.store(context.registers().sp.getAddressAndDecrement(), context.registers().p.toByte());
+
+    // Cycle 6
+    UInt8 adl = context.fetch(NMI_VECTOR_LSB_ADDRESS);
+
+    // Cycle 7
+    UInt8 adh = context.fetch(NMI_VECTOR_MSB_ADDRESS);
+
+    // Partial cycle...
+    context.registers().pc.set(new UInt16(adh, adl));
+
+    return new Result(
+        () -> new UInt8[] {opcode, ignored}, () -> String.format("BRK #$%s", ignored));
   }
 }

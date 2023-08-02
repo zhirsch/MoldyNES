@@ -1,25 +1,27 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
 public class Plp extends Instruction {
 
-  private final Implicit implicit;
+  private final UInt8 opcode;
 
-  public Plp(Implicit implicit) {
-        this.implicit = implicit;
+  public Plp(UInt8 opcode) {
+    this.opcode = opcode;
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.p.fromByte(stack.pullByte());
-  }
-  @Override
-  public Argument getArgument() {
-    return implicit;
-  }
+  public Result execute(NesCpuCycleContext context) {
+    // Cycle 2
+    UInt8 ignored1 = context.fetch(context.registers().pc.address());
 
+    // Cycle 3
+    UInt8 ignored2 = context.fetch(context.registers().sp.address());
+
+    // Cycle 4
+    context.registers().p.fromByte(context.fetch(context.registers().sp.incrementAndGetAddress()));
+
+    return new Result(() -> new UInt8[] {opcode}, () -> "PLP");
+  }
 }

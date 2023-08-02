@@ -1,25 +1,10 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
-import com.zacharyhirsch.moldynes.emulator.memory.Implicit;
+import com.zacharyhirsch.moldynes.emulator.UInt8;
 
-public class Cld extends Instruction {
+public class Cld extends PToggleInstruction {
 
-  private final Implicit implicit;
-
-  public Cld(Implicit implicit) {
-    this.implicit = implicit;
-  }
-
-  @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    regs.p.d = false;
-  }
-
-  @Override
-  public Argument getArgument() {
-    return implicit;
+  public Cld(UInt8 opcode) {
+    super(opcode, p -> p.d = false);
   }
 }

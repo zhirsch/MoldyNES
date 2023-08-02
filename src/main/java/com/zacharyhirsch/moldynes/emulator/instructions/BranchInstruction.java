@@ -1,9 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.NesAlu;
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
 import com.zacharyhirsch.moldynes.emulator.StatusRegister;
 import com.zacharyhirsch.moldynes.emulator.UInt16;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
@@ -22,53 +20,33 @@ public abstract class BranchInstruction extends Instruction {
   }
 
   @Override
-  public Result execute2(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    // Cycle 2
-    UInt8 offset = memory.fetch(regs.pc.address());
-    regs.pc.inc();
+  public Result execute(NesCpuCycleContext context) {
+    UInt8 offset = context.fetch(context.registers().pc.getAddressAndIncrement());
 
-    if (!predicate.test(regs.p)) {
-      // Cycle 3 -- Branch Not Taken
+    if (!predicate.test(context.registers().p)) {
+      UInt16 pc = context.registers().pc.address();
       return new Result(
-          2,
-          false,
           () -> new UInt8[] {opcode, offset},
-          () ->
-              String.format(
-                  "%s $%s",
-                  name,
-                  UInt16.cast(Short.toUnsignedInt(regs.pc.address().value()) + offset.value())));
+          () -> String.format("%s $%s", name, UInt16.cast(Short.toUnsignedInt(pc.value()) + offset.value())));
     }
 
-    // Cycle 3 -- Branch Taken
-    NesAlu.Result adlResult = NesAlu.add(regs.pc.address().lsb(), offset);
+    NesAlu.Result adlResult = NesAlu.add(context.registers().pc.address().lsb(), offset);
     UInt8 pcl = adlResult.output();
-    UInt8 ignored = memory.fetch(regs.pc.address());
-    regs.pc.inc();
+    UInt8 ignored = context.fetch(context.registers().pc.getAddressAndIncrement());
 
+    UInt8 adh = context.registers().pc.getAddressAndIncrement().msb();
+    UInt8 pch;
     if ((offset.value() > 0 && adlResult.c()) || (offset.value() < 0 && !adlResult.c())) {
-      // Cycle 4 -- Page Crossed
-      UInt8 pch =
-          offset.value() > 0
-              ? NesAlu.add(regs.pc.address().msb(), UInt8.cast(1)).output()
-              : NesAlu.sub(regs.pc.address().msb(), UInt8.cast(1)).output();
-      UInt8 ignored2 = memory.fetch(new UInt16(regs.pc.address().msb(), pcl));
-      regs.pc.inc();
-
-      // Cycle 5
-      regs.pc.set(new UInt16(pch, pcl));
-
-      return new Result(
-          4,
-          false,
-          () -> new UInt8[] {opcode, offset},
-          () -> String.format("%s $%s", name, regs.pc));
+      pch = NesAlu.add(adh, offset.signum()).output();
+      UInt8 ignored2 = context.fetch(new UInt16(adh, pcl));
+    } else {
+      pch = adh;
     }
 
-    // Cycle 4 -- Same Page
-    regs.pc.set(new UInt16(regs.pc.address().msb(), pcl));
+    context.registers().pc.set(new UInt16(pch, pcl));
 
     return new Result(
-        3, false, () -> new UInt8[] {opcode, offset}, () -> String.format("%s $%s", name, regs.pc));
+        () -> new UInt8[] {opcode, offset},
+        () -> String.format("%s $%s", name, new UInt16(pch, pcl)));
   }
 }

@@ -1,30 +1,33 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.NesAlu;
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
-import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public class Cpy extends Instruction {
+public final class Cpy extends Instruction {
 
-  private final ReadableAddress<UInt8> address;
+  private final UInt8 opcode;
+  private final FetchInstructionHelper helper;
 
-  public Cpy(ReadableAddress<UInt8> address) {
-        this.address = address;
+  public Cpy(UInt8 opcode) {
+    this.opcode = opcode;
+    this.helper = new FetchInstructionHelper("CPY", opcode, this::cpy);
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.sub(regs.y, address.fetch());
-    regs.p.n = result.n();
-    regs.p.z = result.z();
-    regs.p.c = result.c();
-  }
-  @Override
-  public Argument getArgument() {
-    return address;
+  public Result execute(NesCpuCycleContext context) {
+    return switch (Byte.toUnsignedInt(opcode.value())) {
+      case 0xc0 -> helper.fetchImmediate(context);
+      case 0xc4 -> helper.fetchZeropage(context);
+      case 0xcc -> helper.fetchAbsolute(context);
+      default -> throw new UnknownOpcodeException(opcode);
+    };
   }
 
+  private void cpy(NesCpuCycleContext context, UInt8 data) {
+    NesAlu.Result result = NesAlu.sub(context.registers().y, data);
+    context.registers().p.n = result.n();
+    context.registers().p.z = result.z();
+    context.registers().p.c = result.c();
+  }
 }

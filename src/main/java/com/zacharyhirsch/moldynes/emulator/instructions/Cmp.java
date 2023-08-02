@@ -1,30 +1,38 @@
 package com.zacharyhirsch.moldynes.emulator.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.NesAlu;
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemory;
-import com.zacharyhirsch.moldynes.emulator.NesCpuStack;
-import com.zacharyhirsch.moldynes.emulator.Registers;
+import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
-import com.zacharyhirsch.moldynes.emulator.memory.ReadableAddress;
 
-public class Cmp extends Instruction {
+public final class Cmp extends Instruction {
 
-  private final ReadableAddress<UInt8> address;
+  private final UInt8 opcode;
+  private final FetchInstructionHelper helper;
 
-  public Cmp(ReadableAddress<UInt8> address) {
-        this.address = address;
+  public Cmp(UInt8 opcode) {
+    this.opcode = opcode;
+    this.helper = new FetchInstructionHelper("CMP", opcode, this::cmp);
   }
 
   @Override
-  public void execute(NesCpuMemory memory, NesCpuStack stack, Registers regs) {
-    NesAlu.Result result = NesAlu.sub(regs.a, address.fetch());
-    regs.p.n = result.n();
-    regs.p.z = result.z();
-    regs.p.c = result.c();
+  public Result execute(NesCpuCycleContext context) {
+    return switch (Byte.toUnsignedInt(opcode.value())) {
+      case 0xc1 -> helper.fetchIndirectX(context);
+      case 0xc5 -> helper.fetchZeropage(context);
+      case 0xc9 -> helper.fetchImmediate(context);
+      case 0xcd -> helper.fetchAbsolute(context);
+      case 0xd1 -> helper.fetchIndirectY(context);
+      case 0xd5 -> helper.fetchZeropageX(context);
+      case 0xd9 -> helper.fetchAbsoluteY(context);
+      case 0xdd -> helper.fetchAbsoluteX(context);
+      default -> throw new UnknownOpcodeException(opcode);
+    };
   }
 
-  @Override
-  public Argument getArgument() {
-    return address;
+  private void cmp(NesCpuCycleContext context, UInt8 data) {
+    NesAlu.Result result = NesAlu.sub(context.registers().a, data);
+    context.registers().p.n = result.n();
+    context.registers().p.z = result.z();
+    context.registers().p.c = result.c();
   }
 }

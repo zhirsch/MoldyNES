@@ -1,8 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator;
 
-public class InfiniteLoopException extends RuntimeException {
+public class InfiniteLoopException extends EmulatorCrashedException {
 
-  public InfiniteLoopException(Registers regs) {
-    super("infinite loop @ pc = " + regs.pc + "\n" + regs);
+  public InfiniteLoopException(NesCpuRegisters regs) {
+    super("infinite loop", regs);
   }
 }
