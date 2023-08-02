@@ -30,7 +30,7 @@ final class FetchInstructionHelper {
   Result fetchZeropage(NesCpuCycleContext context) {
     UInt8 adl = context.fetch(context.registers().pc.getAddressAndIncrement());
 
-    UInt8 data = context.fetch(adl);
+    UInt8 data = context.fetch(new UInt16(UInt8.cast(0x00), adl));
 
     impl.accept(context, data);
 
@@ -64,9 +64,9 @@ final class FetchInstructionHelper {
     UInt8 bal = context.fetch(context.registers().pc.getAddressAndIncrement());
 
     UInt8 adl = NesAlu.add(bal, index).output();
-    UInt8 ignored = context.fetch(bal);
+    UInt8 ignored = context.fetch(new UInt16(UInt8.cast(0x00), bal));
 
-    UInt8 data = context.fetch(adl);
+    UInt8 data = context.fetch(new UInt16(UInt8.cast(0x00), adl));
 
     impl.accept(context, data);
 
@@ -115,12 +115,12 @@ final class FetchInstructionHelper {
     UInt8 bal = context.fetch(context.registers().pc.getAddressAndIncrement());
 
     UInt8 balX = NesAlu.add(bal, context.registers().x).output();
-    UInt8 ignored = context.fetch(bal);
+    UInt8 ignored = context.fetch(new UInt16(UInt8.cast(0x00), bal));
 
     UInt8 balX1 = NesAlu.add(balX, UInt8.cast(1)).output();
-    UInt8 adl = context.fetch(balX);
+    UInt8 adl = context.fetch(new UInt16(UInt8.cast(0x00), balX));
 
-    UInt8 adh = context.fetch(balX1);
+    UInt8 adh = context.fetch(new UInt16(UInt8.cast(0x00), balX1));
 
     UInt8 data = context.fetch(new UInt16(adh, adl));
 
@@ -139,13 +139,13 @@ final class FetchInstructionHelper {
 
     // Cycle 3
     UInt8 ial1 = NesAlu.add(ial, UInt8.cast(1)).output();
-    UInt8 bal = context.fetch(ial);
+    UInt8 bal = context.fetch(new UInt16(UInt8.cast(0x00), ial));
 
     // Cycle 4
     NesAlu.Result offset = NesAlu.add(bal, context.registers().y);
     UInt8 adl = offset.output();
     boolean pageCrossed = offset.c();
-    UInt8 bah = context.fetch(ial1);
+    UInt8 bah = context.fetch(new UInt16(UInt8.cast(0x00), ial1));
 
     UInt8 adh;
     if (pageCrossed) {

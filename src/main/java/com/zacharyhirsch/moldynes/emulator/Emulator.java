@@ -1,7 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator;
 
 import com.zacharyhirsch.moldynes.emulator.instructions.Decoder;
-import com.zacharyhirsch.moldynes.emulator.instructions.Decoder.Decoded;
 import com.zacharyhirsch.moldynes.emulator.instructions.Instruction;
 import com.zacharyhirsch.moldynes.emulator.instructions.Instruction.Result;
 import com.zacharyhirsch.moldynes.emulator.instructions.Undocumented;
@@ -27,9 +26,9 @@ final class Emulator {
       NesCpuRegisters pre = regs.copy();
       NesCpuCycleContext context = new NesCpuCycleContext(memory, regs);
       try {
-        Decoded decoded = decoder.next(context);
-        Result result = decoded.instruction().execute(context);
-        log(cycle, pre, decoded, result);
+        Instruction instruction = decoder.next(context);
+        Result result = instruction.execute(context);
+        log(cycle, pre, instruction, result);
         if (result.halt()) {
           break;
         }
@@ -37,21 +36,18 @@ final class Emulator {
         throw new EmulatorCrashedException(regs, exc);
       }
       cycle += context.cycles();
-      if (regs.pc.address().equals(pre.pc.address())) {
-        throw new InfiniteLoopException(regs);
-      }
     }
   }
 
-  private void log(int cycle, NesCpuRegisters pre, Decoded decoded, Instruction.Result result) {
+  private void log(int cycle, NesCpuRegisters pre, Instruction instruction, Result result) {
     if (!DEBUG) {
       return;
     }
     System.out.printf(
-        "%s  %-8s %1s%-30s  %s PPU:  0,  0 CYC:%d\n",
+        "%s  %-8s %s%-30s  %s PPU:  0,  0 CYC:%d\n",
         pre.pc,
         Arrays.stream(result.bytes().get()).map(UInt8::toString).collect(Collectors.joining(" ")),
-        decoded.instruction() instanceof Undocumented ? "*" : "",
+        instruction instanceof Undocumented ? "*" : " ",
         result.text().get(),
         pre,
         cycle);

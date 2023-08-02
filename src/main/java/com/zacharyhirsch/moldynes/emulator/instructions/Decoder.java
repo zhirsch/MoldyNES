@@ -7,14 +7,12 @@ public class Decoder {
 
   public Decoder() {}
 
-  public record Decoded(UInt8 opcode, Instruction instruction) {}
-
-  public Decoded next(NesCpuCycleContext context) {
+  public Instruction next(NesCpuCycleContext context) {
     UInt8 opcode = context.fetch(context.registers().pc.getAddressAndIncrement());
-    return new Decoded(opcode, decodeInstruction(context, opcode));
+    return decodeInstruction(opcode);
   }
 
-  private Instruction decodeInstruction(NesCpuCycleContext context, UInt8 opcode) {
+  private Instruction decodeInstruction(UInt8 opcode) {
     return switch (Byte.toUnsignedInt(opcode.value())) {
       case 0x00 -> new Brk(opcode);
 
