@@ -16,12 +16,4 @@ public record UInt16(short value) {
   public String toString() {
     return String.format("%04x", value());
   }
-
-  public UInt8 lsb() {
-    return UInt8.cast(value());
-  }
-
-  public UInt8 msb() {
-    return UInt8.cast(value() >>> 8);
-  }
 }

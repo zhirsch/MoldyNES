@@ -2,6 +2,7 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 public class EmulatorNesFileTests {
 
-  private NesCpuMemory load(String path) throws IOException {
+  private NesCpuMemoryMap load(String path) throws IOException {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(path)) {
       if (is == null) {
         throw new RuntimeException("image " + path + " does not exist");
@@ -38,19 +39,21 @@ public class EmulatorNesFileTests {
     return new String(header, 0, 4).equals("NES\u001a");
   }
 
-  private NesCpuMemory parseNes1Format(byte[] header, ByteBuffer buffer) {
+  private NesCpuMemoryMap parseNes1Format(byte[] header, ByteBuffer buffer) {
     byte mapper = (byte) ((header[7] & 0b1111_0000) | ((header[6] & 0b1111_0000) >>> 4));
-    return NesCpuMemoryMap.get(mapper).load(header, buffer);
+    return NesCpuMemoryMapFactory.get(mapper).load(header, buffer);
   }
 
   // https://www.qmtpro.com/~nes/misc/nestest.txt
   @Test
   void functionalTest() throws IOException {
-    NesCpuMemory memory = load("nestest.nes");
-    Emulator emulator = new Emulator(memory, new ProgramCounter(UInt16.cast(0xc000)));
+    NesCpuMemoryMap memory = load("nestest.nes");
+    NesCpuState state = new NesCpuState();
+    state.pc = (short) 0xc000;
+    Emulator emulator = new Emulator(memory, state);
     emulator.run();
 
-    assertThat(memory.fetch(UInt16.cast(0x0002))).isEqualTo(UInt8.cast(0x0));
-    assertThat(memory.fetch(UInt16.cast(0x0003))).isEqualTo(UInt8.cast(0x0));
+    assertThat(memory.fetch((byte) 0x00, (byte) 0x02)).isEqualTo(0);
+    assertThat(memory.fetch((byte) 0x00, (byte) 0x03)).isEqualTo(0);
   }
 }

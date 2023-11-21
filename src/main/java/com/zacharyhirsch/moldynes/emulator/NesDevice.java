@@ -2,7 +2,7 @@ package com.zacharyhirsch.moldynes.emulator;
 
 public interface NesDevice {
 
-  UInt8 readRegister(UInt16 address);
+  byte fetch(short address);
 
-  void writeRegister(UInt16 address, UInt8 value);
+  void store(short address, byte data);
 }

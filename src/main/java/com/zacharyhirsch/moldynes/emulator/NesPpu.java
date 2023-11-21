@@ -3,10 +3,10 @@ package com.zacharyhirsch.moldynes.emulator;
 public final class NesPpu implements NesDevice {
 
   @Override
-  public UInt8 readRegister(UInt16 address) {
-    return null;
+  public byte fetch(short address) {
+    return (byte) 0xcd;
   }
 
   @Override
-  public void writeRegister(UInt16 address, UInt8 value) {}
+  public void store(short address, byte data) {}
 }
