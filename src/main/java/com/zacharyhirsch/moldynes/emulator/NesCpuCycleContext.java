@@ -1,13 +1,15 @@
 package com.zacharyhirsch.moldynes.emulator;
 
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+
 public final class NesCpuCycleContext {
 
-  private final NesCpuMemory memory;
-  private final NesCpuRegisters registers;
+  private final NesRam memory;
+  private final NesCpu registers;
 
   private int cycles;
 
-  public NesCpuCycleContext(NesCpuMemory memory, NesCpuRegisters registers) {
+  public NesCpuCycleContext(NesRam memory, NesCpu registers) {
     this.memory = memory;
     this.registers = registers;
     this.cycles = 0;
@@ -23,11 +25,11 @@ public final class NesCpuCycleContext {
     memory.store(address, value);
   }
 
-  public NesCpuMemory memory() {
+  public NesRam memory() {
     return memory;
   }
 
-  public NesCpuRegisters registers() {
+  public NesCpu registers() {
     return registers;
   }
 

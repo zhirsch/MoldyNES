@@ -1,40 +1,68 @@
 package com.zacharyhirsch.moldynes.emulator;
 
+import com.google.common.collect.ImmutableRangeMap;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeMap;
+import com.google.common.collect.TreeRangeMap;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
-public abstract class NesCpuMemoryMap {
+public class NesCpuMemoryMap {
 
-  public static NesCpuMemoryMap get(int mapper) {
-    return switch (mapper) {
-      case 0x0 -> new NromNesCpuMemoryMap();
-      default -> throw new IllegalArgumentException("mapper unimplemented: " + mapper);
-    };
+  private final ImmutableRangeMap<Integer, Region> regions;
+
+  private NesCpuMemoryMap(ImmutableRangeMap<Integer, Region> regions) {
+    this.regions = regions;
   }
 
-  public abstract NesCpuMemory load(byte[] header, ByteBuffer buffer);
+  private record Region(short base, NesDevice device) {}
 
-  // https://www.nesdev.org/wiki/NROM
-  private static final class NromNesCpuMemoryMap extends NesCpuMemoryMap {
+  public static final class Builder {
 
-    @Override
-    public NesCpuMemory load(byte[] header, ByteBuffer buffer) {
-      ByteBuffer prgRom = getPrgRom(header, buffer);
-      int chrRomSize = header[5] << 13;
-      if ((header[6] & 0b0000_0100) == 0b0000_0100) {
-        throw new IllegalArgumentException("trainer not implemented");
+    private final RangeMap<Integer, Region> regions = TreeRangeMap.create();
+
+    public Builder() {
+      // Internal memory
+      NesRam ram = new NesRam(ByteBuffer.allocateDirect(0x0800));
+      for (int off = 0x0000; off < 0x2000; off += 0x0800) {
+        put(off, 0x0800, ram);
       }
-      return new NesCpuMemory.Builder()
-          .bytes(0x8000, 0x4000, prgRom)
-          .bytes(0xc000, 0x4000, prgRom)
-          .build();
+
+      // PPU registers
+      NesPpu ppu = new NesPpu();
+      for (int off = 0x2000; off < 0x4000; off += 0x0008) {
+        put(off, 0x0008, ppu);
+      }
+
+      // APU registers
+      put(0x4000, 0x0018, new NesApu());
     }
 
-    private static ByteBuffer getPrgRom(byte[] header, ByteBuffer buffer) {
-      int prgRomSize = header[4] << 14;
-      if (prgRomSize != 0x4000) {
-        throw new IllegalArgumentException(String.format("bad prg rom size: %04x", prgRomSize));
-      }
-      return buffer.slice(16, prgRomSize).asReadOnlyBuffer();
+    public Builder put(int offset, int len, NesDevice device) {
+      Range<Integer> range = Range.closedOpen(offset, offset + len);
+      regions.put(range, new Region((short) offset, device));
+      return this;
     }
+
+    public NesCpuMemoryMap build() {
+      return new NesCpuMemoryMap(ImmutableRangeMap.copyOf(regions));
+    }
+  }
+
+  public byte fetch(byte adh, byte adl) {
+    short address = (short) ((adh << 8) | adl);
+    Region region = getRegion(address);
+    return region.device.fetch((short) (address - region.base));
+  }
+
+  public void store(byte adh, byte adl, byte data) {
+    short address = (short) ((adh << 8) | adl);
+    Region region = getRegion(address);
+    region.device.store((short) (address - region.base), data);
+  }
+
+  private Region getRegion(short address) {
+    Region region = regions.get(Short.toUnsignedInt(address));
+    return Objects.requireNonNull(region, () -> "%04x".formatted(address));
   }
 }
