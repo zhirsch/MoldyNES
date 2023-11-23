@@ -12,12 +12,12 @@ final class Emulator {
   }
 
   public void run() {
-    try {
-      for (int counter = 0; ; counter++) {
+    while (true) {
+      try {
         cpu.tick();
+      } catch (NesCpuHaltException exc) {
+        break;
       }
-    } catch (NesCpuHaltException exc) {
-      return;
     }
   }
 }

@@ -17,11 +17,11 @@ final class ImmediateDecompiler implements Decompiler {
 
   @Override
   public String decompile(byte opcode, short pc, NesCpu cpu, NesCpuMemoryMap memory) {
-    byte byte1 = fetchByte(memory, pc++);
+    byte byte1 = fetchByte(memory, pc);
     return String.format("%02X %02X    %s #$%02X", opcode, byte1, name, byte1);
   }
 
   private byte fetchByte(NesCpuMemoryMap memory, short address) {
-    return memory.fetch((byte) (address >>> 8), (byte) (address >>> 0));
+    return memory.fetch((byte) (address >>> 8), (byte) (address));
   }
 }

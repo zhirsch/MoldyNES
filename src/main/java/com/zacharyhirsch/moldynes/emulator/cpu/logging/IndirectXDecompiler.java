@@ -17,7 +17,7 @@ final class IndirectXDecompiler implements Decompiler {
 
   @Override
   public String decompile(byte opcode, short pc, NesCpu cpu, NesCpuMemoryMap memory) {
-    byte bal = fetchByte(memory, pc++);
+    byte bal = fetchByte(memory, pc);
     byte balX = (byte) (bal + cpu.state.x);
     byte adl = fetchByte(memory, (byte) 0x00, balX);
     byte adh = fetchByte(memory, (byte) 0x00, (byte) (balX + 1));
@@ -28,7 +28,7 @@ final class IndirectXDecompiler implements Decompiler {
   }
 
   private byte fetchByte(NesCpuMemoryMap memory, short address) {
-    return fetchByte(memory, (byte) (address >>> 8), (byte) (address >>> 0));
+    return fetchByte(memory, (byte) (address >>> 8), (byte) address);
   }
 
   private byte fetchByte(NesCpuMemoryMap memory, byte adh, byte adl) {
