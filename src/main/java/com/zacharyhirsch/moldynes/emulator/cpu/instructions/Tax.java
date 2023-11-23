@@ -1,26 +1,14 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.ImpliedInstruction;
 
-public class Tax extends Instruction {
-
-  private final UInt8 opcode;
-
-  public Tax(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+public final class Tax implements ImpliedInstruction {
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 ignored = context.fetch(context.registers().pc.address());
-
-    // Cycle 3
-    context.registers().x = context.registers().a;
-    context.registers().p.n = context.registers().x.bit(7) == 1;
-    context.registers().p.z = context.registers().x.isZero();
-
-    return new Result(() -> new UInt8[] {opcode}, () -> "TAX");
+  public void execute(NesCpu cpu) {
+    cpu.state.x = cpu.state.a;
+    cpu.state.pN(cpu.state.x < 0);
+    cpu.state.pZ(cpu.state.x == 0);
   }
 }

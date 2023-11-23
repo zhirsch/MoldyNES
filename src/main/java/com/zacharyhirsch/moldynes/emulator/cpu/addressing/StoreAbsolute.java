@@ -1,38 +1,39 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.addressing;
 
-import com.zacharyhirsch.moldynes.emulator.StoreFunction;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuDecode;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 
 public class StoreAbsolute implements NesCpuCycle {
 
-  private final StoreFunction storeFn;
+  private final StoreInstruction instruction;
 
-  public StoreAbsolute(StoreFunction storeFn) {
-    this.storeFn = storeFn;
+  public StoreAbsolute(StoreInstruction instruction) {
+    this.instruction = instruction;
   }
 
   @Override
-  public NesCpuCycle start(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.pc++);
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
+
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
     return this::cycle2;
   }
 
-  private NesCpuCycle cycle2(NesCpu cpu, NesCpuState state) {
-    state.hold = state.data;
-    cpu.fetch(state.pc++);
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.state.hold = cpu.state.data;
+    cpu.fetch(cpu.state.pc++);
     return this::cycle3;
   }
 
-  private NesCpuCycle cycle3(NesCpu cpu, NesCpuState state) {
-    cpu.store(state.data, state.hold, storeFn.value(state));
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.store(cpu.state.data, cpu.state.hold, instruction.execute(cpu));
     return this::cycle4;
   }
 
-  private NesCpuCycle cycle4(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.pc++);
-    return NesCpuDecode::next;
+  private NesCpuCycle cycle4(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

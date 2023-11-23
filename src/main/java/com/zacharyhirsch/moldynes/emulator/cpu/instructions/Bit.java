@@ -1,19 +1,14 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.ModifyFunction;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.FetchInstruction;
 
-public final class Bit {
+public final class Bit implements FetchInstruction {
 
-  private Bit() {}
-
-  public static final class OnFetch implements ModifyFunction {
-
-    @Override
-    public void modify(NesCpuState state) {
-      state.pN((state.data & 0b1000_0000) == 0b1000_0000);
-      state.pV((state.data & 0b0100_0000) == 0b0100_0000);
-      state.pZ((state.data & state.a) == 0);
-    }
+  @Override
+  public void execute(NesCpu cpu) {
+    cpu.state.pN((cpu.state.data & 0b1000_0000) == 0b1000_0000);
+    cpu.state.pV((cpu.state.data & 0b0100_0000) == 0b0100_0000);
+    cpu.state.pZ((cpu.state.data & cpu.state.a) == 0);
   }
 }

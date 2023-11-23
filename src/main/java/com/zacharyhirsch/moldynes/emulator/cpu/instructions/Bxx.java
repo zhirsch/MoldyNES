@@ -2,9 +2,6 @@ package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuDecode;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
-import com.zacharyhirsch.moldynes.emulator.cpu.alu.NesAluAdd;
 import java.util.function.Predicate;
 
 public abstract class Bxx implements NesCpuCycle {
@@ -16,51 +13,38 @@ public abstract class Bxx implements NesCpuCycle {
   }
 
   @Override
-  public NesCpuCycle start(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.pc++);
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
+
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
     return this::cycle2;
   }
 
-  private NesCpuCycle cycle2(NesCpu cpu, NesCpuState state) {
-    if (predicate.test(state.p)) {
-      state.alu = new NesAluAdd(state.pcl(), state.data, false);
-      cpu.fetch(state.pc++);
-      return state.data > 0 ? this::cycle3p : this::cycle3n;
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    if (!predicate.test(cpu.state.p)) {
+      cpu.fetch(cpu.state.pc++);
+      return cpu::done;
     }
-
-    cpu.fetch(state.pc++);
-    return NesCpuDecode::next;
+    return this::cycle3;
   }
 
-  private NesCpuCycle cycle3p(NesCpu cpu, NesCpuState state) {
-    cpu.jump(state.pch(), state.alu.output());
-
-    if (state.alu.c()) {
-      state.alu = new NesAluAdd(state.pch(), (byte) 1, false);
-      cpu.fetch(state.pc);
-      return this::cycle4;
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    int pcl = Byte.toUnsignedInt(cpu.state.pcl()) + cpu.state.data;
+    if (0x00 <= pcl && pcl <= 0xff) {
+      cpu.jump(cpu.state.pch(), (byte) pcl);
+      cpu.fetch(cpu.state.pc++);
+      return cpu::done;
     }
-
-    cpu.fetch(state.pc++);
-    return NesCpuDecode::next;
+    return this::cycle4;
   }
 
-  private NesCpuCycle cycle3n(NesCpu cpu, NesCpuState state) {
-    cpu.jump(state.pch(), state.alu.output());
-
-    if (!state.alu.c()) {
-      state.alu = new NesAluAdd(state.pch(), (byte) -1, false);
-      cpu.fetch(state.pc);
-      return this::cycle4;
-    }
-
-    cpu.fetch(state.pc++);
-    return NesCpuDecode::next;
-  }
-
-  private NesCpuCycle cycle4(NesCpu cpu, NesCpuState state) {
-    cpu.jump(state.alu.output(), state.pcl());
-    cpu.fetch(state.pc++);
-    return NesCpuDecode::next;
+  private NesCpuCycle cycle4(NesCpu cpu) {
+    int pcl = Byte.toUnsignedInt(cpu.state.pcl()) + cpu.state.data;
+    byte pch = (byte) (cpu.state.pch() + (pcl < 0x00 ? -1 : 1));
+    cpu.jump(pch, (byte) pcl);
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

@@ -50,13 +50,13 @@ public class NesCpuMemoryMap {
   }
 
   public byte fetch(byte adh, byte adl) {
-    short address = (short) ((adh << 8) | adl);
+    short address = (short) ((adh << 8) | Byte.toUnsignedInt(adl));
     Region region = getRegion(address);
     return region.device.fetch((short) (address - region.base));
   }
 
   public void store(byte adh, byte adl, byte data) {
-    short address = (short) ((adh << 8) | adl);
+    short address = (short) ((adh << 8) | Byte.toUnsignedInt(adl));
     Region region = getRegion(address);
     region.device.store((short) (address - region.base), data);
   }

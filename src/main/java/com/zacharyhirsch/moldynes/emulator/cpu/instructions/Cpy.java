@@ -1,29 +1,15 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.FinishFunction;
-import com.zacharyhirsch.moldynes.emulator.ModifyFunction;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
-import com.zacharyhirsch.moldynes.emulator.cpu.alu.NesAluSub;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.FetchInstruction;
 
-public final class Cpy {
+public final class Cpy implements FetchInstruction {
 
-  private Cpy() {}
-
-  public static final class OnFetch implements ModifyFunction {
-
-    @Override
-    public void modify(NesCpuState state) {
-      state.alu = new NesAluSub(state.y, state.data, false);
-    }
-  }
-
-  public static final class OnFinish implements FinishFunction {
-
-    @Override
-    public void finish(NesCpuState state) {
-      state.pN(state.alu.n());
-      state.pZ(state.alu.z());
-      state.pC(state.alu.c());
-    }
+  @Override
+  public void execute(NesCpu cpu) {
+    var result = cpu.alu.sub(cpu.state.y, cpu.state.data);
+    cpu.state.pN(result.n());
+    cpu.state.pZ(result.z());
+    cpu.state.pC(result.c());
   }
 }

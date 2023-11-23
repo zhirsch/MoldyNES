@@ -1,61 +1,49 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.addressing;
 
-import com.zacharyhirsch.moldynes.emulator.FinishFunction;
-import com.zacharyhirsch.moldynes.emulator.ModifyFunction;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuDecode;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 
 public class ReadModifyWriteAbsolute implements NesCpuCycle {
 
-  private final ModifyFunction modifyFn;
-  private final FinishFunction finishFn;
+  private final ReadModifyWriteInstruction instruction;
 
-  public ReadModifyWriteAbsolute(ModifyFunction modifyFn) {
-    this(modifyFn, state -> {});
-  }
-
-  public ReadModifyWriteAbsolute(ModifyFunction modifyFn, FinishFunction finishFn) {
-    this.modifyFn = modifyFn;
-    this.finishFn = finishFn;
+  public ReadModifyWriteAbsolute(ReadModifyWriteInstruction instruction) {
+    this.instruction = instruction;
   }
 
   @Override
-  public NesCpuCycle start(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.pc++);
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
+
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
     return this::cycle2;
   }
 
-  private NesCpuCycle cycle2(NesCpu cpu, NesCpuState state) {
-    state.hold = state.data;
-    cpu.fetch(state.pc++);
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.state.hold = cpu.state.data;
+    cpu.fetch(cpu.state.pc++);
     return this::cycle3;
   }
 
-  private NesCpuCycle cycle3(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.data, state.hold);
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.fetch(cpu.state.data, cpu.state.hold);
     return this::cycle4;
   }
 
-  private NesCpuCycle cycle4(NesCpu cpu, NesCpuState state) {
-    modifyFn.modify(state);
-    cpu.store(state.adh, state.adl, state.data);
+  private NesCpuCycle cycle4(NesCpu cpu) {
+    cpu.store(cpu.state.adh, cpu.state.adl, cpu.state.data);
     return this::cycle5;
   }
 
-  private NesCpuCycle cycle5(NesCpu cpu, NesCpuState state) {
-    cpu.store(state.adh, state.adl, state.data);
+  private NesCpuCycle cycle5(NesCpu cpu) {
+    cpu.store(cpu.state.adh, cpu.state.adl, instruction.execute(cpu, cpu.state.data));
     return this::cycle6;
   }
 
-  private NesCpuCycle cycle6(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.pc++);
-    return this::cycle7;
-  }
-
-  private NesCpuCycle cycle7(NesCpu cpu, NesCpuState state) {
-    finishFn.finish(state);
-    return NesCpuDecode.next(cpu, state);
+  private NesCpuCycle cycle6(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

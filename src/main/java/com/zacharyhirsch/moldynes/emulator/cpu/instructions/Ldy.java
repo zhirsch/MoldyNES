@@ -1,19 +1,14 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.ModifyFunction;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.FetchInstruction;
 
-public final class Ldy {
+public final class Ldy implements FetchInstruction {
 
-  private Ldy() {}
-
-  public static final class OnFetch implements ModifyFunction {
-
-    @Override
-    public void modify(NesCpuState state) {
-      state.y = state.data;
-      state.pN(state.data < 0);
-      state.pZ(state.data == 0);
-    }
+  @Override
+  public void execute(NesCpu cpu) {
+    cpu.state.y = cpu.state.data;
+    cpu.state.pN(cpu.state.data < 0);
+    cpu.state.pZ(cpu.state.data == 0);
   }
 }

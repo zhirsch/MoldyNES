@@ -1,32 +1,33 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.addressing;
 
-import com.zacharyhirsch.moldynes.emulator.StoreFunction;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuDecode;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 
 public class StoreZeropage implements NesCpuCycle {
 
-  private final StoreFunction storeFn;
+  private final StoreInstruction instruction;
 
-  public StoreZeropage(StoreFunction storeFn) {
-    this.storeFn = storeFn;
+  public StoreZeropage(StoreInstruction instruction) {
+    this.instruction = instruction;
   }
 
   @Override
-  public NesCpuCycle start(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.pc++);
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
+
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
     return this::cycle2;
   }
 
-  private NesCpuCycle cycle2(NesCpu cpu, NesCpuState state) {
-    cpu.store((byte) 0x00, state.data, storeFn.value(state));
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.store((byte) 0x00, cpu.state.data, instruction.execute(cpu));
     return this::cycle3;
   }
 
-  private NesCpuCycle cycle3(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.pc++);
-    return NesCpuDecode::next;
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

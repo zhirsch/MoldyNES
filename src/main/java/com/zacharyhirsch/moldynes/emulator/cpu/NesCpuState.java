@@ -1,6 +1,5 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
-import com.zacharyhirsch.moldynes.emulator.cpu.alu.NesAlu;
 import java.util.function.Predicate;
 
 public final class NesCpuState {
@@ -16,12 +15,13 @@ public final class NesCpuState {
   public byte a = 0;
   public byte x = 0;
   public byte y = 0;
-
   public byte p = 0b0010_0000 | STATUS_I;
-
   public byte sp = 0;
-
   public short pc;
+  public byte adh;
+  public byte adl;
+  public byte data;
+  public byte hold;
 
   public byte pch() {
     return (byte) (pc >>> 8);
@@ -30,15 +30,6 @@ public final class NesCpuState {
   public byte pcl() {
     return (byte) pc;
   }
-
-  public byte adh;
-  public byte adl;
-  public byte data;
-
-  public byte hold;
-
-  public boolean write = false;
-  public NesAlu alu = null;
 
   public void pN(boolean set) {
     p = (byte) (set ? (p | STATUS_N) : (p & (byte) ~STATUS_N));

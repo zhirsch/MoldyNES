@@ -1,28 +1,16 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.cpu.NesAlu;
-import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.FetchInstruction;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.ImpliedInstruction;
 
-public class Dey extends Instruction {
-
-  private final UInt8 opcode;
-
-  public Dey(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+public final class Dey implements ImpliedInstruction {
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 ignored = context.fetch(context.registers().pc.address());
-
-    // Cycle 3
-    NesAlu.Result result = NesAlu.dec(context.registers().y);
-    context.registers().y = result.output();
-    context.registers().p.n = result.n();
-    context.registers().p.z = result.z();
-
-    return new Result(() -> new UInt8[] {opcode}, () -> "DEY");
+  public void execute(NesCpu cpu) {
+    var result = cpu.alu.dec(cpu.state.y);
+    cpu.state.y = result.output();
+    cpu.state.pN(result.n());
+    cpu.state.pZ(result.z());
   }
 }
