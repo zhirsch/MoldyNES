@@ -36,7 +36,7 @@ public final class NesCpu {
   }
 
   public NesCpuCycle done(NesCpu cpu) {
-    return decoder.decode(this).execute(this);
+    return decoder.decode(cpu).execute(cpu);
   }
 
   public NesCpuCycle halt() {

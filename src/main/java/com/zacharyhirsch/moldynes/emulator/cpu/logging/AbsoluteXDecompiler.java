@@ -18,7 +18,7 @@ final class AbsoluteXDecompiler implements Decompiler {
   @Override
   public String decompile(byte opcode, short pc, NesCpu cpu, NesCpuMemoryMap memory) {
     byte bal = fetchByte(memory, pc++);
-    byte bah = fetchByte(memory, pc++);
+    byte bah = fetchByte(memory, pc);
     short base = (short) ((bah << 8) | Byte.toUnsignedInt(bal));
     short address = (short) (base + Byte.toUnsignedInt(cpu.state.x));
     byte value = fetchByte(memory, address);
@@ -28,7 +28,7 @@ final class AbsoluteXDecompiler implements Decompiler {
   }
 
   private byte fetchByte(NesCpuMemoryMap memory, short address) {
-    return fetchByte(memory, (byte) (address >>> 8), (byte) (address >>> 0));
+    return fetchByte(memory, (byte) (address >>> 8), (byte) address);
   }
 
   private byte fetchByte(NesCpuMemoryMap memory, byte adh, byte adl) {
