@@ -11,7 +11,7 @@ final class IndirectXDecompiler implements Decompiler {
     this(name, false);
   }
 
-  private IndirectXDecompiler(String name, boolean undocumented) {
+  IndirectXDecompiler(String name, boolean undocumented) {
     this.name = (undocumented ? "*" : " ") + name;
   }
 

@@ -11,7 +11,7 @@ final class ImpliedDecompiler implements Decompiler {
     this(name, false);
   }
 
-  private ImpliedDecompiler(String name, boolean undocumented) {
+  ImpliedDecompiler(String name, boolean undocumented) {
     this.name = (undocumented ? "*" : " ") + name;
   }
 

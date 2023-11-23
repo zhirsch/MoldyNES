@@ -3,11 +3,11 @@ package com.zacharyhirsch.moldynes.emulator.cpu.addressing;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
-public class FetchZeropageX implements NesCpuCycle {
+public class ReadModifyWriteIndirectX implements NesCpuCycle {
 
-  private final FetchInstruction instruction;
+  private final ReadModifyWriteInstruction instruction;
 
-  public FetchZeropageX(FetchInstruction instruction) {
+  public ReadModifyWriteIndirectX(ReadModifyWriteInstruction instruction) {
     this.instruction = instruction;
   }
 
@@ -32,7 +32,27 @@ public class FetchZeropageX implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    instruction.execute(cpu);
+    cpu.state.hold = cpu.state.data;
+    cpu.fetch((byte) 0x00, (byte) (cpu.state.adl + 1));
+    return this::cycle5;
+  }
+
+  private NesCpuCycle cycle5(NesCpu cpu) {
+    cpu.fetch(cpu.state.data, cpu.state.hold);
+    return this::cycle6;
+  }
+
+  private NesCpuCycle cycle6(NesCpu cpu) {
+    cpu.fetch(cpu.state.adh, cpu.state.adl);
+    return this::cycle7;
+  }
+
+  private NesCpuCycle cycle7(NesCpu cpu) {
+    cpu.store(cpu.state.adh, cpu.state.adl, instruction.execute(cpu, cpu.state.data));
+    return this::cycle8;
+  }
+
+  private NesCpuCycle cycle8(NesCpu cpu) {
     cpu.fetch(cpu.state.pc++);
     return cpu::done;
   }

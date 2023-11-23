@@ -11,7 +11,7 @@ final class ZeropageDecompiler implements Decompiler {
     this(name, false);
   }
 
-  private ZeropageDecompiler(String name, boolean undocumented) {
+  ZeropageDecompiler(String name, boolean undocumented) {
     this.name = (undocumented ? "*" : " ") + name;
   }
 

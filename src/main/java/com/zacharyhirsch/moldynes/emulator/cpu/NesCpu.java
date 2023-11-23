@@ -27,6 +27,8 @@ public final class NesCpu {
     try {
       cycle = cycle.execute(this);
       mmu.execute(this);
+    } catch (NesCpuHaltException exc) {
+      throw exc;
     } catch (Exception exc) {
       throw new NesCpuCrashedException(state, exc);
     }
@@ -37,10 +39,10 @@ public final class NesCpu {
     return decoder.decode(this).execute(this);
   }
 
-  //  public NesCpuCycle halt() {
-  //    throw new EmulatorCrashedException("halt", state);
-  //  }
-  //
+  public NesCpuCycle halt() {
+    throw new NesCpuHaltException();
+  }
+
   public void jump(byte pch, byte pcl) {
     state.pc = (short) ((pch << 8) | Byte.toUnsignedInt(pcl));
   }

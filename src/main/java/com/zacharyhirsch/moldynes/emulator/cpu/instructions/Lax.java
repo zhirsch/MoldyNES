@@ -1,16 +1,14 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-public final class Lax {
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.FetchInstruction;
 
-//  private Lax() {}
-//
-//  public static final class OnFetch implements ModifyFunction {
-//
-//    @Override
-//    public void modify(NesCpuState state) {
-//      state.a = state.x = state.data;
-//      state.pN(state.data < 0);
-//      state.pZ(state.data == 0);
-//    }
-//  }
+public final class Lax implements FetchInstruction {
+
+  @Override
+  public void execute(NesCpu cpu) {
+    cpu.state.a = cpu.state.x = cpu.state.data;
+    cpu.state.pN(cpu.state.a < 0);
+    cpu.state.pZ(cpu.state.a == 0);
+  }
 }

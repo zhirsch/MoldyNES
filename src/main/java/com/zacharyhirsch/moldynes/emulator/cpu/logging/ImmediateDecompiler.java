@@ -11,7 +11,7 @@ final class ImmediateDecompiler implements Decompiler {
     this(name, false);
   }
 
-  private ImmediateDecompiler(String name, boolean undocumented) {
+  ImmediateDecompiler(String name, boolean undocumented) {
     this.name = (undocumented ? "*" : " ") + name;
   }
 

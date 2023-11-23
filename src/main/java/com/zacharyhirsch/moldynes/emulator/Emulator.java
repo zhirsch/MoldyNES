@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator;
 
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuHaltException;
 
 final class Emulator {
 
@@ -11,8 +12,12 @@ final class Emulator {
   }
 
   public void run() {
-    for (int counter = 0; ; counter++) {
-      cpu.tick();
+    try {
+      for (int counter = 0; ; counter++) {
+        cpu.tick();
+      }
+    } catch (NesCpuHaltException exc) {
+      return;
     }
   }
 }
