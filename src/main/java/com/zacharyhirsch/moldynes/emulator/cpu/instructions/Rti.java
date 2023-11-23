@@ -1,38 +1,47 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
-import com.zacharyhirsch.moldynes.emulator.UInt16;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
-public class Rti extends Instruction {
+public class Rti implements NesCpuCycle {
 
-  private final UInt8 opcode;
-
-  public Rti(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+  private static final byte MASK = (byte) 0b1100_1111;
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 ignored1 = context.fetch(context.registers().pc.getAddressAndIncrement());
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
 
-    // Cycle 3
-    UInt8 ignored2 = context.fetch(context.registers().sp.address());
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return this::cycle2;
+  }
 
-    // Cycle 4
-    UInt8 p = context.fetch(context.registers().sp.incrementAndGetAddress());
-    context.registers().p.fromByte(p);
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.fetch((byte) 0x01, cpu.state.sp++);
+    return this::cycle3;
+  }
 
-    // Cycle 5
-    UInt8 pcl = context.fetch(context.registers().sp.incrementAndGetAddress());
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.fetch((byte) 0x01, cpu.state.sp++);
+    return this::cycle4;
+  }
 
-    // Cycle 6
-    UInt8 pch = context.fetch(context.registers().sp.incrementAndGetAddress());
+  private NesCpuCycle cycle4(NesCpu cpu) {
+    cpu.state.p = (byte) ((cpu.state.data & MASK) | 0b0010_0000);
+    cpu.fetch((byte) 0x01, cpu.state.sp++);
+    return this::cycle5;
+  }
 
-    // Partial cycle...
-    context.registers().pc.set(new UInt16(pch, pcl));
+  private NesCpuCycle cycle5(NesCpu cpu) {
+    cpu.state.hold = cpu.state.data;
+    cpu.fetch((byte) 0x01, cpu.state.sp);
+    return this::cycle6;
+  }
 
-    return new Result(() -> new UInt8[] {opcode}, () -> "RTI");
+  private NesCpuCycle cycle6(NesCpu cpu) {
+    cpu.jump(cpu.state.data, cpu.state.hold);
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

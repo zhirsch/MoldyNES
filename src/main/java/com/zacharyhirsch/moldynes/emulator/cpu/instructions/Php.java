@@ -1,24 +1,29 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
-public class Php extends Instruction {
+public class Php implements NesCpuCycle {
 
-  private final UInt8 opcode;
-
-  public Php(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+  private static final byte MASK = 0b011_0000;
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 ignored = context.fetch(context.registers().pc.address());
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
 
-    // Cycle 3
-    context.store(context.registers().sp.getAddressAndDecrement(), context.registers().p.toByte());
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    // cpu.fetch(cpu.state.pc++);
+    return this::cycle2;
+  }
 
-    return new Result(() -> new UInt8[] {opcode}, () -> "PHP");
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.store((byte) 0x01, cpu.state.sp--, (byte) (cpu.state.p | MASK));
+    return this::cycle3;
+  }
+
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

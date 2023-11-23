@@ -1,17 +1,10 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.StoreFunction;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.StoreInstruction;
 
-public class Stx {
+public final class Stx {
 
   private Stx() {}
 
-  public static final class OnStore implements StoreFunction {
-
-    @Override
-    public byte value(NesCpuState state) {
-      return state.x;
-    }
-  }
+  public static final StoreInstruction VALUE = cpu -> cpu.state.x;
 }

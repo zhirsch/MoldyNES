@@ -1,29 +1,35 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
-public class Pla extends Instruction {
-
-  private final UInt8 opcode;
-
-  public Pla(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+public class Pla implements NesCpuCycle {
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 ignored1 = context.fetch(context.registers().pc.address());
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
 
-    // Cycle 3
-    UInt8 ignored2 = context.fetch(context.registers().sp.address());
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    // cpu.fetch(cpu.state.pc++);
+    return this::cycle2;
+  }
 
-    // Cycle 4
-    context.registers().a = context.fetch(context.registers().sp.incrementAndGetAddress());
-    context.registers().p.n = context.registers().a.bit(7) == 1;
-    context.registers().p.z = context.registers().a.isZero();
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.fetch((byte) 0x01, cpu.state.sp++);
+    return this::cycle3;
+  }
 
-    return new Result(() -> new UInt8[] {opcode}, () -> "PLA");
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.fetch((byte) 0x01, cpu.state.sp);
+    return this::cycle4;
+  }
+
+  private NesCpuCycle cycle4(NesCpu cpu) {
+    cpu.state.a = cpu.state.data;
+    cpu.state.pN(cpu.state.a < 0);
+    cpu.state.pZ(cpu.state.a == 0);
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

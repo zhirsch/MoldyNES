@@ -1,20 +1,12 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuDecode;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.ImpliedInstruction;
 
-public class Sed implements NesCpuCycle {
+public final class Sed implements ImpliedInstruction {
 
   @Override
-  public NesCpuCycle start(NesCpu cpu, NesCpuState state) {
-    cpu.fetch(state.pc++);
-    return this::cycle2;
-  }
-
-  private NesCpuCycle cycle2(NesCpu cpu, NesCpuState state) {
-    state.pD(true);
-    return NesCpuDecode.next(cpu, state);
+  public void execute(NesCpu cpu) {
+    cpu.state.pD(true);
   }
 }

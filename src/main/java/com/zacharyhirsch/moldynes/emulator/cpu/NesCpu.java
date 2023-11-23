@@ -1,52 +1,54 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
-import com.zacharyhirsch.moldynes.emulator.EmulatorCrashedException;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemoryMap;
+import com.zacharyhirsch.moldynes.emulator.cpu.logging.NesCpuLogger;
 
 public final class NesCpu {
 
-  private final NesCpuState state;
-  private final NesCpuMemoryMap memory;
+  private NesCpuCycle cycle;
+  private final NesCpuDecoder decoder;
 
-  private NesCpuCycle cycle = new NesCpuInit();
+  public int counter;
+  public final NesCpuState state;
+  public final NesAlu alu;
+  public final NesMmu mmu;
 
-  public NesCpu(NesCpuState state, NesCpuMemoryMap memory) {
-    this.state = state;
-    this.memory = memory;
+  public NesCpu(NesCpuMemoryMap memory) {
+    this.cycle = new NesCpuInit();
+    this.decoder = new NesCpuDecoder(new NesCpuLogger(memory));
+
+    this.counter = 0;
+    this.state = new NesCpuState();
+    this.alu = new NesAlu();
+    this.mmu = new NesMmu(memory);
   }
 
   public void tick() {
     try {
-      cycle = cycle.start(this, state);
-
-      if (state.alu != null) {
-        state.alu.execute();
-      }
-      state.alu = null;
-
-      if (state.write) {
-        memory.store(state.adh, state.adl, state.data);
-      } else {
-        state.data = memory.fetch(state.adh, state.adl);
-      }
-      state.write = false;
+      cycle = cycle.execute(this);
+      mmu.execute(this);
     } catch (Exception exc) {
-      throw new EmulatorCrashedException(state, exc);
+      throw new NesCpuCrashedException(state, exc);
     }
+    counter++;
   }
 
-  public NesCpuCycle halt() {
-    throw new EmulatorCrashedException("halt", state);
+  public NesCpuCycle done(NesCpu cpu) {
+    return decoder.decode(this).execute(this);
   }
 
+  //  public NesCpuCycle halt() {
+  //    throw new EmulatorCrashedException("halt", state);
+  //  }
+  //
   public void jump(byte pch, byte pcl) {
-    state.pc = (short) ((pch << 8) | pcl);
+    state.pc = (short) ((pch << 8) | Byte.toUnsignedInt(pcl));
   }
 
   public void fetch(byte adh, byte adl) {
     state.adh = adh;
     state.adl = adl;
-    state.write = false;
+    mmu.write = false;
   }
 
   public void fetch(short address) {
@@ -57,22 +59,6 @@ public final class NesCpu {
     state.adh = adh;
     state.adl = adl;
     state.data = data;
-    state.write = true;
+    mmu.write = true;
   }
-
-  //  private static void log(NesCpuState before, Instruction instruction, int cycle) {
-  //    System.out.printf(
-  //        "%02x%02x  %-8s %s%-30s  A:%02x X:%02x Y:%02x P:%02x SP:%02x PPU:  0,  0 CYC:%d\n",
-  //        before.pch,
-  //        before.pcl,
-  //        "", // Arrays.stream(result.bytes().get()).map(UInt8::toString).collect(joining("")),
-  //        instruction instanceof Undocumented ? "*" : " ",
-  //        "", // result.text.get(),
-  //        before.a,
-  //        before.x,
-  //        before.y,
-  //        before.p,
-  //        before.sp,
-  //        cycle);
-  //  }
 }

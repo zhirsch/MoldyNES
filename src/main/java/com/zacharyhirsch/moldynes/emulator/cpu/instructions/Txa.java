@@ -1,26 +1,15 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.FetchInstruction;
+import com.zacharyhirsch.moldynes.emulator.cpu.addressing.ImpliedInstruction;
 
-public class Txa extends Instruction {
-
-  private final UInt8 opcode;
-
-  public Txa(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+public final class Txa implements ImpliedInstruction {
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 ignored = context.fetch(context.registers().pc.address());
-
-    // Cycle 3
-    context.registers().a = context.registers().x;
-    context.registers().p.n = context.registers().a.bit(7) == 1;
-    context.registers().p.z = context.registers().a.isZero();
-
-    return new Result(() -> new UInt8[] {opcode}, () -> "TXA");
+  public void execute(NesCpu cpu) {
+    cpu.state.a = cpu.state.x;
+    cpu.state.pN(cpu.state.a < 0);
+    cpu.state.pZ(cpu.state.a == 0);
   }
 }

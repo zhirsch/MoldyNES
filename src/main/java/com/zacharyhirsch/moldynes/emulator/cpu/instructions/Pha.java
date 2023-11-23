@@ -2,23 +2,29 @@ package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
 import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 
-public class Pha extends Instruction {
-
-  private final UInt8 opcode;
-
-  public Pha(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+public class Pha implements NesCpuCycle {
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 ignored = context.fetch(context.registers().pc.address());
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
 
-    // Cycle 3
-    context.store(context.registers().sp.getAddressAndDecrement(), context.registers().a);
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    // cpu.fetch(cpu.state.pc++);
+    return this::cycle2;
+  }
 
-    return new Result(() -> new UInt8[] {opcode}, () -> "PHA");
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.store((byte) 0x01, cpu.state.sp--, cpu.state.a);
+    return this::cycle3;
+  }
+
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

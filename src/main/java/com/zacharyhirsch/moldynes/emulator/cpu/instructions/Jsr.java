@@ -1,40 +1,44 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
-import com.zacharyhirsch.moldynes.emulator.UInt16;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
-public final class Jsr extends Instruction {
-
-  private final UInt8 opcode;
-
-  public Jsr(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+public final class Jsr implements NesCpuCycle {
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 adl = context.fetch(context.registers().pc.getAddressAndIncrement());
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
 
-    // Cycle 3
-    UInt8 ignored = context.fetch(context.registers().sp.address());
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return this::cycle2;
+  }
 
-    // Cycle 4
-    context.store(
-        context.registers().sp.getAddressAndDecrement(), context.registers().pc.address().msb());
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.state.hold = cpu.state.data;
+    cpu.fetch((byte) 0x01, cpu.state.sp--);
+    return this::cycle3;
+  }
 
-    // Cycle 5
-    context.store(
-        context.registers().sp.getAddressAndDecrement(), context.registers().pc.address().lsb());
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.store(cpu.state.adh, cpu.state.adl, cpu.state.pch());
+    return this::cycle4;
+  }
 
-    // Cycle 6
-    UInt8 adh = context.fetch(context.registers().pc.getAddressAndIncrement());
+  private NesCpuCycle cycle4(NesCpu cpu) {
+    cpu.store((byte) 0x01, cpu.state.sp--, cpu.state.pcl());
+    return this::cycle5;
+  }
 
-    // Cycle 7
-    context.registers().pc.set(new UInt16(adh, adl));
+  private NesCpuCycle cycle5(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return this::cycle6;
+  }
 
-    return new Result(
-        () -> new UInt8[] {opcode, adl, adh}, () -> String.format("JSR $%s", new UInt16(adh, adl)));
+  private NesCpuCycle cycle6(NesCpu cpu) {
+    cpu.jump(cpu.state.data, cpu.state.hold);
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }

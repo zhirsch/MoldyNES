@@ -1,35 +1,44 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuCycleContext;
-import com.zacharyhirsch.moldynes.emulator.UInt16;
-import com.zacharyhirsch.moldynes.emulator.UInt8;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
-public class Rts extends Instruction {
-
-  private final UInt8 opcode;
-
-  public Rts(UInt8 opcode) {
-    this.opcode = opcode;
-  }
+public class Rts implements NesCpuCycle {
 
   @Override
-  public Result execute(NesCpuCycleContext context) {
-    // Cycle 2
-    UInt8 ignored1 = context.fetch(context.registers().pc.getAddressAndIncrement());
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
 
-    // Cycle 3
-    UInt8 ignored2 = context.fetch(context.registers().sp.address());
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return this::cycle2;
+  }
 
-    // Cycle 4
-    UInt8 pcl = context.fetch(context.registers().sp.incrementAndGetAddress());
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.fetch((byte) 0x01, cpu.state.sp++);
+    return this::cycle3;
+  }
 
-    // Cycle 5
-    UInt8 pch = context.fetch(context.registers().sp.incrementAndGetAddress());
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.fetch((byte) 0x01, cpu.state.sp++);
+    return this::cycle4;
+  }
 
-    // Cycle 6
-    context.registers().pc.set(new UInt16(pch, pcl));
-    UInt8 ignored3 = context.fetch(context.registers().pc.getAddressAndIncrement());
+  private NesCpuCycle cycle4(NesCpu cpu) {
+    cpu.state.hold = cpu.state.data;
+    cpu.fetch((byte) 0x01, cpu.state.sp);
+    return this::cycle5;
+  }
 
-    return new Result(() -> new UInt8[] {opcode}, () -> "RTS");
+  private NesCpuCycle cycle5(NesCpu cpu) {
+    cpu.jump(cpu.state.data, cpu.state.hold);
+    cpu.fetch(cpu.state.pc++);
+    return this::cycle6;
+  }
+
+  private NesCpuCycle cycle6(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
   }
 }
