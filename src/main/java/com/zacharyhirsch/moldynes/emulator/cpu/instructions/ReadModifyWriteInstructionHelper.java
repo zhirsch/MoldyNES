@@ -37,36 +37,6 @@ final class ReadModifyWriteInstructionHelper {
 //        () -> new UInt8[] {opcode, adl}, () -> String.format("%s $%s = %s", name, adl, data));
 //  }
 //
-//  public Instruction.Result executeAccumulator(NesCpuCycleContext context) {
-//    // Cycle 2
-//    context.registers().a = impl.apply(context, context.registers().a);
-//    UInt8 ignored = context.fetch(context.registers().pc.address());
-//
-//    return new Instruction.Result(() -> new UInt8[] {opcode}, () -> String.format("%s A", name));
-//  }
-//
-//  public Instruction.Result executeAbsolute(NesCpuCycleContext context) {
-//    // Cycle 2
-//    UInt8 adl = context.fetch(context.registers().pc.getAddressAndIncrement());
-//
-//    // Cycle 3
-//    UInt8 adh = context.fetch(context.registers().pc.getAddressAndIncrement());
-//
-//    // Cycle 4
-//    UInt8 ignored = context.fetch(new UInt16(adh, adl));
-//
-//    // Cycle 5
-//    UInt8 data = context.fetch(new UInt16(adh, adl));
-//
-//    // Cycle 6
-//    UInt8 result = impl.apply(context, data);
-//    context.store(new UInt16(adh, adl), result);
-//
-//    return new Instruction.Result(
-//        () -> new UInt8[] {opcode, adl, adh},
-//        () -> String.format("%s $%s = %s", name, new UInt16(adh, adl), data));
-//  }
-//
 //  public Instruction.Result executeZeropageX(NesCpuCycleContext context) {
 //    // Cycle 2
 //    UInt8 bal = context.fetch(context.registers().pc.getAddressAndIncrement());
@@ -127,38 +97,6 @@ final class ReadModifyWriteInstructionHelper {
 //            String.format(
 //                "%s $%s,%s @ %s = %s",
 //                name, new UInt16(bah, bal), indexName, new UInt16(adh, adl), data));
-//  }
-//
-//  public Instruction.Result executeIndirectX(NesCpuCycleContext context) {
-//    // Cycle 2
-//    UInt8 bal = context.fetch(context.registers().pc.getAddressAndIncrement());
-//
-//    // Cycle 3
-//    UInt8 balX = NesAlu.add(bal, context.registers().x).output();
-//    UInt8 ignored = context.fetch(new UInt16(UInt8.cast(0x00), bal));
-//
-//    // Cycle 4
-//    UInt8 balX1 = NesAlu.add(balX, UInt8.cast(1)).output();
-//    UInt8 adl = context.fetch(new UInt16(UInt8.cast(0x00), balX));
-//
-//    // Cycle 5
-//    UInt8 adh = context.fetch(new UInt16(UInt8.cast(0x00), balX1));
-//
-//    // Cycle 6
-//    UInt8 data = context.fetch(new UInt16(adh, adl));
-//
-//    // Cycle 7
-//    UInt8 result = impl.apply(context, data);
-//    UInt8 ignored2 = context.fetch(new UInt16(adh, adl));
-//
-//    // Cycle 8
-//    context.store(new UInt16(adh, adl), result);
-//
-//    return new Instruction.Result(
-//        () -> new UInt8[] {opcode, bal},
-//        () ->
-//            String.format(
-//                "%s ($%s,X) @ %s = %s = %s", name, bal, balX, new UInt16(adh, adl), data));
 //  }
 //
 //  public Instruction.Result executeIndirectY(NesCpuCycleContext context) {

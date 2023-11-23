@@ -3,11 +3,11 @@ package com.zacharyhirsch.moldynes.emulator.cpu.addressing;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
-public class StoreAbsoluteX implements NesCpuCycle {
+public class ReadModifyWriteAbsoluteX implements NesCpuCycle {
 
-  private final StoreInstruction instruction;
+  private final ReadModifyWriteInstruction instruction;
 
-  public StoreAbsoluteX(StoreInstruction instruction) {
+  public ReadModifyWriteAbsoluteX(ReadModifyWriteInstruction instruction) {
     this.instruction = instruction;
   }
 
@@ -34,11 +34,21 @@ public class StoreAbsoluteX implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    cpu.store(cpu.state.adh, cpu.state.adl, instruction.execute(cpu));
+    cpu.fetch(cpu.state.adh, cpu.state.adl);
     return this::cycle5;
   }
 
   private NesCpuCycle cycle5(NesCpu cpu) {
+    cpu.store(cpu.state.adh, cpu.state.adl, cpu.state.data);
+    return this::cycle6;
+  }
+
+  private NesCpuCycle cycle6(NesCpu cpu) {
+    cpu.store(cpu.state.adh, cpu.state.adl, instruction.execute(cpu, cpu.state.data));
+    return this::cycle7;
+  }
+
+  private NesCpuCycle cycle7(NesCpu cpu) {
     cpu.fetch(cpu.state.pc++);
     return cpu::done;
   }

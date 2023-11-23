@@ -1,54 +1,48 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.addressing;
 
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycleTemp;
 
-public class FetchAbsoluteY implements NesCpuCycleTemp {
+public class FetchAbsoluteY implements NesCpuCycle {
 
-//  private final ModifyFunction modifyFn;
-//  private final FinishFunction finishFn;
-//
-//  public FetchAbsoluteY(ModifyFunction modifyFn) {
-//    this(modifyFn, state -> {});
-//  }
-//
-//  public FetchAbsoluteY(ModifyFunction modifyFn, FinishFunction finishFn) {
-//    this.modifyFn = modifyFn;
-//    this.finishFn = finishFn;
-//  }
-//
-//  @Override
-//  public NesCpuCycle execute(NesCpuState state, NesAlu alu, NesMmu mmu) {
-//    cpu.fetch(state.pc++);
-//    return (state1, alu, mmu) -> cycle2(cpu1, state1);
-//  }
-//
-//  private NesCpuCycle cycle2(NesCpu cpu, NesCpuState state) {
-//    cpu.fetch(state.pc++);
-//    state.alu = new NesAluAdd(state.data, state.y, false);
-//    return (state1, alu, mmu) -> cycle3(cpu1, state1);
-//  }
-//
-//  private NesCpuCycle cycle3(NesCpu cpu, NesCpuState state) {
-//    cpu.fetch(state.data, state.alu.output());
-//    state.alu = new NesAluAdd(state.data, (byte) 1, false);
-//    return state.alu.c() ? (state1, alu, mmu) -> cycle4(cpu1, state1)
-//        : (state2, alu, mmu) -> cycle5(cpu1, state2);
-//  }
-//
-//  private NesCpuCycle cycle4(NesCpu cpu, NesCpuState state) {
-//    cpu.fetch(state.alu.output(), state.adl);
-//    return (state1, alu, mmu) -> cycle5(cpu1, state1);
-//  }
-//
-//  private NesCpuCycle cycle5(NesCpu cpu, NesCpuState state) {
-//    modifyFn.modify(state);
-//    cpu.fetch(state.pc++);
-//    return (state1, alu, mmu) -> cycle6(cpu1, state1);
-//  }
-//
-//  private NesCpuCycle cycle6(NesCpu cpu, NesCpuState state) {
-//    finishFn.finish(state);
-//    return NesCpuDecode.decode(cpu, state);
-//  }
+  private final FetchInstruction instruction;
+
+  public FetchAbsoluteY(FetchInstruction instruction) {
+    this.instruction = instruction;
+  }
+
+  @Override
+  public NesCpuCycle execute(NesCpu cpu) {
+    return cycle1(cpu);
+  }
+
+  private NesCpuCycle cycle1(NesCpu cpu) {
+    cpu.fetch(cpu.state.pc++);
+    return this::cycle2;
+  }
+
+  private NesCpuCycle cycle2(NesCpu cpu) {
+    cpu.state.hold = cpu.state.data;
+    cpu.fetch(cpu.state.pc++);
+    return this::cycle3;
+  }
+
+  private NesCpuCycle cycle3(NesCpu cpu) {
+    cpu.fetch(cpu.state.data, (byte) (cpu.state.hold + cpu.state.y));
+    if (Byte.toUnsignedInt(cpu.state.hold) + Byte.toUnsignedInt(cpu.state.y) > 0xff) {
+      return this::cycle4;
+    }
+    return this::cycle5;
+  }
+
+  private NesCpuCycle cycle4(NesCpu cpu) {
+    cpu.fetch((byte) (cpu.state.adh + 1), cpu.state.adl);
+    return this::cycle5;
+  }
+
+  private NesCpuCycle cycle5(NesCpu cpu) {
+    instruction.execute(cpu);
+    cpu.fetch(cpu.state.pc++);
+    return cpu::done;
+  }
 }

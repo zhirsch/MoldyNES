@@ -3,12 +3,12 @@ package com.zacharyhirsch.moldynes.emulator.cpu.addressing;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
-public class StoreIndirectY implements NesCpuCycle {
+public class ReadModifyWriteIndirectY implements NesCpuCycle {
 
-  private final StoreInstruction store;
+  private final ReadModifyWriteInstruction instruction;
 
-  public StoreIndirectY(StoreInstruction store) {
-    this.store = store;
+  public ReadModifyWriteIndirectY(ReadModifyWriteInstruction instruction) {
+    this.instruction = instruction;
   }
 
   @Override
@@ -34,15 +34,28 @@ public class StoreIndirectY implements NesCpuCycle {
 
   private NesCpuCycle cycle4(NesCpu cpu) {
     cpu.fetch(cpu.state.data, (byte) (cpu.state.hold + cpu.state.y));
-    return this::cycle5;
+    if (Byte.toUnsignedInt(cpu.state.hold) + Byte.toUnsignedInt(cpu.state.y) > 0xff) {
+      return this::cycle5;
+    }
+    return this::cycle6;
   }
 
   private NesCpuCycle cycle5(NesCpu cpu) {
-    cpu.store(cpu.state.adh, cpu.state.adl, store.execute(cpu));
+    cpu.fetch((byte) (cpu.state.adh + 1), cpu.state.adl);
     return this::cycle6;
   }
 
   private NesCpuCycle cycle6(NesCpu cpu) {
+    cpu.fetch(cpu.state.adh, cpu.state.adl);
+    return this::cycle7;
+  }
+
+  private NesCpuCycle cycle7(NesCpu cpu) {
+    cpu.store(cpu.state.adh, cpu.state.adl, instruction.execute(cpu, cpu.state.data));
+    return this::cycle8;
+  }
+
+  private NesCpuCycle cycle8(NesCpu cpu) {
     cpu.fetch(cpu.state.pc++);
     return cpu::done;
   }
