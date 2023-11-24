@@ -38,7 +38,9 @@ public class StoreIndirectY implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle5(NesCpu cpu) {
-    cpu.store(cpu.state.adh, cpu.state.adl, store.execute(cpu));
+    boolean carry = Byte.toUnsignedInt(cpu.state.hold) + Byte.toUnsignedInt(cpu.state.y) > 0xff;
+    byte adh = (byte) (cpu.state.adh + (carry ? 1 : 0));
+    cpu.store(adh, cpu.state.adl, store.execute(cpu, adh, cpu.state.adl));
     return this::cycle6;
   }
 

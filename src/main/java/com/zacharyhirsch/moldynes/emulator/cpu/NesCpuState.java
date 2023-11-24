@@ -4,13 +4,13 @@ import java.util.function.Predicate;
 
 public final class NesCpuState {
 
-  private static final byte STATUS_N = (byte) 0b1000_0000;
-  private static final byte STATUS_V = (byte) 0b0100_0000;
-  private static final byte STATUS_B = (byte) 0b0001_0000;
-  private static final byte STATUS_D = (byte) 0b0000_1000;
-  private static final byte STATUS_I = (byte) 0b0000_0100;
-  private static final byte STATUS_Z = (byte) 0b0000_0010;
-  private static final byte STATUS_C = (byte) 0b0000_0001;
+  public static final byte STATUS_N = (byte) 0b1000_0000;
+  public static final byte STATUS_V = (byte) 0b0100_0000;
+  public static final byte STATUS_B = (byte) 0b0001_0000;
+  public static final byte STATUS_D = (byte) 0b0000_1000;
+  public static final byte STATUS_I = (byte) 0b0000_0100;
+  public static final byte STATUS_Z = (byte) 0b0000_0010;
+  public static final byte STATUS_C = (byte) 0b0000_0001;
 
   public byte a = 0;
   public byte x = 0;
@@ -57,6 +57,14 @@ public final class NesCpuState {
 
   public boolean pC() {
     return testC().test(p);
+  }
+
+  public boolean pN() {
+    return testN().test(p);
+  }
+
+  public boolean pZ() {
+    return testZ().test(p);
   }
 
   public static Predicate<Byte> testN() {

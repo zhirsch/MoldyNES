@@ -6,5 +6,5 @@ public final class Sta {
 
   private Sta() {}
 
-  public static final StoreInstruction VALUE = cpu -> cpu.state.a;
+  public static final StoreInstruction VALUE = (cpu, adh, adl) -> cpu.state.a;
 }

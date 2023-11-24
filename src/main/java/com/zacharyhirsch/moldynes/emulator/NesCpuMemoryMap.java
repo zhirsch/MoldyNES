@@ -36,6 +36,9 @@ public class NesCpuMemoryMap {
 
       // APU registers
       put(0x4000, 0x0018, new NesApu());
+
+      // Uhhh, memory?
+//      put(0x4018, 0x1fe8, new NesRam(ByteBuffer.allocateDirect(0x1fe8)));
     }
 
     public Builder put(int offset, int len, NesDevice device) {

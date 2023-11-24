@@ -4,5 +4,5 @@ import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 
 public interface StoreInstruction {
 
-  byte execute(NesCpu cpu);
+  byte execute(NesCpu cpu, byte adh, byte adl);
 }

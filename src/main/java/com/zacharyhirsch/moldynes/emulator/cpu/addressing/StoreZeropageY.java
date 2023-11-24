@@ -27,7 +27,8 @@ public class StoreZeropageY implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle3(NesCpu cpu) {
-    cpu.store((byte) 0x00, (byte) (cpu.state.adl + cpu.state.y), instruction.execute(cpu));
+    cpu.store((byte) 0x00, (byte) (cpu.state.adl + cpu.state.y), instruction.execute(cpu,
+        cpu.state.data, cpu.state.hold));
     return this::cycle4;
   }
 

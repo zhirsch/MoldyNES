@@ -6,5 +6,5 @@ public final class Stx {
 
   private Stx() {}
 
-  public static final StoreInstruction VALUE = cpu -> cpu.state.x;
+  public static final StoreInstruction VALUE = (cpu, adh, adl) -> cpu.state.x;
 }
