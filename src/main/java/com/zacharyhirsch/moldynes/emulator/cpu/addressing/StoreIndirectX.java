@@ -38,7 +38,8 @@ public class StoreIndirectX implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle5(NesCpu cpu) {
-    cpu.store(cpu.state.data, cpu.state.hold, instruction.execute(cpu));
+    cpu.store(cpu.state.data, cpu.state.hold, instruction.execute(cpu, cpu.state.data,
+        cpu.state.hold));
     return this::cycle6;
   }
 

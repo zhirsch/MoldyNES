@@ -2,10 +2,9 @@ package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 
 public class Brk implements NesCpuCycle {
-
-  private static final byte MASK = 0b011_0000;
 
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
@@ -28,7 +27,8 @@ public class Brk implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    cpu.store((byte) 0x01, cpu.state.sp--, (byte) (cpu.state.p | MASK));
+    byte p = (byte) (cpu.state.p | NesCpuState.STATUS_B | 0b0010_0000);
+    cpu.store((byte) 0x01, cpu.state.sp--, p);
     return this::cycle5;
   }
 
@@ -40,6 +40,7 @@ public class Brk implements NesCpuCycle {
   private NesCpuCycle cycle6(NesCpu cpu) {
     cpu.state.hold = cpu.state.data;
     cpu.fetch((byte) 0xff, (byte) 0xff);
+    cpu.state.pI(true);
     return this::cycle7;
   }
 

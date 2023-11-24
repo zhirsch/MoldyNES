@@ -34,7 +34,7 @@ public class StoreAbsoluteY implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    cpu.store(cpu.state.adh, cpu.state.adl, instruction.execute(cpu));
+    cpu.store(cpu.state.adh, cpu.state.adl, instruction.execute(cpu, cpu.state.data, cpu.state.hold));
     return this::cycle5;
   }
 

@@ -28,7 +28,9 @@ public class StoreAbsolute implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle3(NesCpu cpu) {
-    cpu.store(cpu.state.data, cpu.state.hold, instruction.execute(cpu));
+    byte adh = cpu.state.data;
+    byte adl = cpu.state.hold;
+    cpu.store(adh, adl, instruction.execute(cpu, adh, adl));
     return this::cycle4;
   }
 

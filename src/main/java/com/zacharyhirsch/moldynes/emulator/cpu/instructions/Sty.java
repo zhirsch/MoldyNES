@@ -6,5 +6,5 @@ public class Sty {
 
   private Sty() {}
 
-  public static final StoreInstruction VALUE = cpu -> cpu.state.y;
+  public static final StoreInstruction VALUE = (cpu, adh, adl) -> cpu.state.y;
 }

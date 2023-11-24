@@ -2,10 +2,12 @@ package com.zacharyhirsch.moldynes.emulator.cpu;
 
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemoryMap;
 import com.zacharyhirsch.moldynes.emulator.cpu.logging.NesCpuLogger;
+import java.io.OutputStream;
 
 public final class NesCpu {
 
   private NesCpuCycle cycle;
+  private boolean reset;
   private final NesCpuDecoder decoder;
 
   public int counter;
@@ -13,9 +15,10 @@ public final class NesCpu {
   public final NesAlu alu;
   public final NesMmu mmu;
 
-  public NesCpu(NesCpuMemoryMap memory) {
+  public NesCpu(NesCpuMemoryMap memory, OutputStream output) {
     this.cycle = new NesCpuInit();
-    this.decoder = new NesCpuDecoder(new NesCpuLogger(memory));
+    this.reset = false;
+    this.decoder = new NesCpuDecoder(new NesCpuLogger(memory, output));
 
     this.counter = 0;
     this.state = new NesCpuState();
@@ -35,7 +38,16 @@ public final class NesCpu {
     counter++;
   }
 
+  public void reset() {
+    this.reset = true;
+  }
+
   public NesCpuCycle done(NesCpu cpu) {
+    if (this.reset) {
+      this.reset = false;
+      cpu.state.p |= NesCpuState.STATUS_I;
+      return new NesCpuInit();
+    }
     return decoder.decode(cpu).execute(cpu);
   }
 

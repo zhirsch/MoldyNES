@@ -3,6 +3,8 @@ package com.zacharyhirsch.moldynes.emulator.cpu.logging;
 import com.google.common.collect.ImmutableMap;
 import com.zacharyhirsch.moldynes.emulator.NesCpuMemoryMap;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 
 public final class NesCpuLogger {
@@ -19,6 +21,7 @@ public final class NesCpuLogger {
           .put((byte) 0x08, new ImpliedDecompiler("PHP"))
           .put((byte) 0x09, new ImmediateDecompiler("ORA"))
           .put((byte) 0x0a, new AccumulatorDecompiler("ASL"))
+          .put((byte) 0x0b, new ImmediateDecompiler("ANC", true))
           .put((byte) 0x0c, new AbsoluteDecompiler("NOP", true))
           .put((byte) 0x0d, new AbsoluteDecompiler("ORA"))
           .put((byte) 0x0e, new AbsoluteDecompiler("ASL"))
@@ -48,6 +51,7 @@ public final class NesCpuLogger {
           .put((byte) 0x28, new ImpliedDecompiler("PLP"))
           .put((byte) 0x29, new ImmediateDecompiler("AND"))
           .put((byte) 0x2a, new AccumulatorDecompiler("ROL"))
+          .put((byte) 0x2b, new ImmediateDecompiler("ANC", true))
           .put((byte) 0x2c, new AbsoluteDecompiler("BIT"))
           .put((byte) 0x2d, new AbsoluteDecompiler("AND"))
           .put((byte) 0x2e, new AbsoluteDecompiler("ROL"))
@@ -78,6 +82,7 @@ public final class NesCpuLogger {
           .put((byte) 0x48, new ImpliedDecompiler("PHA"))
           .put((byte) 0x49, new ImmediateDecompiler("EOR"))
           .put((byte) 0x4a, new AccumulatorDecompiler("LSR"))
+          .put((byte) 0x4b, new ImmediateDecompiler("ALR", true))
           .put((byte) 0x4c, new JumpAbsoluteDecompiler("JMP"))
           .put((byte) 0x4d, new AbsoluteDecompiler("EOR"))
           .put((byte) 0x4e, new AbsoluteDecompiler("LSR"))
@@ -89,6 +94,7 @@ public final class NesCpuLogger {
           .put((byte) 0x55, new ZeropageXDecompiler("EOR"))
           .put((byte) 0x56, new ZeropageXDecompiler("LSR"))
           .put((byte) 0x57, new ZeropageXDecompiler("SRE", true))
+          .put((byte) 0x58, new ImpliedDecompiler("CLI"))
           .put((byte) 0x59, new AbsoluteYDecompiler("EOR"))
           .put((byte) 0x5a, new ImpliedDecompiler("NOP", true))
           .put((byte) 0x5b, new AbsoluteYDecompiler("SRE", true))
@@ -106,6 +112,7 @@ public final class NesCpuLogger {
           .put((byte) 0x68, new ImpliedDecompiler("PLA"))
           .put((byte) 0x69, new ImmediateDecompiler("ADC"))
           .put((byte) 0x6a, new AccumulatorDecompiler("ROR"))
+          .put((byte) 0x6b, new ImmediateDecompiler("ARR", true))
           .put((byte) 0x6c, new JumpIndirectDecompiler("JMP"))
           .put((byte) 0x6d, new AbsoluteDecompiler("ADC"))
           .put((byte) 0x6e, new AbsoluteDecompiler("ROR"))
@@ -127,6 +134,7 @@ public final class NesCpuLogger {
           .put((byte) 0x7f, new AbsoluteXDecompiler("RRA", true))
           .put((byte) 0x80, new ImmediateDecompiler("NOP", true))
           .put((byte) 0x81, new IndirectXDecompiler("STA"))
+          .put((byte) 0x82, new ImmediateDecompiler("NOP", true))
           .put((byte) 0x83, new IndirectXDecompiler("SAX", true))
           .put((byte) 0x84, new ZeropageDecompiler("STY"))
           .put((byte) 0x85, new ZeropageDecompiler("STA"))
@@ -148,7 +156,9 @@ public final class NesCpuLogger {
           .put((byte) 0x98, new ImpliedDecompiler("TYA"))
           .put((byte) 0x99, new AbsoluteYDecompiler("STA"))
           .put((byte) 0x9a, new ImpliedDecompiler("TXS"))
+          .put((byte) 0x9c, new AbsoluteXDecompiler("SYA"))
           .put((byte) 0x9d, new AbsoluteXDecompiler("STA"))
+          .put((byte) 0x9e, new AbsoluteYDecompiler("SXA"))
           .put((byte) 0xa0, new ImmediateDecompiler("LDY"))
           .put((byte) 0xa1, new IndirectXDecompiler("LDA"))
           .put((byte) 0xa2, new ImmediateDecompiler("LDX"))
@@ -160,6 +170,7 @@ public final class NesCpuLogger {
           .put((byte) 0xa8, new ImpliedDecompiler("TAY"))
           .put((byte) 0xa9, new ImmediateDecompiler("LDA"))
           .put((byte) 0xaa, new ImpliedDecompiler("TAX"))
+          .put((byte) 0xab, new ImmediateDecompiler("ATX", true))
           .put((byte) 0xac, new AbsoluteDecompiler("LDY"))
           .put((byte) 0xad, new AbsoluteDecompiler("LDA"))
           .put((byte) 0xae, new AbsoluteDecompiler("LDX"))
@@ -180,6 +191,7 @@ public final class NesCpuLogger {
           .put((byte) 0xbf, new AbsoluteYDecompiler("LAX", true))
           .put((byte) 0xc0, new ImmediateDecompiler("CPY"))
           .put((byte) 0xc1, new IndirectXDecompiler("CMP"))
+          .put((byte) 0xc2, new ImmediateDecompiler("NOP", true))
           .put((byte) 0xc3, new IndirectXDecompiler("DCP", true))
           .put((byte) 0xc4, new ZeropageDecompiler("CPY"))
           .put((byte) 0xc5, new ZeropageDecompiler("CMP"))
@@ -188,6 +200,7 @@ public final class NesCpuLogger {
           .put((byte) 0xc8, new ImpliedDecompiler("INY"))
           .put((byte) 0xc9, new ImmediateDecompiler("CMP"))
           .put((byte) 0xca, new ImpliedDecompiler("DEX"))
+          .put((byte) 0xcb, new ImmediateDecompiler("AXS", true))
           .put((byte) 0xcc, new AbsoluteDecompiler("CPY"))
           .put((byte) 0xcd, new AbsoluteDecompiler("CMP"))
           .put((byte) 0xce, new AbsoluteDecompiler("DEC"))
@@ -209,6 +222,7 @@ public final class NesCpuLogger {
           .put((byte) 0xdf, new AbsoluteXDecompiler("DCP", true))
           .put((byte) 0xe0, new ImmediateDecompiler("CPX"))
           .put((byte) 0xe1, new IndirectXDecompiler("SBC"))
+          .put((byte) 0xe2, new ImmediateDecompiler("NOP", true))
           .put((byte) 0xe3, new IndirectXDecompiler("ISB", true))
           .put((byte) 0xe4, new ZeropageDecompiler("CPX"))
           .put((byte) 0xe5, new ZeropageDecompiler("SBC"))
@@ -240,14 +254,24 @@ public final class NesCpuLogger {
           .build();
 
   private final NesCpuMemoryMap memory;
+  private final OutputStream output;
 
-  public NesCpuLogger(NesCpuMemoryMap memory) {
+  public NesCpuLogger(NesCpuMemoryMap memory, OutputStream output) {
     this.memory = memory;
+    this.output = output;
   }
 
   public void log(byte opcode, NesCpu cpu) {
+//    try {
+//      output.write(format(opcode, cpu).getBytes());
+//    } catch (IOException exc) {
+//      throw new RuntimeException(exc);
+//    }
+  }
+
+  private String format(byte opcode, NesCpu cpu) {
     Decompiler decompiler = DECOMPILERS.getOrDefault(opcode, new TodoDecompiler());
-    System.out.printf(
+    return String.format(
         "%02X%02X  %-40s  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:  0,  0 CYC:%d\n",
         cpu.state.adh,
         cpu.state.adl,

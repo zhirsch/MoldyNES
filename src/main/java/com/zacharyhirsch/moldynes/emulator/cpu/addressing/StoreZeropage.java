@@ -22,7 +22,7 @@ public class StoreZeropage implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle2(NesCpu cpu) {
-    cpu.store((byte) 0x00, cpu.state.data, instruction.execute(cpu));
+    cpu.store((byte) 0x00, cpu.state.data, instruction.execute(cpu, cpu.state.data, cpu.state.hold));
     return this::cycle3;
   }
 

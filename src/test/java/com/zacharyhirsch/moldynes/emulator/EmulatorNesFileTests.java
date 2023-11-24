@@ -51,9 +51,9 @@ public class EmulatorNesFileTests {
 
   // https://www.qmtpro.com/~nes/misc/nestest.txt
   @Test
-  void functionalTest() throws IOException {
+  void nestest() throws IOException {
     NesCpuMemoryMap memory = load("nestest.nes", (short) 0xc000);
-    new Emulator(memory).run();
+    new Emulator(memory, System.out).run();
 
     assertThat(memory.fetch((byte) 0x00, (byte) 0x02)).isEqualTo(0);
     assertThat(memory.fetch((byte) 0x00, (byte) 0x03)).isEqualTo(0);
