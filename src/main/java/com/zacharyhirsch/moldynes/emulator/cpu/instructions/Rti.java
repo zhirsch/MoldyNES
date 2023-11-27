@@ -42,6 +42,6 @@ public class Rti implements NesCpuCycle {
   private NesCpuCycle cycle6(NesCpu cpu) {
     cpu.jump(cpu.state.data, cpu.state.hold);
     cpu.fetch(cpu.state.pc++);
-    return cpu::done;
+    return cpu::next;
   }
 }

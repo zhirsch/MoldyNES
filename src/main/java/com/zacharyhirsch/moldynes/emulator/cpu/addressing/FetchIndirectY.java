@@ -48,6 +48,6 @@ public class FetchIndirectY implements NesCpuCycle {
   private NesCpuCycle cycle6(NesCpu cpu) {
     instruction.execute(cpu);
     cpu.fetch(cpu.state.pc++);
-    return cpu::done;
+    return cpu::next;
   }
 }

@@ -1,7 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.logging;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemoryMap;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.memory.NesMemory;
 
 final class AbsoluteDecompiler implements Decompiler {
 
@@ -16,7 +16,7 @@ final class AbsoluteDecompiler implements Decompiler {
   }
 
   @Override
-  public String decompile(byte opcode, short pc, NesCpu cpu, NesCpuMemoryMap memory) {
+  public String decompile(byte opcode, short pc, NesCpuState state, NesMemory memory) {
     byte adl = fetchByte(memory, pc++);
     byte adh = fetchByte(memory, pc);
     byte value = fetchByte(memory, adh, adl);
@@ -24,11 +24,11 @@ final class AbsoluteDecompiler implements Decompiler {
         "%02X %02X %02X %s $%02X%02X = %02X", opcode, adl, adh, name, adh, adl, value);
   }
 
-  private byte fetchByte(NesCpuMemoryMap memory, short address) {
+  private byte fetchByte(NesMemory memory, short address) {
     return fetchByte(memory, (byte) (address >>> 8), (byte) address);
   }
 
-  private byte fetchByte(NesCpuMemoryMap memory, byte adh, byte adl) {
-    return memory.fetch(adh, adl);
+  private byte fetchByte(NesMemory memory, byte adh, byte adl) {
+    return memory.fetchDebug(adh, adl);
   }
 }

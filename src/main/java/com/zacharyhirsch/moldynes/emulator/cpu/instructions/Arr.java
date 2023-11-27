@@ -7,13 +7,15 @@ public final class Arr implements FetchInstruction {
 
   @Override
   public void execute(NesCpu cpu) {
-    var ror = cpu.alu.ror((byte) (cpu.state.a & cpu.state.data), cpu.state.pC());
-    cpu.state.a = ror.output();
-    cpu.state.pN(ror.n());
-    cpu.state.pZ(ror.z());
-    int bit5 = (cpu.state.a & (0b0010_0000)) >>> 5;
-    int bit6 = (cpu.state.a & (0b0100_0000)) >>> 6;
-    cpu.state.pC(bit6 == 1);
-    cpu.state.pV((bit5 ^ bit6) == 1);
+    byte value = (byte) (cpu.state.a & cpu.state.data);
+    cpu.state.a = (byte) ((Byte.toUnsignedInt(value) >>> 1) | (cpu.state.pC() ? 0b1000_0000 : 0));
+    cpu.state.pN(cpu.state.a < 0);
+    cpu.state.pZ(cpu.state.a == 0);
+    cpu.state.pC(bit(value, 7) == 1);
+    cpu.state.pV((bit(value, 6) ^ bit(value, 7)) == 1);
+  }
+
+  private static int bit(byte value, int i) {
+    return (Byte.toUnsignedInt(value) >>> i) & 1;
   }
 }

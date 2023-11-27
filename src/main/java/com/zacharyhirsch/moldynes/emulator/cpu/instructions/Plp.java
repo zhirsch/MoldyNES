@@ -30,6 +30,6 @@ public class Plp implements NesCpuCycle {
   private NesCpuCycle cycle4(NesCpu cpu) {
     cpu.state.p = (byte) ((cpu.state.data & MASK) | 0b0010_0000);
     cpu.fetch(cpu.state.pc++);
-    return cpu::done;
+    return cpu::next;
   }
 }

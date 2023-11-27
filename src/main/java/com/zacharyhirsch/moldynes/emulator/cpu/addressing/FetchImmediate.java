@@ -24,6 +24,6 @@ public final class FetchImmediate implements NesCpuCycle {
   private NesCpuCycle cycle2(NesCpu cpu) {
     instruction.execute(cpu);
     cpu.fetch(cpu.state.pc++);
-    return cpu::done;
+    return cpu::next;
   }
 }

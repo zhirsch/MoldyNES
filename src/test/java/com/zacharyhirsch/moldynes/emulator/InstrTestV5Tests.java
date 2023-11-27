@@ -2,8 +2,12 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
+import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.logging.NesCpuLogger;
+import com.zacharyhirsch.moldynes.emulator.memory.NesMemory;
+import com.zacharyhirsch.moldynes.emulator.memory.NesMemoryMapper;
+import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,55 +17,25 @@ import org.junit.jupiter.api.Test;
 
 public class InstrTestV5Tests {
 
-  private NesCpuMemoryMap load(String filename, Short entry) throws IOException {
-    String path = "instr_test-v5\\rom_singles\\" + filename;
+  private ByteBuffer read(String path) throws IOException {
     try (InputStream is = getClass().getClassLoader().getResourceAsStream(path)) {
       if (is == null) {
         throw new RuntimeException("image " + path + " does not exist");
       }
-
-      ByteBuffer buffer = ByteBuffer.wrap(is.readAllBytes());
-      byte[] header = readHeader(buffer);
-
-      if ((header[7] & 0x0c) == 0x08) {
-        throw new RuntimeException("NES 2.0 file format not implemented");
-      }
-      return parseNes1Format(header, buffer, entry);
+      return ByteBuffer.wrap(is.readAllBytes());
     }
-  }
-
-  private static byte[] readHeader(ByteBuffer buffer) {
-    byte[] header = new byte[16];
-    buffer.get(0, header);
-    if (!checkMagic(header)) {
-      throw new IllegalArgumentException("bad magic string");
-    }
-    return header;
-  }
-
-  private static boolean checkMagic(byte[] header) {
-    return new String(header, 0, 4).equals("NES\u001a");
-  }
-
-  private NesCpuMemoryMap parseNes1Format(byte[] header, ByteBuffer buffer, Short entry) {
-    byte mapper = (byte) ((header[7] & 0b1111_0000) | ((header[6] & 0b1111_0000) >>> 4));
-    if (entry != null) {
-      setEntryPoint(buffer, entry);
-    }
-    return NesCpuMemoryMapFactory.get(mapper).load(header, buffer);
-  }
-
-  private void setEntryPoint(ByteBuffer buffer, short entry) {
-    buffer.put(0xfffc - 0xc000 + 16, (byte) (entry >>> 0));
-    buffer.put(0xfffd - 0xc000 + 16, (byte) (entry >>> 8));
   }
 
   private void runTest(String filename) throws IOException {
-//    try (OutputStream output = new FileOutputStream(filename + ".log")) {
-    try (OutputStream output = new ByteArrayOutputStream()) {
-      NesCpuMemoryMap memory = load(filename, null);
-      Emulator emulator = new Emulator(memory, output);
-      byte status = run(emulator, memory);
+    try (Display display = new Display()) {
+      ByteBuffer buffer = read("instr_test-v5\\rom_singles\\" + filename);
+      NesMemoryMapper mapper = NesMemoryMapper.get(buffer);
+      NesPpu ppu = mapper.createPpu(buffer, display);
+      NesApu apu = new NesApu();
+      NesMemory memory = mapper.createMem(buffer, ppu, apu);
+
+      NesCpu cpu = new NesCpu(ppu, memory, new NesCpuLogger(OutputStream.nullOutputStream()));
+      byte status = run(new Emulator(cpu, ppu, apu), memory, display);
 
       assertThat(status).isEqualTo(0x00);
     }
@@ -147,8 +121,9 @@ public class InstrTestV5Tests {
     runTest("16-special.nes");
   }
 
-  private static byte run(Emulator emulator, NesCpuMemoryMap memory) {
+  private static byte run(Emulator emulator, NesMemory memory, Display display) {
     waitForStart(emulator, memory);
+    byte finalStatus = (byte) 0xff;
     Byte lastStatus = null;
     String lastMessage = null;
     while (emulator.step()) {
@@ -158,7 +133,7 @@ public class InstrTestV5Tests {
         System.out.printf("STATUS: %02x\n", status);
       }
       if (Byte.toUnsignedInt(status) < 0x80) {
-        return status;
+        finalStatus = status;
       }
       if (status == (byte) 0x81) {
         reset(emulator, memory);
@@ -176,11 +151,14 @@ public class InstrTestV5Tests {
         lastMessage = message;
         System.out.printf(">%s<\n", message);
       }
+      if (display.quit) {
+        break;
+      }
     }
-    return (byte) 0xff;
+    return finalStatus;
   }
 
-  private static void reset(Emulator emulator, NesCpuMemoryMap memory) {
+  private static void reset(Emulator emulator, NesMemory memory) {
     Instant resetAt = Instant.now().plusMillis(250);
     while (emulator.step()) {
       if (Instant.now().isAfter(resetAt)) {
@@ -191,7 +169,7 @@ public class InstrTestV5Tests {
     waitForStart(emulator, memory);
   }
 
-  private static void waitForStart(Emulator emulator, NesCpuMemoryMap memory) {
+  private static void waitForStart(Emulator emulator, NesMemory memory) {
     while (emulator.step()) {
       byte status = memory.fetch((byte) 0x60, (byte) 0x00);
       if (status == (byte) 0x80) {

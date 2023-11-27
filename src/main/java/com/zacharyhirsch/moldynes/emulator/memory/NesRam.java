@@ -1,5 +1,6 @@
-package com.zacharyhirsch.moldynes.emulator;
+package com.zacharyhirsch.moldynes.emulator.memory;
 
+import com.zacharyhirsch.moldynes.emulator.NesDevice;
 import java.nio.ByteBuffer;
 
 public final class NesRam implements NesDevice {

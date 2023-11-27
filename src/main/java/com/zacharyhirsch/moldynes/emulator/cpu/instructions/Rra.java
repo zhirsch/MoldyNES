@@ -7,15 +7,14 @@ public final class Rra implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    var ror = cpu.alu.ror(value, cpu.state.pC());
-
-    var add = cpu.alu.add(cpu.state.a, ror.output(), ror.c());
+    byte output = (byte) ((Byte.toUnsignedInt(value) >> 1) | (cpu.state.pC() ? 0b1000_0000 : 0));
+    var add = cpu.alu.add(cpu.state.a, output, (value & 1) == 1);
     cpu.state.a = add.output();
     cpu.state.pN(add.n());
     cpu.state.pZ(add.z());
     cpu.state.pC(add.c());
     cpu.state.pV(add.v());
-
-    return ror.output();
+    return output;
   }
+
 }

@@ -57,6 +57,6 @@ public class ReadModifyWriteIndirectY implements NesCpuCycle {
 
   private NesCpuCycle cycle8(NesCpu cpu) {
     cpu.fetch(cpu.state.pc++);
-    return cpu::done;
+    return cpu::next;
   }
 }

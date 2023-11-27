@@ -1,9 +1,9 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.logging;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemoryMap;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.memory.NesMemory;
 
 interface Decompiler {
 
-  String decompile(byte opcode, short pc, NesCpu cpu, NesCpuMemoryMap memory);
+  String decompile(byte opcode, short pc, NesCpuState state, NesMemory memory);
 }

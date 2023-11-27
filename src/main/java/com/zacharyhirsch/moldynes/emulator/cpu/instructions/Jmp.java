@@ -28,7 +28,7 @@ public final class Jmp {
     private NesCpuCycle cycle3(NesCpu cpu) {
       cpu.jump(cpu.state.data, cpu.state.hold);
       cpu.fetch(cpu.state.pc++);
-      return cpu::done;
+      return cpu::next;
     }
   }
 
@@ -64,7 +64,7 @@ public final class Jmp {
     private NesCpuCycle cycle5(NesCpu cpu) {
       cpu.jump(cpu.state.data, cpu.state.hold);
       cpu.fetch(cpu.state.pc++);
-      return cpu::done;
+      return cpu::next;
     }
   }
 }

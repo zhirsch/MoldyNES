@@ -36,6 +36,6 @@ public class StoreAbsolute implements NesCpuCycle {
 
   private NesCpuCycle cycle4(NesCpu cpu) {
     cpu.fetch(cpu.state.pc++);
-    return cpu::done;
+    return cpu::next;
   }
 }

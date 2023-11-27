@@ -32,6 +32,8 @@ import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Anc;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.And;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Arr;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Asl;
+import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Atx;
+import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Axs;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Bcc;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Bcs;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Beq;
@@ -66,7 +68,6 @@ import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Lda;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Ldx;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Ldy;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Lsr;
-import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Atx;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Nop;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Ora;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Pha;
@@ -81,7 +82,6 @@ import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Rti;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Rts;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Sax;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Sbc;
-import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Axs;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Sec;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Sed;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Sei;
@@ -99,19 +99,12 @@ import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Txa;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Txs;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Tya;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.UnknownOpcodeException;
-import com.zacharyhirsch.moldynes.emulator.cpu.logging.NesCpuLogger;
 
 public final class NesCpuDecoder {
 
-  private final NesCpuLogger logger;
+  public NesCpuDecoder() {}
 
-  public NesCpuDecoder(NesCpuLogger logger) {
-    this.logger = logger;
-  }
-
-  public NesCpuCycle decode(NesCpu cpu) {
-    byte opcode = cpu.state.data;
-    logger.log(opcode, cpu);
+  public NesCpuCycle decode(byte opcode) {
     return switch (Byte.toUnsignedInt(opcode)) {
       case 0x00 -> new Brk();
       case 0x01 -> new FetchIndirectX(new Ora());

@@ -1,8 +1,9 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.logging;
 
 import com.google.common.collect.ImmutableMap;
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemoryMap;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.memory.NesMemory;
+import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
@@ -253,42 +254,34 @@ public final class NesCpuLogger {
           .put((byte) 0xff, new AbsoluteXDecompiler("ISB", true))
           .build();
 
-  private final NesCpuMemoryMap memory;
   private final OutputStream output;
 
-  public NesCpuLogger(NesCpuMemoryMap memory, OutputStream output) {
-    this.memory = memory;
+  public NesCpuLogger(OutputStream output) {
     this.output = output;
   }
 
-  public void log(byte opcode, NesCpu cpu) {
+  public void log(byte opcode, int cycle, NesCpuState state, NesPpu ppu, NesMemory memory) {
 //    try {
-//      output.write(format(opcode, cpu).getBytes());
+//      output.write(format(opcode, cycle, state, ppu, memory).getBytes());
 //    } catch (IOException exc) {
 //      throw new RuntimeException(exc);
 //    }
   }
 
-  private String format(byte opcode, NesCpu cpu) {
-    Decompiler decompiler = DECOMPILERS.getOrDefault(opcode, new TodoDecompiler());
+  private String format(byte opcode, int cycle, NesCpuState state, NesPpu ppu, NesMemory memory) {
+    Decompiler decompiler = DECOMPILERS.get(opcode);
     return String.format(
-        "%02X%02X  %-40s  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:  0,  0 CYC:%d\n",
-        cpu.state.adh,
-        cpu.state.adl,
-        decompiler.decompile(opcode, cpu.state.pc, cpu, memory),
-        cpu.state.a,
-        cpu.state.x,
-        cpu.state.y,
-        cpu.state.p,
-        cpu.state.sp,
-        cpu.counter);
-  }
-
-  private static final class TodoDecompiler implements Decompiler {
-
-    @Override
-    public String decompile(byte opcode, short pc, NesCpu cpu, NesCpuMemoryMap memory) {
-      return String.format("%02X TODO", opcode);
-    }
+        "%02X%02X  %-40s  A:%02X X:%02X Y:%02X P:%02X SP:%02X PPU:%3d,%3d CYC:%d\n",
+        state.adh,
+        state.adl,
+        decompiler.decompile(opcode, state.pc, state, memory),
+        state.a,
+        state.x,
+        state.y,
+        state.p,
+        state.sp,
+        ppu.column(),
+        ppu.scanline(),
+        cycle);
   }
 }

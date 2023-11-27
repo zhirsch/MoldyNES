@@ -24,6 +24,6 @@ public final class ReadModifyWriteAccumulator implements NesCpuCycle {
   private NesCpuCycle cycle2(NesCpu cpu) {
     cpu.state.a = instruction.execute(cpu, cpu.state.a);
     cpu.fetch(cpu.state.adh, cpu.state.adl);
-    return cpu::done;
+    return cpu::next;
   }
 }
