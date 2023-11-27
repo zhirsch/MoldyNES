@@ -7,8 +7,8 @@ public final class Dcp implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    byte output = cpu.alu.dec(value).output();
-    var cmp = cpu.alu.sub(cpu.state.a, output);
+    byte output = (byte) (value - 1);
+    var cmp = cpu.alu.cmp(cpu.state.a, output);
     cpu.state.pN(cmp.n());
     cpu.state.pZ(cmp.z());
     cpu.state.pC(cmp.c());

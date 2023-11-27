@@ -1,15 +1,19 @@
 package com.zacharyhirsch.moldynes.emulator;
 
+import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuHaltException;
-import java.io.OutputStream;
+import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 
 final class Emulator {
 
   private final NesCpu cpu;
+  private final NesPpu ppu;
+  private final NesApu apu;
 
-  public Emulator(NesCpuMemoryMap memory, OutputStream output) {
-    this.cpu = new NesCpu(memory, output);
+  public Emulator(NesCpu cpu, NesPpu ppu, NesApu apu) {
+    this.cpu = cpu;
+    this.ppu = ppu;
+    this.apu = apu;
   }
 
   public void run() {
@@ -17,12 +21,10 @@ final class Emulator {
   }
 
   public boolean step() {
-    try {
-      cpu.tick();
-      return true;
-    } catch (NesCpuHaltException exc) {
-      return false;
-    }
+    ppu.tick();
+    ppu.tick();
+    ppu.tick();
+    return cpu.tick();
   }
 
   public void reset() {

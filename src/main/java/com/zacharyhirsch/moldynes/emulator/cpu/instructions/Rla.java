@@ -7,14 +7,11 @@ public final class Rla implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    var rol = cpu.alu.rol(value, cpu.state.pC());
-    cpu.state.pC(rol.c());
-
-    var and = cpu.alu.and(cpu.state.a, rol.output());
-    cpu.state.a = and.output();
-    cpu.state.pN(and.n());
-    cpu.state.pZ(and.z());
-
-    return rol.output();
+    byte output = (byte) ((value << 1) | (cpu.state.pC() ? 1 : 0));
+    cpu.state.a = (byte) (cpu.state.a & output);
+    cpu.state.pN(cpu.state.a < 0);
+    cpu.state.pZ(cpu.state.a == 0);
+    cpu.state.pC(value < 0);
+    return output;
   }
 }

@@ -24,6 +24,6 @@ public final class Implied implements NesCpuCycle {
   private NesCpuCycle cycle2(NesCpu cpu) {
     instruction.execute(cpu);
     cpu.fetch(cpu.state.adh, cpu.state.adl);
-    return cpu::done;
+    return cpu::next;
   }
 }

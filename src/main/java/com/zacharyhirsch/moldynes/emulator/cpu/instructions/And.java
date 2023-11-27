@@ -7,9 +7,9 @@ public final class And implements FetchInstruction {
 
   @Override
   public void execute(NesCpu cpu) {
-    var result = cpu.alu.and(cpu.state.a, cpu.state.data);
-    cpu.state.a = result.output();
-    cpu.state.pN(result.n());
-    cpu.state.pZ(result.z());
+    byte output = (byte) (cpu.state.a & cpu.state.data);
+    cpu.state.a = output;
+    cpu.state.pN(output < 0);
+    cpu.state.pZ(output == 0);
   }
 }

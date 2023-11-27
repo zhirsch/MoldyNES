@@ -7,14 +7,11 @@ public final class Slo implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    var asl = cpu.alu.asl(value);
-    cpu.state.pC(asl.c());
-
-    var or = cpu.alu.or(cpu.state.a, asl.output());
-    cpu.state.a = or.output();
-    cpu.state.pN(or.n());
-    cpu.state.pZ(or.z());
-
-    return asl.output();
+    byte output = (byte) (value << 1);
+    cpu.state.a = (byte) (cpu.state.a | output);
+    cpu.state.pN(cpu.state.a < 0);
+    cpu.state.pZ(cpu.state.a == 0);
+    cpu.state.pC(value < 0);
+    return output;
   }
 }

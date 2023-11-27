@@ -7,6 +7,7 @@ public final class Hlt implements NesCpuCycle {
 
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
-    return cpu.halt();
+    cpu.halt();
+    return cpu::next;
   }
 }

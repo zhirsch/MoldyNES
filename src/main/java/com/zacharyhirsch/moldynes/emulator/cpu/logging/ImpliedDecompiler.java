@@ -1,7 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.logging;
 
-import com.zacharyhirsch.moldynes.emulator.NesCpuMemoryMap;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.memory.NesMemory;
 
 final class ImpliedDecompiler implements Decompiler {
 
@@ -16,7 +16,7 @@ final class ImpliedDecompiler implements Decompiler {
   }
 
   @Override
-  public String decompile(byte opcode, short pc, NesCpu cpu, NesCpuMemoryMap memory) {
+  public String decompile(byte opcode, short pc, NesCpuState state, NesMemory memory) {
     return String.format("%02X       %s", opcode, name);
   }
 }

@@ -1,4 +1,6 @@
-package com.zacharyhirsch.moldynes.emulator;
+package com.zacharyhirsch.moldynes.emulator.apu;
+
+import com.zacharyhirsch.moldynes.emulator.NesDevice;
 
 public final class NesApu implements NesDevice {
 

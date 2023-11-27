@@ -7,7 +7,7 @@ public final class Axs implements FetchInstruction {
 
   @Override
   public void execute(NesCpu cpu) {
-    var result = cpu.alu.sub((byte) (cpu.state.a & cpu.state.x), cpu.state.data);
+    var result = cpu.alu.cmp((byte) (cpu.state.a & cpu.state.x), cpu.state.data);
     cpu.state.x = result.output();
     cpu.state.pN(result.n());
     cpu.state.pZ(result.z());

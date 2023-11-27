@@ -7,7 +7,7 @@ public final class Isb implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    byte output = cpu.alu.inc(value).output();
+    byte output = (byte) (value + 1);
     var result = cpu.alu.sub(cpu.state.a, output, cpu.state.pC());
     cpu.state.a = result.output();
     cpu.state.pN(result.n());

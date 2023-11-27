@@ -24,6 +24,6 @@ public class Php implements NesCpuCycle {
 
   private NesCpuCycle cycle3(NesCpu cpu) {
     cpu.fetch(cpu.state.pc++);
-    return cpu::done;
+    return cpu::next;
   }
 }

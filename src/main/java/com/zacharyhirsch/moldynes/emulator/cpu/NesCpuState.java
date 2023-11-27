@@ -22,6 +22,7 @@ public final class NesCpuState {
   public byte adl;
   public byte data;
   public byte hold;
+  public boolean write = false;
 
   public byte pch() {
     return (byte) (pc >>> 8);

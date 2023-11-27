@@ -7,14 +7,11 @@ public final class Sre implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    var lsr = cpu.alu.lsr(value);
-    cpu.state.pC(lsr.c());
-
-    var eor = cpu.alu.xor(cpu.state.a, lsr.output());
-    cpu.state.a = eor.output();
-    cpu.state.pN(eor.n());
-    cpu.state.pZ(eor.z());
-
-    return lsr.output();
+    byte output = (byte) (Byte.toUnsignedInt(value) >>> 1);
+    cpu.state.a = (byte) (cpu.state.a ^ output);
+    cpu.state.pN(cpu.state.a < 0);
+    cpu.state.pZ(cpu.state.a == 0);
+    cpu.state.pC((value & 1) == 1);
+    return output;
   }
 }

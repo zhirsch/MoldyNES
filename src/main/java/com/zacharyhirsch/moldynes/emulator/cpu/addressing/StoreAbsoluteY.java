@@ -28,8 +28,12 @@ public class StoreAbsoluteY implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle3(NesCpu cpu) {
-    var result = cpu.alu.add(cpu.state.hold, cpu.state.y);
-    cpu.fetch((byte) (cpu.state.data + (result.c() ? 1 : 0)), result.output());
+    byte adl = (byte) (cpu.state.hold + cpu.state.y);
+    if (Byte.toUnsignedInt(cpu.state.hold) + Byte.toUnsignedInt(cpu.state.y) > 255) {
+      cpu.fetch((byte) (cpu.state.data + 1), adl);
+    } else {
+      cpu.fetch(cpu.state.data, adl);
+    }
     return this::cycle4;
   }
 
@@ -40,6 +44,6 @@ public class StoreAbsoluteY implements NesCpuCycle {
 
   private NesCpuCycle cycle5(NesCpu cpu) {
     cpu.fetch(cpu.state.pc++);
-    return cpu::done;
+    return cpu::next;
   }
 }

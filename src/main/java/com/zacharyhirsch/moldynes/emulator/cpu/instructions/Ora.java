@@ -7,9 +7,8 @@ public final class Ora implements FetchInstruction {
 
   @Override
   public void execute(NesCpu cpu) {
-    var result = cpu.alu.or(cpu.state.a, cpu.state.data);
-    cpu.state.a = result.output();
-    cpu.state.pN(result.n());
-    cpu.state.pZ(result.z());
+    cpu.state.a = (byte) (cpu.state.a | cpu.state.data);
+    cpu.state.pN(cpu.state.a < 0);
+    cpu.state.pZ(cpu.state.a == 0);
   }
 }

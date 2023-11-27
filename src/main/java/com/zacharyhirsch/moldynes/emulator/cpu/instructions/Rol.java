@@ -7,10 +7,10 @@ public final class Rol implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    var result = cpu.alu.rol(value, cpu.state.pC());
-    cpu.state.pN(result.n());
-    cpu.state.pZ(result.z());
-    cpu.state.pC(result.c());
-    return result.output();
+    byte output = (byte) ((value << 1) | (cpu.state.pC() ? 1 : 0));
+    cpu.state.pN(output < 0);
+    cpu.state.pZ(output == 0);
+    cpu.state.pC(value < 0);
+    return output;
   }
 }

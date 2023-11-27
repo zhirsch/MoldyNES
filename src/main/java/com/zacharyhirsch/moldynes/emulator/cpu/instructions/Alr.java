@@ -7,11 +7,10 @@ public final class Alr implements FetchInstruction {
 
   @Override
   public void execute(NesCpu cpu) {
-    var and = cpu.alu.and(cpu.state.a, cpu.state.data);
-    var lsr = cpu.alu.lsr(and.output());
-    cpu.state.a = lsr.output();
-    cpu.state.pN(lsr.n());
-    cpu.state.pZ(lsr.z());
-    cpu.state.pC(lsr.c());
+    byte input = (byte) (cpu.state.a & cpu.state.data);
+    cpu.state.a = (byte) (Byte.toUnsignedInt(input) >>> 1);
+    cpu.state.pN(false);
+    cpu.state.pZ(cpu.state.a == 0);
+    cpu.state.pC((input & 1) == 1);
   }
 }
