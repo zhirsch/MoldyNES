@@ -4,13 +4,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
-import com.zacharyhirsch.moldynes.emulator.cpu.logging.NesCpuLogger;
-import com.zacharyhirsch.moldynes.emulator.memory.NesMemory;
-import com.zacharyhirsch.moldynes.emulator.memory.NesMemoryMapper;
+import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import org.junit.jupiter.api.Test;
 
@@ -28,15 +25,17 @@ public class NesTest {
   // https://www.qmtpro.com/~nes/misc/nestest.txt
   @Test
   void nestest() throws IOException {
-    try (Display display = new Display()) {
-      ByteBuffer buffer = read("nestest.nes");
-      NesMemoryMapper mapper = NesMemoryMapper.get(buffer);
+    ByteBuffer buffer = read("nestest.nes");
+    NesMapper mapper = NesMapper.get(buffer);
+    NesApu apu = new NesApu();
+    NesJoypad joypad1 = new NesJoypad();
+    NesJoypad joypad2 = new NesJoypad();
 
-      NesPpu ppu = mapper.createPpu(buffer, display);
-      NesApu apu = new NesApu();
-      NesMemory memory = mapper.createMem(buffer, ppu, apu);
+    try (Display display = new Display(joypad1, joypad2)) {
+      NesPpu ppu = new NesPpu(mapper, display);
+      NesBus bus = new NesBus(mapper, ppu, joypad1, joypad2);
+      NesCpu cpu = new NesCpu(ppu, bus);
 
-      NesCpu cpu = new NesCpu(ppu, memory, new NesCpuLogger(OutputStream.nullOutputStream()));
       Emulator emulator = new Emulator(cpu, ppu, apu);
       while (emulator.step()) {
         if (display.quit) {
@@ -44,8 +43,8 @@ public class NesTest {
         }
       }
 
-      assertThat(memory.fetch((byte) 0x00, (byte) 0x02)).isEqualTo(0);
-      assertThat(memory.fetch((byte) 0x00, (byte) 0x03)).isEqualTo(0);
+      assertThat(bus.read((byte) 0x00, (byte) 0x02)).isEqualTo(0);
+      assertThat(bus.read((byte) 0x00, (byte) 0x03)).isEqualTo(0);
     }
   }
 }
