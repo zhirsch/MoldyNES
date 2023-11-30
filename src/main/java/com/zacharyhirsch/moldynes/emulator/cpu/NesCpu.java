@@ -1,42 +1,32 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
-import com.zacharyhirsch.moldynes.emulator.cpu.logging.NesCpuLogger;
-import com.zacharyhirsch.moldynes.emulator.memory.NesMemory;
+import com.zacharyhirsch.moldynes.emulator.NesBus;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public final class NesCpu {
 
   private final NesPpu ppu;
-  private final NesMemory memory;
+  private final NesBus bus;
   private final NesCpuDecoder decoder;
-  private final NesCpuLogger logger;
-  private final Consumer<byte[][][]> present;
 
   private NesCpuCycle cycle;
-  private int counter;
   private boolean halt;
   private boolean reset;
 
   public final NesCpuState state;
   public final NesAlu alu;
 
-  public NesCpu(NesPpu ppu, NesMemory memory, NesCpuLogger logger) {
+  public NesCpu(NesPpu ppu, NesBus bus) {
     this.ppu = ppu;
-    this.memory = memory;
+    this.bus = bus;
     this.decoder = new NesCpuDecoder();
-    this.logger = logger;
 
-    this.cycle = new NesCpuInit(ppu);
-    this.counter = 0;
+    this.cycle = new NesCpuInit();
     this.halt = false;
     this.reset = false;
 
     this.state = new NesCpuState();
     this.alu = new NesAlu();
-    present = r -> {
-    };
   }
 
   public boolean tick() {
@@ -46,14 +36,13 @@ public final class NesCpu {
     try {
       cycle = cycle.execute(this);
       if (state.write) {
-        memory.store(state.adh, state.adl, state.data);
+        bus.write(state.adh, state.adl, state.data);
       } else {
-        state.data = memory.fetch(state.adh, state.adl);
+        state.data = bus.read(state.adh, state.adl);
       }
     } catch (Exception exc) {
       throw new NesCpuCrashedException(state, exc);
     }
-    counter++;
     return true;
   }
 
@@ -65,15 +54,13 @@ public final class NesCpu {
     if (reset) {
       reset = false;
       state.p |= NesCpuState.STATUS_I;
-      return new NesCpuInit(ppu).execute(this);
+      return new NesCpuInit().execute(this);
     }
     if (ppu.nmi()) {
       state.pc--;
       return new NesCpuNmi().execute(this);
     }
-    byte opcode = state.data;
-    logger.log(opcode, counter, state, ppu, memory);
-    return decoder.decode(opcode).execute(this);
+    return decoder.decode(state.data).execute(this);
   }
 
   public void halt() {

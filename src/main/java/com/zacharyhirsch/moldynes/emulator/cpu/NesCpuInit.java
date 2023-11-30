@@ -1,14 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
-import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
-
 public class NesCpuInit implements NesCpuCycle {
-
-  private final NesPpu ppu;
-
-  public NesCpuInit(NesPpu ppu) {
-    this.ppu = ppu;
-  }
 
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
@@ -49,11 +41,6 @@ public class NesCpuInit implements NesCpuCycle {
   private NesCpuCycle cycle7(NesCpu cpu) {
     cpu.jump(cpu.state.data, cpu.state.hold);
     cpu.fetch(cpu.state.pc++);
-    return this::next;
-  }
-
-  private NesCpuCycle next(NesCpu cpu) {
-    ppu.reset();
-    return cpu.next(cpu);
+    return cpu::next;
   }
 }

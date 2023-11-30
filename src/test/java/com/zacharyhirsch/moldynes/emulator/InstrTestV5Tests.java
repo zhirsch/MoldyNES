@@ -4,13 +4,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
-import com.zacharyhirsch.moldynes.emulator.cpu.logging.NesCpuLogger;
-import com.zacharyhirsch.moldynes.emulator.memory.NesMemory;
-import com.zacharyhirsch.moldynes.emulator.memory.NesMemoryMapper;
+import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -27,15 +24,18 @@ public class InstrTestV5Tests {
   }
 
   private void runTest(String filename) throws IOException {
-    try (Display display = new Display()) {
-      ByteBuffer buffer = read("instr_test-v5\\rom_singles\\" + filename);
-      NesMemoryMapper mapper = NesMemoryMapper.get(buffer);
-      NesPpu ppu = mapper.createPpu(buffer, display);
-      NesApu apu = new NesApu();
-      NesMemory memory = mapper.createMem(buffer, ppu, apu);
+    ByteBuffer buffer = read("instr_test-v5\\rom_singles\\" + filename);
+    NesMapper mapper = NesMapper.get(buffer);
+    NesApu apu = new NesApu();
+    NesJoypad joypad1 = new NesJoypad();
+    NesJoypad joypad2 = new NesJoypad();
 
-      NesCpu cpu = new NesCpu(ppu, memory, new NesCpuLogger(OutputStream.nullOutputStream()));
-      byte status = run(new Emulator(cpu, ppu, apu), memory, display);
+    try (Display display = new Display(joypad1, joypad2)) {
+      NesPpu ppu = new NesPpu(mapper, display);
+      NesBus bus = new NesBus(mapper, ppu, joypad1, joypad2);
+      NesCpu cpu = new NesCpu(ppu, bus);
+
+      byte status = run(new Emulator(cpu, ppu, apu), bus, display);
 
       assertThat(status).isEqualTo(0x00);
     }
@@ -121,44 +121,22 @@ public class InstrTestV5Tests {
     runTest("16-special.nes");
   }
 
-  private static byte run(Emulator emulator, NesMemory memory, Display display) {
-    waitForStart(emulator, memory);
-    byte finalStatus = (byte) 0xff;
-    Byte lastStatus = null;
-    String lastMessage = null;
+  private static byte run(Emulator emulator, NesBus bus, Display display) {
+    waitForStart(emulator, bus);
+    byte status = (byte) 0xff;
     while (emulator.step()) {
-      byte status = memory.fetch((byte) 0x60, (byte) 0x00);
-      if (lastStatus == null || lastStatus != status) {
-        lastStatus = status;
-        System.out.printf("STATUS: %02x\n", status);
-      }
-      if (Byte.toUnsignedInt(status) < 0x80) {
-        finalStatus = status;
-      }
+      status = bus.read((byte) 0x60, (byte) 0x00);
       if (status == (byte) 0x81) {
-        reset(emulator, memory);
-      }
-      StringBuilder builder = new StringBuilder();
-      for (short addr = 0x6004; ; addr += 1) {
-        byte ch = memory.fetch((byte) (addr >>> 8), (byte) (addr & 0xff));
-        if (ch == 0) {
-          break;
-        }
-        builder.append((char) ch);
-      }
-      String message = builder.toString();
-      if (lastMessage == null || !lastMessage.equals(message)) {
-        lastMessage = message;
-        System.out.printf(">%s<\n", message);
+        reset(emulator, bus);
       }
       if (display.quit) {
         break;
       }
     }
-    return finalStatus;
+    return status;
   }
 
-  private static void reset(Emulator emulator, NesMemory memory) {
+  private static void reset(Emulator emulator, NesBus bus) {
     Instant resetAt = Instant.now().plusMillis(250);
     while (emulator.step()) {
       if (Instant.now().isAfter(resetAt)) {
@@ -166,12 +144,12 @@ public class InstrTestV5Tests {
         break;
       }
     }
-    waitForStart(emulator, memory);
+    waitForStart(emulator, bus);
   }
 
-  private static void waitForStart(Emulator emulator, NesMemory memory) {
+  private static void waitForStart(Emulator emulator, NesBus bus) {
     while (emulator.step()) {
-      byte status = memory.fetch((byte) 0x60, (byte) 0x00);
+      byte status = bus.read((byte) 0x60, (byte) 0x00);
       if (status == (byte) 0x80) {
         break;
       }
