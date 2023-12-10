@@ -61,7 +61,7 @@ final class Display implements NesPpu.DrawFrame, AutoCloseable {
           .put(SDLK_Z, NesJoypad.Button.SELECT)
           .put(SDLK_X, NesJoypad.Button.START)
           .put(SDLK_M, NesJoypad.Button.BUTTON_A)
-          .put((int)',', NesJoypad.Button.BUTTON_B)
+          .put((int) ',', NesJoypad.Button.BUTTON_B)
           .build();
 
   private static final Map<Integer, NesJoypad.Button> JOYPAD2_KEYS =

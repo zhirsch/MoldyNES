@@ -24,7 +24,7 @@ public class PacManTest {
 
   @Test
   void pacman() throws IOException {
-    ByteBuffer buffer = read("zelda.nes");
+    ByteBuffer buffer = read("smb.nes");
     NesMapper mapper = NesMapper.get(buffer);
     NesApu apu = new NesApu();
     NesJoypad joypad1 = new NesJoypad();

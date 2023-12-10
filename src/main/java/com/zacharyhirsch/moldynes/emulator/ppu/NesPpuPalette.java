@@ -2,7 +2,7 @@ package com.zacharyhirsch.moldynes.emulator.ppu;
 
 public final class NesPpuPalette {
 
-  static final NesPpuColor[] SYSTEM_PALETTE =
+  public static final NesPpuColor[] SYSTEM_PALETTE =
       new NesPpuColor[] {
         new NesPpuColor((byte) 0x65, (byte) 0x65, (byte) 0x65),
         new NesPpuColor((byte) 0x00, (byte) 0x2b, (byte) 0x9b),
@@ -76,30 +76,6 @@ public final class NesPpuPalette {
     this.palette = new byte[0x0100];
   }
 
-  public byte read(short address) {
-    if (address == 0x3f10 || address == 0x3f14 || address == 0x3f18 || address == 0x3f1c) {
-      address -= 0x0010;
-    }
-    return palette[address - 0x3f00];
-  }
-
-  public void write(short address, byte data) {
-    if (address == 0x3f10 || address == 0x3f14 || address == 0x3f18 || address == 0x3f1c) {
-      address -= 0x0010;
-    }
-    palette[address - 0x3f00] = data;
-  }
-
-  public NesPpuColor[] getBackgroundPalette(int tileRow, int tileColumn, byte attrByte) {
-    int paletteIndex = getBackgroundPaletteIndex(tileRow, tileColumn, attrByte);
-    return new NesPpuColor[] {
-      null,
-      SYSTEM_PALETTE[palette[paletteIndex * 4 + 1]],
-      SYSTEM_PALETTE[palette[paletteIndex * 4 + 2]],
-      SYSTEM_PALETTE[palette[paletteIndex * 4 + 3]],
-    };
-  }
-
   public NesPpuColor[] getSpritePalette(byte attrByte) {
     int paletteIndex = getSpritePaletteIndex(attrByte);
     return new NesPpuColor[] {
@@ -108,25 +84,6 @@ public final class NesPpuPalette {
       SYSTEM_PALETTE[palette[16 + paletteIndex * 4 + 2]],
       SYSTEM_PALETTE[palette[16 + paletteIndex * 4 + 3]],
     };
-  }
-
-  public NesPpuColor getColor(int i) {
-    return SYSTEM_PALETTE[palette[i]];
-  }
-
-  private int getBackgroundPaletteIndex(int tileRow, int tileColumn, byte attrByte) {
-    int a = tileColumn % 4 / 2;
-    int b = tileRow % 4 / 2;
-    if (a == 1 && b == 0) {
-      return (attrByte >> 2) & 0b0000_0011;
-    }
-    if (a == 0 && b == 1) {
-      return (attrByte >> 4) & 0b0000_0011;
-    }
-    if (a == 1 && b == 1) {
-      return (attrByte >> 6) & 0b0000_0011;
-    }
-    return attrByte & 0b0000_0011;
   }
 
   private int getSpritePaletteIndex(byte attrByte) {
