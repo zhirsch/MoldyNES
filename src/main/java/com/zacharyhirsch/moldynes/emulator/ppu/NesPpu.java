@@ -44,7 +44,7 @@ public final class NesPpu {
   public NesPpu(NesMapper mapper, DrawFrame drawFrame) {
     this.mapper = mapper;
     this.drawFrame = drawFrame;
-    this.ram = new byte[0x0800];
+    this.ram = new byte[0x2000];
     this.oam = new byte[0x0100];
     this.palette = new byte[0x0100];
   }
@@ -60,7 +60,11 @@ public final class NesPpu {
       nmi = true;
     }
 
-    t = (short) ((t & 0b0111_0011_1111_1111) | ((data & 0b0000_0011) << 10));
+    /*
+    t: ...GH.. ........ <- d: ......GH
+       <used elsewhere> <- d: ABCDEF..
+    */
+    t = (short) ((t & 0b0111_0011_1111_1111) | ((Byte.toUnsignedInt(data) & 0b0000_0011) << 10));
   }
 
   public byte readMask() {
@@ -100,33 +104,50 @@ public final class NesPpu {
 
   public void writeScroll(byte data) {
     if (w == 0) {
+      /*
+      t: ....... ...ABCDE <- d: ABCDE...
+      x:              FGH <- d: .....FGH
+      w:                  <- 1
+      */
       t =
           (short)
               ((t & 0b0111_1111_1110_0000)
-                  | (Byte.toUnsignedInt((byte) (data & 0b1111_1000)) >>> 3));
-      x = (byte) (data & 0b0000_0111);
+                  | (byte) ((Byte.toUnsignedInt(data) & 0b0001_1111) >>> 3));
+      x = (byte) (Byte.toUnsignedInt(data) & 0b0000_0111);
       w = 1;
     } else {
+      /*
+      t: FGH..AB CDE..... <- d: ABCDEFGH
+      w:                  <- 0
+      */
       t =
           (short)
-              ((t & 0b0111_1100_0001_1111)
-                  | (Byte.toUnsignedInt((byte) (data & 0b1111_1000)) << 2));
-      t =
-          (short)
-              ((t & 0b0000_1111_1111_1111)
-                  | (Byte.toUnsignedInt((byte) (data & 0b0000_0111)) << 12));
+              ((t & 0b0000_1100_0001_1111)
+                  | ((Byte.toUnsignedInt(data) & 0b1111_1000) << 2)
+                  | ((Byte.toUnsignedInt(data) & 0b0000_0111) << 12));
       w = 0;
     }
   }
 
   public void writeAddress(byte data) {
     if (w == 0) {
+      /*
+      t: .CDEFGH ........ <- d: ..CDEFGH
+             <unused>     <- d: AB......
+      t: Z...... ........ <- 0 (bit Z is cleared)
+      w:                  <- 1
+      */
       t =
           (short)
               ((t & 0b0000_0000_1111_1111)
-                  | (Byte.toUnsignedInt((byte) (data & 0b0011_1111)) << 8));
+                  | (short) ((Byte.toUnsignedInt(data) << 8) & 0b0011_1111_0000_0000));
       w = 1;
     } else {
+      /*
+      t: ....... ABCDEFGH <- d: ABCDEFGH
+      v: <...all bits...> <- t: <...all bits...>
+      w:                  <- 0
+      */
       t = (short) ((t & 0b0111_1111_0000_0000) | Byte.toUnsignedInt(data));
       v = t;
       w = 0;
@@ -141,21 +162,21 @@ public final class NesPpu {
       incrementAddress();
       return result;
     }
-    if (0x2000 <= v && v < 0x2f00) {
+    if (0x2000 <= v && v < 0x3000) {
       result = buffer;
-      buffer = ram[Short.toUnsignedInt(mapper.getNametableMirrorAddress(v))];
+      buffer = ram[mapper.getNametableMirrorAddress(v)];
       incrementAddress();
       return result;
     }
     if (0x3000 <= v && v < 0x3f00) {
       result = buffer;
-      buffer = ram[Short.toUnsignedInt(mapper.getNametableMirrorAddress(v))];
+      buffer = ram[mapper.getNametableMirrorAddress(v)];
       incrementAddress();
       return result;
     }
     if (0x3f00 <= v && v < 0x4000) {
       result = palette[getPaletteAddress(v)];
-      buffer = ram[Short.toUnsignedInt(mapper.getNametableMirrorAddress(v))];
+      buffer = ram[mapper.getNametableMirrorAddress(v)];
       incrementAddress();
       return result;
     }
@@ -168,13 +189,13 @@ public final class NesPpu {
       incrementAddress();
       return;
     }
-    if (0x2000 <= v && v < 0x2f00) {
-      ram[Short.toUnsignedInt(mapper.getNametableMirrorAddress(v))] = data;
+    if (0x2000 <= v && v < 0x3000) {
+      ram[mapper.getNametableMirrorAddress(v)] = data;
       incrementAddress();
       return;
     }
     if (0x3000 <= v && v < 0x3f00) {
-      ram[Short.toUnsignedInt(mapper.getNametableMirrorAddress(v))] = data;
+      ram[mapper.getNametableMirrorAddress(v)] = data;
       incrementAddress();
       return;
     }
@@ -203,35 +224,40 @@ public final class NesPpu {
 
   // https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
   private void incrementHorizontal() {
-    // Coarse X increment
-    if ((v & 0x001f) == 31) {
-      // Coarse X wraps around.  Set it to 0 and switch horizontal nametable.
-      v = (short) (v & 0b0111_1111_1110_0000);
-      v = (short) (v ^ 0b0000_0100_0000_0000);
-    } else {
-      v += 1;
+    int coarseX = (v & 0b0000_0000_0001_1111) >>> 0;
+
+    coarseX = (coarseX + 1) % 32;
+
+    if (coarseX == 0) {
+      // Switch horizontal nametable
+      v ^= 0b0000_0100_0000_0000;
     }
+
+    v &= 0b0111_1111_1110_0000;
+    v |= (short) (coarseX << 0);
   }
 
   private void incrementVertical() {
-    // Y increment
-    if ((v & 0x7000) != 0x7000) {
-      v += 0x1000; // increment fine Y until it's equal to 7
-    } else {
-      v = (short) (v & 0b0000_1111_1111_1111); // set fine Y to 0
-      int coarseY = (v & 0b0000_0011_1110_0000) >> 5;
-      if (coarseY == 29) {
+    int fineY = (v & 0b0111_0000_0000_0000) >>> 12;
+    int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
+
+    fineY = (fineY + 1) % 8;
+
+    if (fineY == 0) {
+      coarseY++;
+      if (coarseY == 30) {
         // Coarse Y wraps around.  Set it to 0 and switch vertical nametable.
         coarseY = 0;
-        v = (short) (v ^ 0b0000_1000_0000_0000);
-      } else if (coarseY == 31) {
+        v ^= 0b0000_1000_0000_0000;
+      } else if (coarseY == 32) {
         // Coarse Y wraps around, BUT don't switch the vertical nametable.
         coarseY = 0;
-      } else {
-        coarseY += 1;
       }
-      v = (short) ((v & 0b0111_1100_0001_1111) | (coarseY << 5));
     }
+
+    v &= 0b0000_1100_0001_1111;
+    v |= (short) (fineY << 12);
+    v |= (short) (coarseY << 5);
   }
 
   private void incrementOamAddress() {
@@ -240,122 +266,27 @@ public final class NesPpu {
 
   public void tick() {
     if (isRenderingEnabled()) {
-      if ((0 <= scanline && scanline <= 239) || scanline == 261) {
-        if ((1 <= pixel && pixel <= 256) || (321 <= pixel && pixel <= 336)) {
-          int phase = pixel % 8;
-          if (phase == 1) {
-            // Fetch nametable byte
-            short address = (short) (0x2000 | (v & 0x0fff));
-            nametableByte = ram[mapper.getNametableMirrorAddress(address)];
-          }
-          if (phase == 3) {
-            // Fetch attribute table byte
-            //            attr     nametable      coarse y / 4        coarse x / 4
-            int address = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
-            //if (address - 0x2000 < ram.length) { // FIXME
-              attributeByte = ram[(address - 0x2000) % ram.length];
-            //}
-          }
-          if (phase == 5) {
-            // Fetch pattern byte lo into latch
-            int chrBank = bit8(control, 4) == 0 ? 0x0000 : 0x1000;
-            int y = (v & (0b0111_0000_0000_0000)) >> 12;
-            int chrIndex = chrBank + Byte.toUnsignedInt(nametableByte) * 16 + y;
-            patternLoLatch = mapper.readChr((short) chrIndex);
-          }
-          if (phase == 7) {
-            // Fetch pattern byte hi into latch
-            int chrBank = bit8(control, 4) == 0 ? 0x0000 : 0x1000;
-            int y = (v & (0b0111_0000_0000_0000)) >> 12;
-            int chrIndex = chrBank + Byte.toUnsignedInt(nametableByte) * 16 + y;
-            patternHiLatch = mapper.readChr((short) (chrIndex + 8));
-          }
-          if (phase == 0) {
-            incrementHorizontal();
-            if (pixel == 256) {
-              incrementVertical();
-            }
-          }
-          if (pixel >= 9 && phase == 1) {
-            // Reload shift registers
-            patternLoShift =
-                (short) ((patternLoShift & 0xff00) | Byte.toUnsignedInt(patternLoLatch));
-            patternHiShift =
-                (short) ((patternHiShift & 0xff00) | Byte.toUnsignedInt(patternHiLatch));
-            attributeLoShift =
-                (short) ((attributeLoShift & 0xff00) | (bit8(attributeByte, 0) == 0 ? 0x00 : 0xff));
-            attributeHiShift =
-                (short) ((attributeHiShift & 0xff00) | (bit8(attributeByte, 1) == 0 ? 0x00 : 0xff));
-          }
-        }
-        if (pixel == 257) {
-          // horiz(v) = horiz(t)
-          int mask = 0b0000_0100_0001_1111;
-          v = (short) (((v & ~mask) | (t & mask)) & 0b0111_1111_1111_1111);
-        }
-        if (257 <= pixel && pixel <= 320) {
-          // TODO: Fetch tile data for sprites on the next scanline
-        }
-        if (pixel == 337 || pixel == 339) {
-          // Dead reads, might be used for timing?
-          short address = (short) (0x2000 | (v & 0x0fff));
-          nametableByte = ram[mapper.getNametableMirrorAddress(address)];
-        }
-        if (scanline == 261) {
-          if (280 <= pixel && pixel <= 304) {
-            // vert(v) = vert(t)
-            int mask = 0b0111_1011_1110_0000;
-            v = (short) (((v & ~mask) | (t & mask)) & 0b0111_1111_1111_1111);
-          }
-        }
-        if (0 <= scanline && scanline <= 239 && 1 <= pixel && pixel <= 256) {
-          int patternHi = bit16(patternHiShift, 15 - x);
-          int patternLo = bit16(patternLoShift, 15 - x);
-          int attributeHi = bit16(attributeHiShift, 15 - x);
-          int attributeLo = bit16(attributeLoShift, 15 - x);
-          NesPpuColor[] colors = getBackgroundPalette((attributeHi << 1) | attributeLo);
-          NesPpuColor color =
-              switch ((patternHi << 1) | patternLo) {
-                case 0 -> colors[0];
-                case 1 -> colors[1];
-                case 2 -> colors[2];
-                case 3 -> colors[3];
-                default -> throw new IllegalStateException();
-              };
-          int i = 3 * (scanline * 256 + pixel - 1);
-          frame[i] = color.r();
-          frame[i + 1] = color.g();
-          frame[i + 2] = color.b();
-
-          patternLoShift <<= 1;
-          patternHiShift <<= 1;
-          attributeLoShift <<= 1;
-          attributeHiShift <<= 1;
-        }
+      if (0 <= scanline && scanline <= 239) {
+        doVisibleScanline(false);
       }
-      if (scanline == 241 && pixel == 0) {
-        drawFrame.draw(frame);
-        odd = !odd;
+      if (scanline == 240) {
+        doPostRenderScanline();
+        if (pixel == 0) {
+          drawFrame.draw(frame);
+        }
       }
     }
-    if (scanline == 241) {
-      // Vblank begins.
-      if (pixel == 1) {
-        status = (byte) (status | 0b1000_0000); // set vblank
-        nmi = bit8(control, 7) == 1;
-      }
+    if (241 <= scanline && scanline <= 260) {
+      doVerticalBlankingScanline();
     }
     if (scanline == 261) {
-      // Vblank ends.
-      if (pixel == 1) {
-        status = (byte) (status & 0b0011_1111); // clear vblank and sprite0 hit
-        nmi = false;
-      }
+      doVisibleScanline(true);
     }
     if (scanline == 261) {
       if ((pixel == 339 && odd) || pixel == 340) {
         scanline = 0;
         pixel = 0;
+        odd = !odd;
       } else {
         pixel++;
       }
@@ -367,6 +298,226 @@ public final class NesPpu {
         pixel++;
       }
     }
+  }
+
+  private void doVisibleScanline(boolean isPreRender) {
+    if (pixel == 0) {
+      idle();
+      return;
+    }
+    if (1 <= pixel && pixel <= 256) {
+      if (pixel == 1 && isPreRender) {
+        // clear vblank and sprite0 hit
+        status = (byte) (status & 0b0011_1111);
+        nmi = false;
+      }
+      if (!isPreRender) {
+        renderPixel();
+      }
+      shiftRegisters();
+      // Fetch tile data for this scanline
+      fetchTileData((pixel - 1) % 8);
+      if (pixel % 8 == 0) {
+        incrementHorizontal();
+        reloadShiftRegisters();
+      }
+      if (pixel == 256) {
+        incrementVertical();
+      }
+      return;
+    }
+    if (257 <= pixel && pixel <= 320) {
+      if (pixel == 257) {
+        // horiz(v) = horiz(t)
+        // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
+        v &= 0b0111_1011_1110_0000;
+        v |= (short) (t & 0b0000_0100_0001_1111);
+      }
+      if (isPreRender && 280 <= pixel && pixel <= 304) {
+        // vert(v) = vert(t)
+        // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
+        v &= 0b0000_0100_0001_1111;
+        v |= (short) (t & 0b0111_1011_1110_0000);
+      }
+      // Fetch sprite data for the *next* scanline
+      fetchSpriteData((pixel - 1) % 8);
+      return;
+    }
+    if (321 <= pixel && pixel <= 336) {
+      shiftRegisters();
+      // Fetch the first two tiles for the *next* scanline
+      fetchTileData((pixel - 1) % 8);
+      if (pixel % 8 == 0) {
+        incrementHorizontal();
+        reloadShiftRegisters();
+      }
+      return;
+    }
+    if (337 <= pixel && pixel <= 340) {
+      // Fetch unused bytes
+      fetchUnusedBytes((pixel - 1) % 4);
+      return;
+    }
+    // TODO: sprite evaluation for the next scanline
+    throw new IllegalStateException();
+  }
+
+  private void renderPixel() {
+    int patternHi = bit16(patternHiShift, 15 - x);
+    int patternLo = bit16(patternLoShift, 15 - x);
+    int attributeHi = bit16(attributeHiShift, 15 - x);
+    int attributeLo = bit16(attributeLoShift, 15 - x);
+    NesPpuColor[] colors = getBackgroundPalette((attributeHi << 1) | attributeLo);
+    NesPpuColor color =
+        switch ((patternHi << 1) | patternLo) {
+          case 0 -> colors[0];
+          case 1 -> colors[1];
+          case 2 -> colors[2];
+          case 3 -> colors[3];
+          default -> throw new IllegalStateException();
+        };
+    int i = 3 * (scanline * 256 + pixel - 1);
+    frame[i + 0] = color.r();
+    frame[i + 1] = color.g();
+    frame[i + 2] = color.b();
+  }
+
+  private void shiftRegisters() {
+    patternLoShift <<= 1;
+    patternHiShift <<= 1;
+    attributeLoShift <<= 1;
+    attributeHiShift <<= 1;
+  }
+
+  private void idle() {}
+
+  private void fetchTileData(int phase) {
+    if (phase == 0) {
+      // start fetch of nametable byte
+      return;
+    }
+    if (phase == 1) {
+      // finish fetch of nametable byte
+      nametableByte = fetchNametableByte();
+      return;
+    }
+    if (phase == 2) {
+      // start fetch of attribute table byte
+      return;
+    }
+    if (phase == 3) {
+      // finish fetch of attribute table byte
+      attributeByte = fetchAttributeByte();
+      return;
+    }
+    if (phase == 4) {
+      // start fetch of pattern table tile low byte into latch
+      return;
+    }
+    if (phase == 5) {
+      // finish fetch of pattern table tile low byte into latch
+      patternLoLatch = fetchPatternTableByte(0);
+      return;
+    }
+    if (phase == 6) {
+      // start fetch of pattern table tile high byte into latch
+      return;
+    }
+    if (phase == 7) {
+      // finish fetch of pattern table tile high byte into latch
+      patternHiLatch = fetchPatternTableByte(8);
+      return;
+    }
+    throw new IllegalStateException();
+  }
+
+  private void fetchSpriteData(int phase) {
+    // TODO: fetch sprite data
+  }
+
+  private void fetchUnusedBytes(int phase) {
+    if (phase == 0) {
+      // start fetch of first unused byte
+      return;
+    }
+    if (phase == 1) {
+      // finish fetch of first unused byte
+      fetchNametableByte();
+      return;
+    }
+    if (phase == 2) {
+      // start fetch of second unused byte
+      return;
+    }
+    if (phase == 3) {
+      // finish fetch of second unused byte
+      fetchNametableByte();
+      return;
+    }
+    throw new IllegalStateException();
+  }
+
+  private byte fetchNametableByte() {
+    short address = (short) (0x2000 | (v & 0x0fff));
+    //    return ram[mapper.getNametableMirrorAddress(address)];
+    return ram[v & 0x0fff];
+  }
+
+  private byte fetchAttributeByte() {
+    //    short mainNametable =
+    //        switch (Byte.toUnsignedInt(control) & 0b0000_0011) {
+    //          case 0 -> 0x0000;
+    //          case 1 -> (short) (mapper.isVerticalMirroring() ? 0x0400 : 0x0000);
+    //          case 2 -> (short) (mapper.isVerticalMirroring() ? 0x0000 : 0x0400);
+    //          case 3 -> 0x0400;
+    //          default -> throw new IllegalStateException();
+    //        };
+    //
+    //    int tileRow = scanline / 8;
+    //    int tileColumn = pixel / 8;
+    //    byte attrByte = ram[nametable + 0x03c0 + tileRow / 4 * 8 + tileColumn / 4];
+
+    int nametab = (v >> 0) & 0b0000_1100_0000_0000;
+    int coarseY = (v >> 4) & 0b0000_0000_0011_1000;
+    int coarseX = (v >> 2) & 0b0000_0000_0000_0111;
+    int address = 0b0000_0011_1100_0000 | nametab | coarseY | coarseX;
+    //    return ram[address % ram.length];
+    return ram[address];
+  }
+
+  private byte fetchPatternTableByte(int offset) {
+    int chrBank = bit8(control, 4) == 0 ? 0b0000_0000_0000_0000 : 0b0001_0000_0000_0000;
+    int fineY = (v >> 12) & 0b0111;
+    int chrIndex = chrBank | (Byte.toUnsignedInt(nametableByte) << 4) | offset | fineY;
+    return mapper.readChr((short) chrIndex);
+  }
+
+  private void doPostRenderScanline() {
+    idle();
+  }
+
+  private void doVerticalBlankingScanline() {
+    if (pixel == 1 && scanline == 241) {
+      // set vblank
+      status = (byte) (status | 0b1000_0000);
+      nmi = bit8(control, 7) == 1;
+      return;
+    }
+    idle();
+  }
+
+  private void reloadShiftRegisters() {
+    attributeLoShift &= (short) 0xff00;
+    attributeLoShift |= (short) (bit8(attributeByte, 0) == 0 ? 0x0000 : 0x00ff);
+
+    attributeHiShift &= (short) 0xff00;
+    attributeHiShift |= (short) (bit8(attributeByte, 1) == 0 ? 0x0000 : 0x00ff);
+
+    patternLoShift &= (short) 0xff00;
+    patternLoShift |= (short) Byte.toUnsignedInt(patternLoLatch);
+
+    patternHiShift &= (short) 0xff00;
+    patternHiShift |= (short) Byte.toUnsignedInt(patternHiLatch);
   }
 
   private NesPpuColor[] getBackgroundPalette(int attribute) {

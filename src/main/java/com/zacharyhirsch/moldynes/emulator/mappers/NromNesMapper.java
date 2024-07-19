@@ -74,22 +74,60 @@ final class NromNesMapper implements NesMapper {
     // Vertical mirroring:
     //   [ A ] [ B ]
     //   [ a ] [ b ]
+
+    int nametable = (address & 0b0000_1100_0000_0000) >>> 10;
+
+    short offset;
+    if (isVerticalMirroring()) {
+      offset =
+          switch (nametable) {
+            case 0, 2 -> 0b0000_0000_0000_0000;
+            case 1, 3 -> 0b0000_0100_0000_0000;
+            default -> throw new IllegalStateException();
+          };
+    } else {
+      offset =
+          switch (nametable) {
+            case 0, 1 -> 0b0000_0000_0000_0000;
+            case 2, 3 -> 0b0000_0100_0000_0000;
+            default -> throw new IllegalStateException();
+          };
+    }
+
+    int index = address & 0b0000_0011_1111_1111;
+    return (short) (offset | index);
+
+    //    boolean vertical = isVerticalMirroring();
     //
+    //    short ramIndex = (short) (address & 0b0000_1111_1111_1111);
+    //    int nametable = ramIndex >>> 10;
+    //    if (vertical && (nametable == 2 || nametable == 3)) {
+    //      return (short) (ramIndex - 0x0800);
+    //    }
+    //    if (!vertical && (nametable == 1 || nametable == 2)) {
+    //      short x = (short) (ramIndex - 0b0000_0100_0000_0000);
+    //      short y = (short) (ramIndex & 0b0000_1011_1111_1111);
+    //
+    //      return (short) (ramIndex - 0x0400);
+    //    }
+    //    if (!vertical && nametable == 3) {
+    //      return (short) (ramIndex - 0x0800);
+    //    }
+    //    return ramIndex;
 
-    boolean vertical = isVerticalMirroring();
-
-    short addr = (short) (address & 0b0010_1111_1111_1111);
-    short ramIndex = (short) (addr - 0x2000);
-    int nametable = ramIndex / 0x400;
-    if (vertical && (nametable == 2 || nametable == 3)) {
-      return (short) (ramIndex - 0x800);
-    }
-    if (!vertical && (nametable == 1 || nametable == 2)) {
-      return (short) (ramIndex - 0x400);
-    }
-    if (!vertical && nametable == 3) {
-      return (short) (ramIndex - 0x800);
-    }
-    return ramIndex;
+    //    boolean vertical = isVerticalMirroring();
+    //
+    //    short ramIndex = (short) (address & 0b0000_1111_1111_1111);
+    //    int nametable = ramIndex >>> 10;
+    //    if (vertical && (nametable == 2 || nametable == 3)) {
+    //      return (short) (ramIndex - 0b0000_1000_0000_0000);
+    //    }
+    //    if (!vertical && (nametable == 1 || nametable == 2)) {
+    //      return (short) (ramIndex - 0b0000_0100_0000_0000);
+    //    }
+    //    if (!vertical && nametable == 3) {
+    //      return (short) (ramIndex - 0b0000_0100_00000_0000);
+    //    }
+    //    return ramIndex;
   }
 }
