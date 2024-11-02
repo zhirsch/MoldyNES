@@ -24,7 +24,7 @@ public class InstrTestV5Tests {
   }
 
   private void runTest(String filename) throws IOException {
-    ByteBuffer buffer = read("instr_test-v5\\rom_singles\\" + filename);
+    ByteBuffer buffer = read("instr_test-v5/rom_singles/" + filename);
     NesMapper mapper = NesMapper.get(buffer);
     NesApu apu = new NesApu();
     NesJoypad joypad1 = new NesJoypad();
