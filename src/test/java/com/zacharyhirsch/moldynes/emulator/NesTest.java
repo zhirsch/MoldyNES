@@ -31,7 +31,7 @@ public class NesTest {
     NesJoypad joypad1 = new NesJoypad();
     NesJoypad joypad2 = new NesJoypad();
 
-    try (Display display = new Display(joypad1, joypad2)) {
+    try (SdlDisplay display = new SdlDisplay(joypad1, joypad2)) {
       NesPpu ppu = new NesPpu(mapper, display);
       NesBus bus = new NesBus(mapper, ppu, joypad1, joypad2);
       NesCpu cpu = new NesCpu(ppu, bus);
