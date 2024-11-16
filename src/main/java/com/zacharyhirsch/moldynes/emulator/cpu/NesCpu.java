@@ -9,9 +9,11 @@ public final class NesCpu {
   private final NesBus bus;
   private final NesCpuDecoder decoder;
 
+  public int cycleCount = 0;
   private NesCpuCycle cycle;
   private boolean halt;
   private boolean reset;
+  private boolean nmi;
 
   public final NesCpuState state;
   public final NesAlu alu;
@@ -24,9 +26,13 @@ public final class NesCpu {
     this.cycle = new NesCpuInit();
     this.halt = false;
     this.reset = false;
+    this.nmi = false;
 
     this.state = new NesCpuState();
     this.alu = new NesAlu();
+
+    this.ppu.setNmiHandler(() -> nmi = true);
+    this.ppu.setCycleCountFn(() -> cycleCount);
   }
 
   public boolean tick() {
@@ -34,6 +40,7 @@ public final class NesCpu {
       return false;
     }
     try {
+      cycleCount++;
       cycle = cycle.execute(this);
       if (state.write) {
         bus.write(state.adh, state.adl, state.data);
@@ -56,7 +63,8 @@ public final class NesCpu {
       state.p |= NesCpuState.STATUS_I;
       return new NesCpuInit().execute(this);
     }
-    if (ppu.nmi()) {
+    if (nmi) {
+      nmi = false;
       state.pc--;
       return new NesCpuNmi().execute(this);
     }

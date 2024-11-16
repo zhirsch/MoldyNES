@@ -8,7 +8,7 @@ final class NromNesMapper implements NesMapper {
   private final byte[] header;
   private final byte[] ram;
   private final byte[] prgRom;
-  private final byte[] chrRom;
+  private final byte[] chrRam;
 
   public NromNesMapper(byte[] header, ByteBuffer buffer) {
     this.header = header;
@@ -17,8 +17,10 @@ final class NromNesMapper implements NesMapper {
     prgRom = new byte[header[4] << 14];
     buffer.get(0x10, prgRom, 0, prgRom.length);
 
-    chrRom = new byte[header[5] << 13];
-    buffer.get(0x10 + prgRom.length, chrRom, 0, chrRom.length);
+    int chrRomLength = header[5] << 13;
+    int chrRamLength = Math.max(chrRomLength, 0x2000);
+    chrRam = new byte[chrRamLength];
+    buffer.get(0x10 + prgRom.length, chrRam, 0, chrRomLength);
   }
 
   @Override
@@ -51,13 +53,14 @@ final class NromNesMapper implements NesMapper {
   @Override
   public byte readChr(short address) {
     int addr = Short.toUnsignedInt(address);
-    return chrRom[addr];
+    return chrRam[addr];
   }
 
   @Override
   public void writeChr(short address, byte data) {
     int addr = Short.toUnsignedInt(address);
-    throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+    //    throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+    chrRam[addr] = data;
   }
 
   @Override

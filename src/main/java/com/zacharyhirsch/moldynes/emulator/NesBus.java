@@ -30,14 +30,26 @@ public class NesBus {
     if (0x0800 <= addr && addr < 0x2000) {
       return read((short) (addr & 0b0000_0111_1111_1111));
     }
+    if (addr == 0x2000) {
+      throw new IllegalArgumentException("reading PPUCTRL is not allowed");
+    }
     if (addr == 0x2001) {
       return ppu.readMask();
     }
     if (addr == 0x2002) {
       return ppu.readStatus();
     }
+    if (addr == 0x2003) {
+      throw new IllegalArgumentException("reading OAMADDR is not allowed");
+    }
     if (addr == 0x2004) {
       return ppu.readOamData();
+    }
+    if (addr == 0x2005) {
+      throw new IllegalArgumentException("reading PPUSCROLL is not allowed");
+    }
+    if (addr == 0x2006) {
+      throw new IllegalArgumentException("reading PPUADDR is not allowed");
     }
     if (addr == 0x2007) {
       return ppu.readData();
@@ -45,7 +57,14 @@ public class NesBus {
     if (0x2008 <= addr && addr < 0x4000) {
       return read((short) (addr & 0b0010_0000_0000_0111));
     }
-    if (0x4000 <= addr && addr < 0x4014 || addr == 0x4015) {
+    if (0x4000 <= addr && addr < 0x4014) {
+      // APU
+      return (byte) 0x00;
+    }
+    if (addr == 0x4014) {
+      throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+    }
+    if (addr == 0x4015) {
       // APU
       return (byte) 0x00;
     }
@@ -54,6 +73,9 @@ public class NesBus {
     }
     if (addr == 0x4017) {
       return joypad2.read();
+    }
+    if (0x4018 <= addr && addr < 0x4020) {
+      throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
     }
     if (0x4020 <= addr && addr < 0x10000) {
       return mapper.read((short) addr);
@@ -83,6 +105,9 @@ public class NesBus {
       ppu.writeMask(data);
       return;
     }
+    if (addr == 0x2002) {
+      throw new IllegalArgumentException("writing PPUSTATUS is not allowed");
+    }
     if (addr == 0x2003) {
       ppu.writeOamAddr(data);
       return;
@@ -107,6 +132,10 @@ public class NesBus {
       write((short) (addr & 0b0010_0000_0000_0111), data);
       return;
     }
+    if (0x4000 <= addr && addr < 0x4014) {
+      // APU
+      return;
+    }
     if (addr == 0x4014) {
       byte[] buffer = new byte[0x100];
       for (int i = 0; i < 256; i++) {
@@ -116,7 +145,7 @@ public class NesBus {
       // TODO: account for cycles during DMA
       return;
     }
-    if (0x4000 <= addr && addr < 0x4014 || address == 0x4015) {
+    if (addr == 0x4015) {
       // APU
       return;
     }
@@ -127,6 +156,9 @@ public class NesBus {
     }
     if (addr == 0x4017) {
       return;
+    }
+    if (0x4018 <= addr && addr < 0x4020) {
+      throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
     }
     if (0x4020 <= addr && addr < 0x10000) {
       mapper.write((short) addr, data);

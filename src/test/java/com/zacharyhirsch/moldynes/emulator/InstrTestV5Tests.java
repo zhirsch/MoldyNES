@@ -2,10 +2,12 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.io.Resources;
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
+import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -36,7 +38,7 @@ public class InstrTestV5Tests {
     NesJoypad joypad2 = new NesJoypad();
 
     NesApu apu = new NesApu();
-    NesPpu ppu = new NesPpu(mapper, new FakeDisplay());
+    NesPpu ppu = new NesPpu(mapper, new FakeDisplay(), loadPalette());
     NesBus bus = new NesBus(mapper, ppu, joypad1, joypad2);
     NesCpu cpu = new NesCpu(ppu, bus);
     Emulator emulator = new Emulator(cpu, ppu, apu);
@@ -56,6 +58,12 @@ public class InstrTestV5Tests {
     System.out.println(readStatusString(bus));
 
     assertThat(status).isEqualTo(0x00);
+  }
+
+  private static NesPpuPalette loadPalette() throws IOException {
+    try (InputStream input = Resources.getResource("Composite_wiki.pal").openStream()) {
+      return NesPpuPalette.load(input);
+    }
   }
 
   @Test
