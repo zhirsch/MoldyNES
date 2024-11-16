@@ -1,674 +1,2044 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
+import com.zacharyhirsch.moldynes.emulator.Display;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
-import java.util.function.UnaryOperator;
+import java.util.Arrays;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 public final class NesPpu {
 
-  public interface DrawFrame {
+  private interface TickFn extends BiConsumer<NesPpu, Boolean> {}
 
-    void draw(byte[] frame);
-  }
+  private static final TickFn[][] VISIBLE_SCANLINE = {
+    /*   0 */ {},
+    /*   1 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*   2 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*   3 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*   4 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*   5 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*   6 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*   7 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*   8 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*   9 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  10 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  11 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  12 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  13 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  14 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  15 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  16 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  17 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  18 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  19 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  20 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  21 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  22 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  23 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  24 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  25 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  26 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  27 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  28 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  29 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  30 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  31 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  32 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  33 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  34 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  35 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  36 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  37 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  38 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  39 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  40 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  41 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  42 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  43 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  44 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  45 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  46 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  47 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  48 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  49 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  50 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  51 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  52 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  53 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  54 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  55 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  56 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  57 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  58 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  59 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  60 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  61 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  62 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  63 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  64 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  65 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  66 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  67 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  68 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  69 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  70 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  71 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  72 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  73 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  74 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  75 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  76 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  77 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  78 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  79 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  80 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  81 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  82 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  83 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  84 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  85 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  86 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  87 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  88 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  89 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  90 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  91 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  92 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  93 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  94 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  95 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  96 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  97 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  98 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  99 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 100 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 101 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 102 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 103 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 104 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 105 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 106 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 107 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 108 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 109 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 110 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 111 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 112 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 113 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 114 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 115 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 116 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 117 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 118 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 119 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 120 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 121 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 122 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 123 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 124 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 125 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 126 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 127 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 128 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 129 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 130 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 131 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 132 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 133 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 134 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 135 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 136 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 137 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 138 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 139 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 140 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 141 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 142 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 143 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 144 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 145 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 146 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 147 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 148 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 149 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 150 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 151 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 152 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 153 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 154 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 155 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 156 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 157 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 158 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 159 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 160 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 161 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 162 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 163 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 164 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 165 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 166 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 167 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 168 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 169 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 170 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 171 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 172 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 173 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 174 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 175 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 176 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 177 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 178 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 179 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 180 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 181 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 182 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 183 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 184 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 185 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 186 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 187 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 188 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 189 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 190 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 191 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 192 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 193 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 194 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 195 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 196 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 197 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 198 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 199 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 200 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 201 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 202 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 203 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 204 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 205 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 206 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 207 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 208 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 209 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 210 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 211 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 212 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 213 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 214 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 215 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 216 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 217 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 218 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 219 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 220 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 221 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 222 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 223 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 224 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 225 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 226 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 227 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 228 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 229 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 230 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 231 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 232 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 233 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 234 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 235 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 236 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 237 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 238 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 239 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 240 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 241 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 242 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 243 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 244 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 245 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 246 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 247 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 248 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 249 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 250 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 251 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 252 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 253 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 254 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 255 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 256 */ {
+      NesPpu::renderPixel,
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::incrementVertical,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 257 */ {NesPpu::reloadHorizontal, NesPpu::fetchNametableByte1},
+    /* 258 */ {NesPpu::fetchNametableByte2},
+    /* 259 */ {NesPpu::fetchNametableByte1},
+    /* 260 */ {NesPpu::fetchNametableByte2},
+    /* 261 */ {}, // TODO: sprite
+    /* 262 */ {}, // TODO: sprite
+    /* 263 */ {}, // TODO: sprite
+    /* 264 */ {}, // TODO: sprite
+    /* 265 */ {NesPpu::fetchNametableByte1},
+    /* 266 */ {NesPpu::fetchNametableByte2},
+    /* 267 */ {NesPpu::fetchNametableByte1},
+    /* 268 */ {NesPpu::fetchNametableByte2},
+    /* 269 */ {}, // TODO: sprite
+    /* 270 */ {}, // TODO: sprite
+    /* 271 */ {}, // TODO: sprite
+    /* 272 */ {}, // TODO: sprite
+    /* 273 */ {NesPpu::fetchNametableByte1},
+    /* 274 */ {NesPpu::fetchNametableByte2},
+    /* 275 */ {NesPpu::fetchNametableByte1},
+    /* 276 */ {NesPpu::fetchNametableByte2},
+    /* 277 */ {}, // TODO: sprite
+    /* 278 */ {}, // TODO: sprite
+    /* 279 */ {}, // TODO: sprite
+    /* 280 */ {}, // TODO: sprite
+    /* 281 */ {NesPpu::fetchNametableByte1},
+    /* 282 */ {NesPpu::fetchNametableByte2},
+    /* 283 */ {NesPpu::fetchNametableByte1},
+    /* 284 */ {NesPpu::fetchNametableByte2},
+    /* 285 */ {}, // TODO: sprite
+    /* 286 */ {}, // TODO: sprite
+    /* 287 */ {}, // TODO: sprite
+    /* 288 */ {}, // TODO: sprite
+    /* 289 */ {NesPpu::fetchNametableByte1},
+    /* 290 */ {NesPpu::fetchNametableByte2},
+    /* 291 */ {NesPpu::fetchNametableByte1},
+    /* 292 */ {NesPpu::fetchNametableByte2},
+    /* 293 */ {}, // TODO: sprite
+    /* 294 */ {}, // TODO: sprite
+    /* 295 */ {}, // TODO: sprite
+    /* 296 */ {}, // TODO: sprite
+    /* 297 */ {NesPpu::fetchNametableByte1},
+    /* 298 */ {NesPpu::fetchNametableByte2},
+    /* 299 */ {NesPpu::fetchNametableByte1},
+    /* 300 */ {NesPpu::fetchNametableByte2},
+    /* 301 */ {}, // TODO: sprite
+    /* 302 */ {}, // TODO: sprite
+    /* 303 */ {}, // TODO: sprite
+    /* 304 */ {}, // TODO: sprite
+    /* 305 */ {NesPpu::fetchNametableByte1},
+    /* 306 */ {NesPpu::fetchNametableByte2},
+    /* 307 */ {NesPpu::fetchNametableByte1},
+    /* 308 */ {NesPpu::fetchNametableByte2},
+    /* 309 */ {}, // TODO: sprite
+    /* 310 */ {}, // TODO: sprite
+    /* 311 */ {}, // TODO: sprite
+    /* 312 */ {}, // TODO: sprite
+    /* 313 */ {NesPpu::fetchNametableByte1},
+    /* 314 */ {NesPpu::fetchNametableByte2},
+    /* 315 */ {NesPpu::fetchNametableByte1},
+    /* 316 */ {NesPpu::fetchNametableByte2},
+    /* 317 */ {}, // TODO: sprite
+    /* 318 */ {}, // TODO: sprite
+    /* 319 */ {}, // TODO: sprite
+    /* 320 */ {}, // TODO: sprite
+    /* 321 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 322 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 323 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 324 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 325 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 326 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 327 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 328 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 329 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 330 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 331 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 332 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 333 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 334 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 335 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 336 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 337 */ {NesPpu::fetchNametableByte1},
+    /* 338 */ {NesPpu::fetchNametableByte2},
+    /* 339 */ {NesPpu::fetchNametableByte1},
+    /* 340 */ {NesPpu::fetchNametableByte2},
+  };
 
-  private interface Tick extends UnaryOperator<NesPpu> {
+  private static final TickFn[][] POST_RENDER_SCANLINE = {
+    /*   0 */ {},
+    /*   1 */ {},
+    /*   2 */ {},
+    /*   3 */ {},
+    /*   4 */ {},
+    /*   5 */ {},
+    /*   6 */ {},
+    /*   7 */ {},
+    /*   8 */ {},
+    /*   9 */ {},
+    /*  10 */ {},
+    /*  11 */ {},
+    /*  12 */ {},
+    /*  13 */ {},
+    /*  14 */ {},
+    /*  15 */ {},
+    /*  16 */ {},
+    /*  17 */ {},
+    /*  18 */ {},
+    /*  19 */ {},
+    /*  20 */ {},
+    /*  21 */ {},
+    /*  22 */ {},
+    /*  23 */ {},
+    /*  24 */ {},
+    /*  25 */ {},
+    /*  26 */ {},
+    /*  27 */ {},
+    /*  28 */ {},
+    /*  29 */ {},
+    /*  30 */ {},
+    /*  31 */ {},
+    /*  32 */ {},
+    /*  33 */ {},
+    /*  34 */ {},
+    /*  35 */ {},
+    /*  36 */ {},
+    /*  37 */ {},
+    /*  38 */ {},
+    /*  39 */ {},
+    /*  40 */ {},
+    /*  41 */ {},
+    /*  42 */ {},
+    /*  43 */ {},
+    /*  44 */ {},
+    /*  45 */ {},
+    /*  46 */ {},
+    /*  47 */ {},
+    /*  48 */ {},
+    /*  49 */ {},
+    /*  50 */ {},
+    /*  51 */ {},
+    /*  52 */ {},
+    /*  53 */ {},
+    /*  54 */ {},
+    /*  55 */ {},
+    /*  56 */ {},
+    /*  57 */ {},
+    /*  58 */ {},
+    /*  59 */ {},
+    /*  60 */ {},
+    /*  61 */ {},
+    /*  62 */ {},
+    /*  63 */ {},
+    /*  64 */ {},
+    /*  65 */ {},
+    /*  66 */ {},
+    /*  67 */ {},
+    /*  68 */ {},
+    /*  69 */ {},
+    /*  70 */ {},
+    /*  71 */ {},
+    /*  72 */ {},
+    /*  73 */ {},
+    /*  74 */ {},
+    /*  75 */ {},
+    /*  76 */ {},
+    /*  77 */ {},
+    /*  78 */ {},
+    /*  79 */ {},
+    /*  80 */ {},
+    /*  81 */ {},
+    /*  82 */ {},
+    /*  83 */ {},
+    /*  84 */ {},
+    /*  85 */ {},
+    /*  86 */ {},
+    /*  87 */ {},
+    /*  88 */ {},
+    /*  89 */ {},
+    /*  90 */ {},
+    /*  91 */ {},
+    /*  92 */ {},
+    /*  93 */ {},
+    /*  94 */ {},
+    /*  95 */ {},
+    /*  96 */ {},
+    /*  97 */ {},
+    /*  98 */ {},
+    /*  99 */ {},
+    /* 100 */ {},
+    /* 101 */ {},
+    /* 102 */ {},
+    /* 103 */ {},
+    /* 104 */ {},
+    /* 105 */ {},
+    /* 106 */ {},
+    /* 107 */ {},
+    /* 108 */ {},
+    /* 109 */ {},
+    /* 110 */ {},
+    /* 111 */ {},
+    /* 112 */ {},
+    /* 113 */ {},
+    /* 114 */ {},
+    /* 115 */ {},
+    /* 116 */ {},
+    /* 117 */ {},
+    /* 118 */ {},
+    /* 119 */ {},
+    /* 120 */ {},
+    /* 121 */ {},
+    /* 122 */ {},
+    /* 123 */ {},
+    /* 124 */ {},
+    /* 125 */ {},
+    /* 126 */ {},
+    /* 127 */ {},
+    /* 128 */ {},
+    /* 129 */ {},
+    /* 130 */ {},
+    /* 131 */ {},
+    /* 132 */ {},
+    /* 133 */ {},
+    /* 134 */ {},
+    /* 135 */ {},
+    /* 136 */ {},
+    /* 137 */ {},
+    /* 138 */ {},
+    /* 139 */ {},
+    /* 140 */ {},
+    /* 141 */ {},
+    /* 142 */ {},
+    /* 143 */ {},
+    /* 144 */ {},
+    /* 145 */ {},
+    /* 146 */ {},
+    /* 147 */ {},
+    /* 148 */ {},
+    /* 149 */ {},
+    /* 150 */ {},
+    /* 151 */ {},
+    /* 152 */ {},
+    /* 153 */ {},
+    /* 154 */ {},
+    /* 155 */ {},
+    /* 156 */ {},
+    /* 157 */ {},
+    /* 158 */ {},
+    /* 159 */ {},
+    /* 160 */ {},
+    /* 161 */ {},
+    /* 162 */ {},
+    /* 163 */ {},
+    /* 164 */ {},
+    /* 165 */ {},
+    /* 166 */ {},
+    /* 167 */ {},
+    /* 168 */ {},
+    /* 169 */ {},
+    /* 170 */ {},
+    /* 171 */ {},
+    /* 172 */ {},
+    /* 173 */ {},
+    /* 174 */ {},
+    /* 175 */ {},
+    /* 176 */ {},
+    /* 177 */ {},
+    /* 178 */ {},
+    /* 179 */ {},
+    /* 180 */ {},
+    /* 181 */ {},
+    /* 182 */ {},
+    /* 183 */ {},
+    /* 184 */ {},
+    /* 185 */ {},
+    /* 186 */ {},
+    /* 187 */ {},
+    /* 188 */ {},
+    /* 189 */ {},
+    /* 190 */ {},
+    /* 191 */ {},
+    /* 192 */ {},
+    /* 193 */ {},
+    /* 194 */ {},
+    /* 195 */ {},
+    /* 196 */ {},
+    /* 197 */ {},
+    /* 198 */ {},
+    /* 199 */ {},
+    /* 200 */ {},
+    /* 201 */ {},
+    /* 202 */ {},
+    /* 203 */ {},
+    /* 204 */ {},
+    /* 205 */ {},
+    /* 206 */ {},
+    /* 207 */ {},
+    /* 208 */ {},
+    /* 209 */ {},
+    /* 210 */ {},
+    /* 211 */ {},
+    /* 212 */ {},
+    /* 213 */ {},
+    /* 214 */ {},
+    /* 215 */ {},
+    /* 216 */ {},
+    /* 217 */ {},
+    /* 218 */ {},
+    /* 219 */ {},
+    /* 220 */ {},
+    /* 221 */ {},
+    /* 222 */ {},
+    /* 223 */ {},
+    /* 224 */ {},
+    /* 225 */ {},
+    /* 226 */ {},
+    /* 227 */ {},
+    /* 228 */ {},
+    /* 229 */ {},
+    /* 230 */ {},
+    /* 231 */ {},
+    /* 232 */ {},
+    /* 233 */ {},
+    /* 234 */ {},
+    /* 235 */ {},
+    /* 236 */ {},
+    /* 237 */ {},
+    /* 238 */ {},
+    /* 239 */ {},
+    /* 240 */ {},
+    /* 241 */ {},
+    /* 242 */ {},
+    /* 243 */ {},
+    /* 244 */ {},
+    /* 245 */ {},
+    /* 246 */ {},
+    /* 247 */ {},
+    /* 248 */ {},
+    /* 249 */ {},
+    /* 250 */ {},
+    /* 251 */ {},
+    /* 252 */ {},
+    /* 253 */ {},
+    /* 254 */ {},
+    /* 255 */ {},
+    /* 256 */ {},
+    /* 257 */ {},
+    /* 258 */ {},
+    /* 259 */ {},
+    /* 260 */ {},
+    /* 261 */ {},
+    /* 262 */ {},
+    /* 263 */ {},
+    /* 264 */ {},
+    /* 265 */ {},
+    /* 266 */ {},
+    /* 267 */ {},
+    /* 268 */ {},
+    /* 269 */ {},
+    /* 270 */ {},
+    /* 271 */ {},
+    /* 272 */ {},
+    /* 273 */ {},
+    /* 274 */ {},
+    /* 275 */ {},
+    /* 276 */ {},
+    /* 277 */ {},
+    /* 278 */ {},
+    /* 279 */ {},
+    /* 280 */ {},
+    /* 281 */ {},
+    /* 282 */ {},
+    /* 283 */ {},
+    /* 284 */ {},
+    /* 285 */ {},
+    /* 286 */ {},
+    /* 287 */ {},
+    /* 288 */ {},
+    /* 289 */ {},
+    /* 290 */ {},
+    /* 291 */ {},
+    /* 292 */ {},
+    /* 293 */ {},
+    /* 294 */ {},
+    /* 295 */ {},
+    /* 296 */ {},
+    /* 297 */ {},
+    /* 298 */ {},
+    /* 299 */ {},
+    /* 300 */ {},
+    /* 301 */ {},
+    /* 302 */ {},
+    /* 303 */ {},
+    /* 304 */ {},
+    /* 305 */ {},
+    /* 306 */ {},
+    /* 307 */ {},
+    /* 308 */ {},
+    /* 309 */ {},
+    /* 310 */ {},
+    /* 311 */ {},
+    /* 312 */ {},
+    /* 313 */ {},
+    /* 314 */ {},
+    /* 315 */ {},
+    /* 316 */ {},
+    /* 317 */ {},
+    /* 318 */ {},
+    /* 319 */ {},
+    /* 320 */ {},
+    /* 321 */ {},
+    /* 322 */ {},
+    /* 323 */ {},
+    /* 324 */ {},
+    /* 325 */ {},
+    /* 326 */ {},
+    /* 327 */ {},
+    /* 328 */ {},
+    /* 329 */ {},
+    /* 330 */ {},
+    /* 331 */ {},
+    /* 332 */ {},
+    /* 333 */ {},
+    /* 334 */ {},
+    /* 335 */ {},
+    /* 336 */ {},
+    /* 337 */ {},
+    /* 338 */ {},
+    /* 339 */ {},
+    /* 340 */ {},
+  };
+  private static final TickFn[][] VBLANK_SCANLINE = {
+    /*   0 */ {NesPpu::drawFrame},
+    /*   1 */ {NesPpu::setVBlankNmi},
+    /*   2 */ {},
+    /*   3 */ {},
+    /*   4 */ {},
+    /*   5 */ {},
+    /*   6 */ {},
+    /*   7 */ {},
+    /*   8 */ {},
+    /*   9 */ {},
+    /*  10 */ {},
+    /*  11 */ {},
+    /*  12 */ {},
+    /*  13 */ {},
+    /*  14 */ {},
+    /*  15 */ {},
+    /*  16 */ {},
+    /*  17 */ {},
+    /*  18 */ {},
+    /*  19 */ {},
+    /*  20 */ {},
+    /*  21 */ {},
+    /*  22 */ {},
+    /*  23 */ {},
+    /*  24 */ {},
+    /*  25 */ {},
+    /*  26 */ {},
+    /*  27 */ {},
+    /*  28 */ {},
+    /*  29 */ {},
+    /*  30 */ {},
+    /*  31 */ {},
+    /*  32 */ {},
+    /*  33 */ {},
+    /*  34 */ {},
+    /*  35 */ {},
+    /*  36 */ {},
+    /*  37 */ {},
+    /*  38 */ {},
+    /*  39 */ {},
+    /*  40 */ {},
+    /*  41 */ {},
+    /*  42 */ {},
+    /*  43 */ {},
+    /*  44 */ {},
+    /*  45 */ {},
+    /*  46 */ {},
+    /*  47 */ {},
+    /*  48 */ {},
+    /*  49 */ {},
+    /*  50 */ {},
+    /*  51 */ {},
+    /*  52 */ {},
+    /*  53 */ {},
+    /*  54 */ {},
+    /*  55 */ {},
+    /*  56 */ {},
+    /*  57 */ {},
+    /*  58 */ {},
+    /*  59 */ {},
+    /*  60 */ {},
+    /*  61 */ {},
+    /*  62 */ {},
+    /*  63 */ {},
+    /*  64 */ {},
+    /*  65 */ {},
+    /*  66 */ {},
+    /*  67 */ {},
+    /*  68 */ {},
+    /*  69 */ {},
+    /*  70 */ {},
+    /*  71 */ {},
+    /*  72 */ {},
+    /*  73 */ {},
+    /*  74 */ {},
+    /*  75 */ {},
+    /*  76 */ {},
+    /*  77 */ {},
+    /*  78 */ {},
+    /*  79 */ {},
+    /*  80 */ {},
+    /*  81 */ {},
+    /*  82 */ {},
+    /*  83 */ {},
+    /*  84 */ {},
+    /*  85 */ {},
+    /*  86 */ {},
+    /*  87 */ {},
+    /*  88 */ {},
+    /*  89 */ {},
+    /*  90 */ {},
+    /*  91 */ {},
+    /*  92 */ {},
+    /*  93 */ {},
+    /*  94 */ {},
+    /*  95 */ {},
+    /*  96 */ {},
+    /*  97 */ {},
+    /*  98 */ {},
+    /*  99 */ {},
+    /* 100 */ {},
+    /* 101 */ {},
+    /* 102 */ {},
+    /* 103 */ {},
+    /* 104 */ {},
+    /* 105 */ {},
+    /* 106 */ {},
+    /* 107 */ {},
+    /* 108 */ {},
+    /* 109 */ {},
+    /* 110 */ {},
+    /* 111 */ {},
+    /* 112 */ {},
+    /* 113 */ {},
+    /* 114 */ {},
+    /* 115 */ {},
+    /* 116 */ {},
+    /* 117 */ {},
+    /* 118 */ {},
+    /* 119 */ {},
+    /* 120 */ {},
+    /* 121 */ {},
+    /* 122 */ {},
+    /* 123 */ {},
+    /* 124 */ {},
+    /* 125 */ {},
+    /* 126 */ {},
+    /* 127 */ {},
+    /* 128 */ {},
+    /* 129 */ {},
+    /* 130 */ {},
+    /* 131 */ {},
+    /* 132 */ {},
+    /* 133 */ {},
+    /* 134 */ {},
+    /* 135 */ {},
+    /* 136 */ {},
+    /* 137 */ {},
+    /* 138 */ {},
+    /* 139 */ {},
+    /* 140 */ {},
+    /* 141 */ {},
+    /* 142 */ {},
+    /* 143 */ {},
+    /* 144 */ {},
+    /* 145 */ {},
+    /* 146 */ {},
+    /* 147 */ {},
+    /* 148 */ {},
+    /* 149 */ {},
+    /* 150 */ {},
+    /* 151 */ {},
+    /* 152 */ {},
+    /* 153 */ {},
+    /* 154 */ {},
+    /* 155 */ {},
+    /* 156 */ {},
+    /* 157 */ {},
+    /* 158 */ {},
+    /* 159 */ {},
+    /* 160 */ {},
+    /* 161 */ {},
+    /* 162 */ {},
+    /* 163 */ {},
+    /* 164 */ {},
+    /* 165 */ {},
+    /* 166 */ {},
+    /* 167 */ {},
+    /* 168 */ {},
+    /* 169 */ {},
+    /* 170 */ {},
+    /* 171 */ {},
+    /* 172 */ {},
+    /* 173 */ {},
+    /* 174 */ {},
+    /* 175 */ {},
+    /* 176 */ {},
+    /* 177 */ {},
+    /* 178 */ {},
+    /* 179 */ {},
+    /* 180 */ {},
+    /* 181 */ {},
+    /* 182 */ {},
+    /* 183 */ {},
+    /* 184 */ {},
+    /* 185 */ {},
+    /* 186 */ {},
+    /* 187 */ {},
+    /* 188 */ {},
+    /* 189 */ {},
+    /* 190 */ {},
+    /* 191 */ {},
+    /* 192 */ {},
+    /* 193 */ {},
+    /* 194 */ {},
+    /* 195 */ {},
+    /* 196 */ {},
+    /* 197 */ {},
+    /* 198 */ {},
+    /* 199 */ {},
+    /* 200 */ {},
+    /* 201 */ {},
+    /* 202 */ {},
+    /* 203 */ {},
+    /* 204 */ {},
+    /* 205 */ {},
+    /* 206 */ {},
+    /* 207 */ {},
+    /* 208 */ {},
+    /* 209 */ {},
+    /* 210 */ {},
+    /* 211 */ {},
+    /* 212 */ {},
+    /* 213 */ {},
+    /* 214 */ {},
+    /* 215 */ {},
+    /* 216 */ {},
+    /* 217 */ {},
+    /* 218 */ {},
+    /* 219 */ {},
+    /* 220 */ {},
+    /* 221 */ {},
+    /* 222 */ {},
+    /* 223 */ {},
+    /* 224 */ {},
+    /* 225 */ {},
+    /* 226 */ {},
+    /* 227 */ {},
+    /* 228 */ {},
+    /* 229 */ {},
+    /* 230 */ {},
+    /* 231 */ {},
+    /* 232 */ {},
+    /* 233 */ {},
+    /* 234 */ {},
+    /* 235 */ {},
+    /* 236 */ {},
+    /* 237 */ {},
+    /* 238 */ {},
+    /* 239 */ {},
+    /* 240 */ {},
+    /* 241 */ {},
+    /* 242 */ {},
+    /* 243 */ {},
+    /* 244 */ {},
+    /* 245 */ {},
+    /* 246 */ {},
+    /* 247 */ {},
+    /* 248 */ {},
+    /* 249 */ {},
+    /* 250 */ {},
+    /* 251 */ {},
+    /* 252 */ {},
+    /* 253 */ {},
+    /* 254 */ {},
+    /* 255 */ {},
+    /* 256 */ {},
+    /* 257 */ {},
+    /* 258 */ {},
+    /* 259 */ {},
+    /* 260 */ {},
+    /* 261 */ {},
+    /* 262 */ {},
+    /* 263 */ {},
+    /* 264 */ {},
+    /* 265 */ {},
+    /* 266 */ {},
+    /* 267 */ {},
+    /* 268 */ {},
+    /* 269 */ {},
+    /* 270 */ {},
+    /* 271 */ {},
+    /* 272 */ {},
+    /* 273 */ {},
+    /* 274 */ {},
+    /* 275 */ {},
+    /* 276 */ {},
+    /* 277 */ {},
+    /* 278 */ {},
+    /* 279 */ {},
+    /* 280 */ {},
+    /* 281 */ {},
+    /* 282 */ {},
+    /* 283 */ {},
+    /* 284 */ {},
+    /* 285 */ {},
+    /* 286 */ {},
+    /* 287 */ {},
+    /* 288 */ {},
+    /* 289 */ {},
+    /* 290 */ {},
+    /* 291 */ {},
+    /* 292 */ {},
+    /* 293 */ {},
+    /* 294 */ {},
+    /* 295 */ {},
+    /* 296 */ {},
+    /* 297 */ {},
+    /* 298 */ {},
+    /* 299 */ {},
+    /* 300 */ {},
+    /* 301 */ {},
+    /* 302 */ {},
+    /* 303 */ {},
+    /* 304 */ {},
+    /* 305 */ {},
+    /* 306 */ {},
+    /* 307 */ {},
+    /* 308 */ {},
+    /* 309 */ {},
+    /* 310 */ {},
+    /* 311 */ {},
+    /* 312 */ {},
+    /* 313 */ {},
+    /* 314 */ {},
+    /* 315 */ {},
+    /* 316 */ {},
+    /* 317 */ {},
+    /* 318 */ {},
+    /* 319 */ {},
+    /* 320 */ {},
+    /* 321 */ {},
+    /* 322 */ {},
+    /* 323 */ {},
+    /* 324 */ {},
+    /* 325 */ {},
+    /* 326 */ {},
+    /* 327 */ {},
+    /* 328 */ {},
+    /* 329 */ {},
+    /* 330 */ {},
+    /* 331 */ {},
+    /* 332 */ {},
+    /* 333 */ {},
+    /* 334 */ {},
+    /* 335 */ {},
+    /* 336 */ {},
+    /* 337 */ {},
+    /* 338 */ {},
+    /* 339 */ {},
+    /* 340 */ {},
+  };
 
-    static Tick create(Tick... fns) {
-      Tick retval = (Tick) UnaryOperator.<NesPpu>identity();
-      for (Tick fn : fns) {
-        retval = (Tick) retval.andThen(fn);
-      }
-      return retval;
-    }
-  }
+  private static final TickFn[][] PRE_RENDER_SCANLINE = {
+    /*   0 */ {NesPpu::clearVBlankNmi, NesPpu::clearSprite0Hit},
+    /*   1 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*   2 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*   3 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*   4 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*   5 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*   6 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*   7 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*   8 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*   9 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  10 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  11 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  12 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  13 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  14 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  15 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  16 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  17 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  18 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  19 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  20 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  21 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  22 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  23 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  24 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  25 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  26 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  27 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  28 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  29 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  30 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  31 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  32 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  33 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  34 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  35 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  36 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  37 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  38 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  39 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  40 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  41 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  42 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  43 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  44 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  45 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  46 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  47 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  48 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  49 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  50 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  51 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  52 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  53 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  54 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  55 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  56 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  57 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  58 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  59 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  60 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  61 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  62 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  63 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  64 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  65 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  66 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  67 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  68 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  69 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  70 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  71 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  72 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  73 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  74 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  75 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  76 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  77 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  78 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  79 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  80 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  81 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  82 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  83 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  84 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  85 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  86 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  87 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  88 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  89 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  90 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  91 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /*  92 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /*  93 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /*  94 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /*  95 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /*  96 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /*  97 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*  98 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /*  99 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 100 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 101 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 102 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 103 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 104 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 105 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 106 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 107 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 108 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 109 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 110 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 111 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 112 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 113 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 114 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 115 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 116 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 117 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 118 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 119 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 120 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 121 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 122 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 123 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 124 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 125 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 126 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 127 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 128 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 129 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 130 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 131 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 132 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 133 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 134 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 135 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 136 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 137 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 138 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 139 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 140 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 141 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 142 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 143 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 144 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 145 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 146 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 147 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 148 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 149 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 150 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 151 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 152 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 153 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 154 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 155 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 156 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 157 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 158 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 159 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 160 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 161 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 162 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 163 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 164 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 165 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 166 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 167 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 168 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 169 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 170 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 171 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 172 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 173 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 174 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 175 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 176 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 177 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 178 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 179 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 180 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 181 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 182 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 183 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 184 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 185 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 186 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 187 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 188 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 189 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 190 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 191 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 192 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 193 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 194 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 195 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 196 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 197 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 198 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 199 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 200 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 201 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 202 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 203 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 204 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 205 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 206 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 207 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 208 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 209 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 210 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 211 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 212 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 213 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 214 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 215 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 216 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 217 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 218 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 219 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 220 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 221 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 222 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 223 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 224 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 225 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 226 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 227 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 228 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 229 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 230 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 231 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 232 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 233 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 234 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 235 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 236 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 237 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 238 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 239 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 240 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 241 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 242 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 243 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 244 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 245 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 246 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 247 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 248 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 249 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 250 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 251 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 252 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 253 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 254 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 255 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 256 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::incrementVertical,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 257 */ {NesPpu::reloadHorizontal, NesPpu::fetchNametableByte1},
+    /* 258 */ {NesPpu::fetchNametableByte2},
+    /* 259 */ {NesPpu::fetchNametableByte1},
+    /* 260 */ {NesPpu::fetchNametableByte2},
+    /* 261 */ {}, // TODO: sprite
+    /* 262 */ {}, // TODO: sprite
+    /* 263 */ {}, // TODO: sprite
+    /* 264 */ {}, // TODO: sprite
+    /* 265 */ {NesPpu::reloadHorizontal, NesPpu::fetchNametableByte1},
+    /* 266 */ {NesPpu::fetchNametableByte2},
+    /* 267 */ {NesPpu::fetchNametableByte1},
+    /* 268 */ {NesPpu::fetchNametableByte2},
+    /* 269 */ {}, // TODO: sprite
+    /* 270 */ {}, // TODO: sprite
+    /* 271 */ {}, // TODO: sprite
+    /* 272 */ {}, // TODO: sprite
+    /* 273 */ {NesPpu::reloadHorizontal, NesPpu::fetchNametableByte1},
+    /* 274 */ {NesPpu::fetchNametableByte2},
+    /* 275 */ {NesPpu::fetchNametableByte1},
+    /* 276 */ {NesPpu::fetchNametableByte2},
+    /* 277 */ {}, // TODO: sprite
+    /* 278 */ {}, // TODO: sprite
+    /* 279 */ {}, // TODO: sprite
+    /* 280 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 281 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte1},
+    /* 282 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte2},
+    /* 283 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte1},
+    /* 284 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte2},
+    /* 285 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 286 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 287 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 288 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 289 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte1},
+    /* 290 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte2},
+    /* 291 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte1},
+    /* 292 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte2},
+    /* 293 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 294 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 295 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 296 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 297 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte1},
+    /* 298 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte2},
+    /* 299 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte1},
+    /* 300 */ {NesPpu::reloadVertical, NesPpu::fetchNametableByte2},
+    /* 301 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 302 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 303 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 304 */ {NesPpu::reloadVertical}, // TODO: sprite
+    /* 305 */ {NesPpu::reloadHorizontal, NesPpu::fetchNametableByte1},
+    /* 306 */ {NesPpu::fetchNametableByte2},
+    /* 307 */ {NesPpu::fetchNametableByte1},
+    /* 308 */ {NesPpu::fetchNametableByte2},
+    /* 309 */ {}, // TODO: sprite
+    /* 310 */ {}, // TODO: sprite
+    /* 311 */ {}, // TODO: sprite
+    /* 312 */ {}, // TODO: sprite
+    /* 313 */ {NesPpu::reloadHorizontal, NesPpu::fetchNametableByte1},
+    /* 314 */ {NesPpu::fetchNametableByte2},
+    /* 315 */ {NesPpu::fetchNametableByte1},
+    /* 316 */ {NesPpu::fetchNametableByte2},
+    /* 317 */ {}, // TODO: sprite
+    /* 318 */ {}, // TODO: sprite
+    /* 319 */ {}, // TODO: sprite
+    /* 320 */ {}, // TODO: sprite
+    /* 321 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 322 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 323 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 324 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 325 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 326 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 327 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 328 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 329 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /* 330 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
+    /* 331 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
+    /* 332 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
+    /* 333 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
+    /* 334 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
+    /* 335 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
+    /* 336 */ {
+      NesPpu::shiftRegisters,
+      NesPpu::fetchPatternByteHi2,
+      NesPpu::incrementHorizontal,
+      NesPpu::reloadShiftRegisters
+    },
+    /* 337 */ {NesPpu::fetchNametableByte1},
+    /* 338 */ {NesPpu::fetchNametableByte2},
+    /* 339 */ {NesPpu::fetchNametableByte1},
+    /* 340 */ {NesPpu::fetchNametableByte2},
+  };
 
-  private static final int NUM_SCANLINES = 261;
-  private static final int NUM_PIXELS = 341;
-
-  /*
-      if (1 <= pixel && pixel <= 256) {
-      if (pixel == 1 && isPreRender) {
-        // clear vblank and sprite0 hit
-        status = (byte) (status & 0b0011_1111);
-        nmi = false;
-      }
-      if (!isPreRender) {
-        renderPixel();
-      }
-      shiftRegisters();
-      // Fetch tile data for this scanline
-      fetchTileData((pixel - 1) % 8);
-      if (pixel % 8 == 0) {
-        incrementHorizontal();
-        reloadShiftRegisters();
-      }
-      if (pixel == 256) {
-        incrementVertical();
-      }
-      return;
-    }
-  */
-
-//  private static final Tick[] VISIBLE_SCANLINE = {
-//    /*   0 */ NesPpu::idle,
-//    /*   1 */ Tick.create(
-//        NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1),
-//    /*   2 */ Tick.create(
-//        NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2),
-//    /*   3 */ NesPpu::fetchAttributeByte1,
-//    /*   4 */ NesPpu::fetchAttributeByte2,
-//    /*   5 */ NesPpu::fetchPatternByteLo1,
-//    /*   6 */ NesPpu::fetchPatternByteLo2,
-//    /*   7 */ NesPpu::fetchPatternByteHi1,
-//    /*   8 */ NesPpu::fetchPatternByteHi2,
-//    /*   9 */ NesPpu::idle,
-//    /*  10 */ NesPpu::idle,
-//    /*  11 */ NesPpu::idle,
-//    /*  12 */ NesPpu::idle,
-//    /*  13 */ NesPpu::idle,
-//    /*  14 */ NesPpu::idle,
-//    /*  15 */ NesPpu::idle,
-//    /*  16 */ NesPpu::idle,
-//    /*  17 */ NesPpu::idle,
-//    /*  18 */ NesPpu::idle,
-//    /*  19 */ NesPpu::idle,
-//    /*  20 */ NesPpu::idle,
-//    /*  21 */ NesPpu::idle,
-//    /*  22 */ NesPpu::idle,
-//    /*  23 */ NesPpu::idle,
-//    /*  24 */ NesPpu::idle,
-//    /*  25 */ NesPpu::idle,
-//    /*  26 */ NesPpu::idle,
-//    /*  27 */ NesPpu::idle,
-//    /*  28 */ NesPpu::idle,
-//    /*  29 */ NesPpu::idle,
-//    /*  30 */ NesPpu::idle,
-//    /*  31 */ NesPpu::idle,
-//    /*  32 */ NesPpu::idle,
-//    /*  33 */ NesPpu::idle,
-//    /*  34 */ NesPpu::idle,
-//    /*  35 */ NesPpu::idle,
-//    /*  36 */ NesPpu::idle,
-//    /*  37 */ NesPpu::idle,
-//    /*  38 */ NesPpu::idle,
-//    /*  39 */ NesPpu::idle,
-//    /*  40 */ NesPpu::idle,
-//    /*  41 */ NesPpu::idle,
-//    /*  42 */ NesPpu::idle,
-//    /*  43 */ NesPpu::idle,
-//    /*  44 */ NesPpu::idle,
-//    /*  45 */ NesPpu::idle,
-//    /*  46 */ NesPpu::idle,
-//    /*  47 */ NesPpu::idle,
-//    /*  48 */ NesPpu::idle,
-//    /*  49 */ NesPpu::idle,
-//    /*  50 */ NesPpu::idle,
-//    /*  51 */ NesPpu::idle,
-//    /*  52 */ NesPpu::idle,
-//    /*  53 */ NesPpu::idle,
-//    /*  54 */ NesPpu::idle,
-//    /*  55 */ NesPpu::idle,
-//    /*  56 */ NesPpu::idle,
-//    /*  57 */ NesPpu::idle,
-//    /*  58 */ NesPpu::idle,
-//    /*  59 */ NesPpu::idle,
-//    /*  60 */ NesPpu::idle,
-//    /*  61 */ NesPpu::idle,
-//    /*  62 */ NesPpu::idle,
-//    /*  63 */ NesPpu::idle,
-//    /*  64 */ NesPpu::idle,
-//    /*  65 */ NesPpu::idle,
-//    /*  66 */ NesPpu::idle,
-//    /*  67 */ NesPpu::idle,
-//    /*  68 */ NesPpu::idle,
-//    /*  69 */ NesPpu::idle,
-//    /*  70 */ NesPpu::idle,
-//    /*  71 */ NesPpu::idle,
-//    /*  72 */ NesPpu::idle,
-//    /*  73 */ NesPpu::idle,
-//    /*  74 */ NesPpu::idle,
-//    /*  75 */ NesPpu::idle,
-//    /*  76 */ NesPpu::idle,
-//    /*  77 */ NesPpu::idle,
-//    /*  78 */ NesPpu::idle,
-//    /*  79 */ NesPpu::idle,
-//    /*  80 */ NesPpu::idle,
-//    /*  81 */ NesPpu::idle,
-//    /*  82 */ NesPpu::idle,
-//    /*  83 */ NesPpu::idle,
-//    /*  84 */ NesPpu::idle,
-//    /*  85 */ NesPpu::idle,
-//    /*  86 */ NesPpu::idle,
-//    /*  87 */ NesPpu::idle,
-//    /*  88 */ NesPpu::idle,
-//    /*  89 */ NesPpu::idle,
-//    /*  90 */ NesPpu::idle,
-//    /*  91 */ NesPpu::idle,
-//    /*  92 */ NesPpu::idle,
-//    /*  93 */ NesPpu::idle,
-//    /*  94 */ NesPpu::idle,
-//    /*  95 */ NesPpu::idle,
-//    /*  96 */ NesPpu::idle,
-//    /*  97 */ NesPpu::idle,
-//    /*  98 */ NesPpu::idle,
-//    /*  99 */ NesPpu::idle,
-//    /* 100 */ NesPpu::idle,
-//    /* 101 */ NesPpu::idle,
-//    /* 102 */ NesPpu::idle,
-//    /* 103 */ NesPpu::idle,
-//    /* 104 */ NesPpu::idle,
-//    /* 105 */ NesPpu::idle,
-//    /* 106 */ NesPpu::idle,
-//    /* 107 */ NesPpu::idle,
-//    /* 108 */ NesPpu::idle,
-//    /* 109 */ NesPpu::idle,
-//    /* 110 */ NesPpu::idle,
-//    /* 111 */ NesPpu::idle,
-//    /* 112 */ NesPpu::idle,
-//    /* 113 */ NesPpu::idle,
-//    /* 114 */ NesPpu::idle,
-//    /* 115 */ NesPpu::idle,
-//    /* 116 */ NesPpu::idle,
-//    /* 117 */ NesPpu::idle,
-//    /* 118 */ NesPpu::idle,
-//    /* 119 */ NesPpu::idle,
-//    /* 120 */ NesPpu::idle,
-//    /* 121 */ NesPpu::idle,
-//    /* 122 */ NesPpu::idle,
-//    /* 123 */ NesPpu::idle,
-//    /* 124 */ NesPpu::idle,
-//    /* 125 */ NesPpu::idle,
-//    /* 126 */ NesPpu::idle,
-//    /* 127 */ NesPpu::idle,
-//    /* 128 */ NesPpu::idle,
-//    /* 129 */ NesPpu::idle,
-//    /* 130 */ NesPpu::idle,
-//    /* 131 */ NesPpu::idle,
-//    /* 132 */ NesPpu::idle,
-//    /* 133 */ NesPpu::idle,
-//    /* 134 */ NesPpu::idle,
-//    /* 135 */ NesPpu::idle,
-//    /* 136 */ NesPpu::idle,
-//    /* 137 */ NesPpu::idle,
-//    /* 138 */ NesPpu::idle,
-//    /* 139 */ NesPpu::idle,
-//    /* 140 */ NesPpu::idle,
-//    /* 141 */ NesPpu::idle,
-//    /* 142 */ NesPpu::idle,
-//    /* 143 */ NesPpu::idle,
-//    /* 144 */ NesPpu::idle,
-//    /* 145 */ NesPpu::idle,
-//    /* 146 */ NesPpu::idle,
-//    /* 147 */ NesPpu::idle,
-//    /* 148 */ NesPpu::idle,
-//    /* 149 */ NesPpu::idle,
-//    /* 150 */ NesPpu::idle,
-//    /* 151 */ NesPpu::idle,
-//    /* 152 */ NesPpu::idle,
-//    /* 153 */ NesPpu::idle,
-//    /* 154 */ NesPpu::idle,
-//    /* 155 */ NesPpu::idle,
-//    /* 156 */ NesPpu::idle,
-//    /* 157 */ NesPpu::idle,
-//    /* 158 */ NesPpu::idle,
-//    /* 159 */ NesPpu::idle,
-//    /* 160 */ NesPpu::idle,
-//    /* 161 */ NesPpu::idle,
-//    /* 162 */ NesPpu::idle,
-//    /* 163 */ NesPpu::idle,
-//    /* 164 */ NesPpu::idle,
-//    /* 165 */ NesPpu::idle,
-//    /* 166 */ NesPpu::idle,
-//    /* 167 */ NesPpu::idle,
-//    /* 168 */ NesPpu::idle,
-//    /* 169 */ NesPpu::idle,
-//    /* 170 */ NesPpu::idle,
-//    /* 171 */ NesPpu::idle,
-//    /* 172 */ NesPpu::idle,
-//    /* 173 */ NesPpu::idle,
-//    /* 174 */ NesPpu::idle,
-//    /* 175 */ NesPpu::idle,
-//    /* 176 */ NesPpu::idle,
-//    /* 177 */ NesPpu::idle,
-//    /* 178 */ NesPpu::idle,
-//    /* 179 */ NesPpu::idle,
-//    /* 180 */ NesPpu::idle,
-//    /* 181 */ NesPpu::idle,
-//    /* 182 */ NesPpu::idle,
-//    /* 183 */ NesPpu::idle,
-//    /* 184 */ NesPpu::idle,
-//    /* 185 */ NesPpu::idle,
-//    /* 186 */ NesPpu::idle,
-//    /* 187 */ NesPpu::idle,
-//    /* 188 */ NesPpu::idle,
-//    /* 189 */ NesPpu::idle,
-//    /* 190 */ NesPpu::idle,
-//    /* 191 */ NesPpu::idle,
-//    /* 192 */ NesPpu::idle,
-//    /* 193 */ NesPpu::idle,
-//    /* 194 */ NesPpu::idle,
-//    /* 195 */ NesPpu::idle,
-//    /* 196 */ NesPpu::idle,
-//    /* 197 */ NesPpu::idle,
-//    /* 198 */ NesPpu::idle,
-//    /* 199 */ NesPpu::idle,
-//    /* 200 */ NesPpu::idle,
-//    /* 201 */ NesPpu::idle,
-//    /* 202 */ NesPpu::idle,
-//    /* 203 */ NesPpu::idle,
-//    /* 204 */ NesPpu::idle,
-//    /* 205 */ NesPpu::idle,
-//    /* 206 */ NesPpu::idle,
-//    /* 207 */ NesPpu::idle,
-//    /* 208 */ NesPpu::idle,
-//    /* 209 */ NesPpu::idle,
-//    /* 210 */ NesPpu::idle,
-//    /* 211 */ NesPpu::idle,
-//    /* 212 */ NesPpu::idle,
-//    /* 213 */ NesPpu::idle,
-//    /* 214 */ NesPpu::idle,
-//    /* 215 */ NesPpu::idle,
-//    /* 216 */ NesPpu::idle,
-//    /* 217 */ NesPpu::idle,
-//    /* 218 */ NesPpu::idle,
-//    /* 219 */ NesPpu::idle,
-//    /* 220 */ NesPpu::idle,
-//    /* 221 */ NesPpu::idle,
-//    /* 222 */ NesPpu::idle,
-//    /* 223 */ NesPpu::idle,
-//    /* 224 */ NesPpu::idle,
-//    /* 225 */ NesPpu::idle,
-//    /* 226 */ NesPpu::idle,
-//    /* 227 */ NesPpu::idle,
-//    /* 228 */ NesPpu::idle,
-//    /* 229 */ NesPpu::idle,
-//    /* 230 */ NesPpu::idle,
-//    /* 231 */ NesPpu::idle,
-//    /* 232 */ NesPpu::idle,
-//    /* 233 */ NesPpu::idle,
-//    /* 234 */ NesPpu::idle,
-//    /* 235 */ NesPpu::idle,
-//    /* 236 */ NesPpu::idle,
-//    /* 237 */ NesPpu::idle,
-//    /* 238 */ NesPpu::idle,
-//    /* 239 */ NesPpu::idle,
-//    /* 240 */ NesPpu::idle,
-//    /* 241 */ NesPpu::idle,
-//    /* 242 */ NesPpu::idle,
-//    /* 243 */ NesPpu::idle,
-//    /* 244 */ NesPpu::idle,
-//    /* 245 */ NesPpu::idle,
-//    /* 246 */ NesPpu::idle,
-//    /* 247 */ NesPpu::idle,
-//    /* 248 */ NesPpu::idle,
-//    /* 249 */ NesPpu::idle,
-//    /* 250 */ NesPpu::idle,
-//    /* 251 */ NesPpu::idle,
-//    /* 252 */ NesPpu::idle,
-//    /* 253 */ NesPpu::idle,
-//    /* 254 */ NesPpu::idle,
-//    /* 255 */ NesPpu::idle,
-//    /* 256 */ NesPpu::idle,
-//    /* 257 */ NesPpu::idle,
-//    /* 258 */ NesPpu::idle,
-//    /* 259 */ NesPpu::idle,
-//    /* 260 */ NesPpu::idle,
-//    /* 261 */ NesPpu::idle,
-//    /* 262 */ NesPpu::idle,
-//    /* 263 */ NesPpu::idle,
-//    /* 264 */ NesPpu::idle,
-//    /* 265 */ NesPpu::idle,
-//    /* 266 */ NesPpu::idle,
-//    /* 267 */ NesPpu::idle,
-//    /* 268 */ NesPpu::idle,
-//    /* 269 */ NesPpu::idle,
-//    /* 270 */ NesPpu::idle,
-//    /* 271 */ NesPpu::idle,
-//    /* 272 */ NesPpu::idle,
-//    /* 273 */ NesPpu::idle,
-//    /* 274 */ NesPpu::idle,
-//    /* 275 */ NesPpu::idle,
-//    /* 276 */ NesPpu::idle,
-//    /* 277 */ NesPpu::idle,
-//    /* 278 */ NesPpu::idle,
-//    /* 279 */ NesPpu::idle,
-//    /* 280 */ NesPpu::idle,
-//    /* 281 */ NesPpu::idle,
-//    /* 282 */ NesPpu::idle,
-//    /* 283 */ NesPpu::idle,
-//    /* 284 */ NesPpu::idle,
-//    /* 285 */ NesPpu::idle,
-//    /* 286 */ NesPpu::idle,
-//    /* 287 */ NesPpu::idle,
-//    /* 288 */ NesPpu::idle,
-//    /* 289 */ NesPpu::idle,
-//    /* 290 */ NesPpu::idle,
-//    /* 291 */ NesPpu::idle,
-//    /* 292 */ NesPpu::idle,
-//    /* 293 */ NesPpu::idle,
-//    /* 294 */ NesPpu::idle,
-//    /* 295 */ NesPpu::idle,
-//    /* 296 */ NesPpu::idle,
-//    /* 297 */ NesPpu::idle,
-//    /* 298 */ NesPpu::idle,
-//    /* 299 */ NesPpu::idle,
-//    /* 300 */ NesPpu::idle,
-//    /* 301 */ NesPpu::idle,
-//    /* 302 */ NesPpu::idle,
-//    /* 303 */ NesPpu::idle,
-//    /* 304 */ NesPpu::idle,
-//    /* 305 */ NesPpu::idle,
-//    /* 306 */ NesPpu::idle,
-//    /* 307 */ NesPpu::idle,
-//    /* 308 */ NesPpu::idle,
-//    /* 309 */ NesPpu::idle,
-//    /* 310 */ NesPpu::idle,
-//    /* 311 */ NesPpu::idle,
-//    /* 312 */ NesPpu::idle,
-//    /* 313 */ NesPpu::idle,
-//    /* 314 */ NesPpu::idle,
-//    /* 315 */ NesPpu::idle,
-//    /* 316 */ NesPpu::idle,
-//    /* 317 */ NesPpu::idle,
-//    /* 318 */ NesPpu::idle,
-//    /* 319 */ NesPpu::idle,
-//    /* 320 */ NesPpu::idle,
-//    /* 321 */ NesPpu::idle,
-//    /* 322 */ NesPpu::idle,
-//    /* 323 */ NesPpu::idle,
-//    /* 324 */ NesPpu::idle,
-//    /* 325 */ NesPpu::idle,
-//    /* 326 */ NesPpu::idle,
-//    /* 327 */ NesPpu::idle,
-//    /* 328 */ NesPpu::idle,
-//    /* 329 */ NesPpu::idle,
-//    /* 330 */ NesPpu::idle,
-//    /* 331 */ NesPpu::idle,
-//    /* 332 */ NesPpu::idle,
-//    /* 333 */ NesPpu::idle,
-//    /* 334 */ NesPpu::idle,
-//    /* 335 */ NesPpu::idle,
-//    /* 336 */ NesPpu::idle,
-//    /* 337 */ NesPpu::idle,
-//    /* 338 */ NesPpu::idle,
-//    /* 339 */ NesPpu::idle,
-//    /* 340 */ NesPpu::idle,
-//  };
-//
-//  private static final Tick[][] SCANLINES = {
-//    /*   0 */ new Tick[] {},
-//    /*   1 */ new Tick[] {},
-//    /*   2 */ new Tick[] {},
-//    /*   3 */ new Tick[] {},
-//    /*   4 */ new Tick[] {},
-//    /*   5 */ new Tick[] {},
-//    /*   6 */ new Tick[] {},
-//    /*   7 */ new Tick[] {},
-//    /*   8 */ new Tick[] {},
-//    /*   9 */ new Tick[] {},
-//    /*  10 */ new Tick[] {},
-//    /*  11 */ new Tick[] {},
-//    /*  12 */ new Tick[] {},
-//    /*  13 */ new Tick[] {},
-//    /*  14 */ new Tick[] {},
-//    /*  15 */ new Tick[] {},
-//    /*  16 */ new Tick[] {},
-//    /*  17 */ new Tick[] {},
-//    /*  18 */ new Tick[] {},
-//    /*  19 */ new Tick[] {},
-//    /*  20 */ new Tick[] {},
-//    /*  21 */ new Tick[] {},
-//    /*  22 */ new Tick[] {},
-//    /*  23 */ new Tick[] {},
-//    /*  24 */ new Tick[] {},
-//    /*  25 */ new Tick[] {},
-//    /*  26 */ new Tick[] {},
-//    /*  27 */ new Tick[] {},
-//    /*  28 */ new Tick[] {},
-//    /*  29 */ new Tick[] {},
-//    /*  30 */ new Tick[] {},
-//    /*  31 */ new Tick[] {},
-//    /*  32 */ new Tick[] {},
-//    /*  33 */ new Tick[] {},
-//    /*  34 */ new Tick[] {},
-//    /*  35 */ new Tick[] {},
-//    /*  36 */ new Tick[] {},
-//    /*  37 */ new Tick[] {},
-//    /*  38 */ new Tick[] {},
-//    /*  39 */ new Tick[] {},
-//    /*  40 */ new Tick[] {},
-//    /*  41 */ new Tick[] {},
-//    /*  42 */ new Tick[] {},
-//    /*  43 */ new Tick[] {},
-//    /*  44 */ new Tick[] {},
-//    /*  45 */ new Tick[] {},
-//    /*  46 */ new Tick[] {},
-//    /*  47 */ new Tick[] {},
-//    /*  48 */ new Tick[] {},
-//    /*  49 */ new Tick[] {},
-//    /*  50 */ new Tick[] {},
-//    /*  51 */ new Tick[] {},
-//    /*  52 */ new Tick[] {},
-//    /*  53 */ new Tick[] {},
-//    /*  54 */ new Tick[] {},
-//    /*  55 */ new Tick[] {},
-//    /*  56 */ new Tick[] {},
-//    /*  57 */ new Tick[] {},
-//    /*  58 */ new Tick[] {},
-//    /*  59 */ new Tick[] {},
-//    /*  60 */ new Tick[] {},
-//    /*  61 */ new Tick[] {},
-//    /*  62 */ new Tick[] {},
-//    /*  63 */ new Tick[] {},
-//    /*  64 */ new Tick[] {},
-//    /*  65 */ new Tick[] {},
-//    /*  66 */ new Tick[] {},
-//    /*  67 */ new Tick[] {},
-//    /*  68 */ new Tick[] {},
-//    /*  69 */ new Tick[] {},
-//    /*  70 */ new Tick[] {},
-//    /*  71 */ new Tick[] {},
-//    /*  72 */ new Tick[] {},
-//    /*  73 */ new Tick[] {},
-//    /*  74 */ new Tick[] {},
-//    /*  75 */ new Tick[] {},
-//    /*  76 */ new Tick[] {},
-//    /*  77 */ new Tick[] {},
-//    /*  78 */ new Tick[] {},
-//    /*  79 */ new Tick[] {},
-//    /*  80 */ new Tick[] {},
-//    /*  81 */ new Tick[] {},
-//    /*  82 */ new Tick[] {},
-//    /*  83 */ new Tick[] {},
-//    /*  84 */ new Tick[] {},
-//    /*  85 */ new Tick[] {},
-//    /*  86 */ new Tick[] {},
-//    /*  87 */ new Tick[] {},
-//    /*  88 */ new Tick[] {},
-//    /*  89 */ new Tick[] {},
-//    /*  90 */ new Tick[] {},
-//    /*  91 */ new Tick[] {},
-//    /*  92 */ new Tick[] {},
-//    /*  93 */ new Tick[] {},
-//    /*  94 */ new Tick[] {},
-//    /*  95 */ new Tick[] {},
-//    /*  96 */ new Tick[] {},
-//    /*  97 */ new Tick[] {},
-//    /*  98 */ new Tick[] {},
-//    /*  99 */ new Tick[] {},
-//    /* 100 */ new Tick[] {},
-//    /* 101 */ new Tick[] {},
-//    /* 102 */ new Tick[] {},
-//    /* 103 */ new Tick[] {},
-//    /* 104 */ new Tick[] {},
-//    /* 105 */ new Tick[] {},
-//    /* 106 */ new Tick[] {},
-//    /* 107 */ new Tick[] {},
-//    /* 108 */ new Tick[] {},
-//    /* 109 */ new Tick[] {},
-//    /* 110 */ new Tick[] {},
-//    /* 111 */ new Tick[] {},
-//    /* 112 */ new Tick[] {},
-//    /* 113 */ new Tick[] {},
-//    /* 114 */ new Tick[] {},
-//    /* 115 */ new Tick[] {},
-//    /* 116 */ new Tick[] {},
-//    /* 117 */ new Tick[] {},
-//    /* 118 */ new Tick[] {},
-//    /* 119 */ new Tick[] {},
-//    /* 120 */ new Tick[] {},
-//    /* 121 */ new Tick[] {},
-//    /* 122 */ new Tick[] {},
-//    /* 123 */ new Tick[] {},
-//    /* 124 */ new Tick[] {},
-//    /* 125 */ new Tick[] {},
-//    /* 126 */ new Tick[] {},
-//    /* 127 */ new Tick[] {},
-//    /* 128 */ new Tick[] {},
-//    /* 129 */ new Tick[] {},
-//    /* 130 */ new Tick[] {},
-//    /* 131 */ new Tick[] {},
-//    /* 132 */ new Tick[] {},
-//    /* 133 */ new Tick[] {},
-//    /* 134 */ new Tick[] {},
-//    /* 135 */ new Tick[] {},
-//    /* 136 */ new Tick[] {},
-//    /* 137 */ new Tick[] {},
-//    /* 138 */ new Tick[] {},
-//    /* 139 */ new Tick[] {},
-//    /* 140 */ new Tick[] {},
-//    /* 141 */ new Tick[] {},
-//    /* 142 */ new Tick[] {},
-//    /* 143 */ new Tick[] {},
-//    /* 144 */ new Tick[] {},
-//    /* 145 */ new Tick[] {},
-//    /* 146 */ new Tick[] {},
-//    /* 147 */ new Tick[] {},
-//    /* 148 */ new Tick[] {},
-//    /* 149 */ new Tick[] {},
-//    /* 150 */ new Tick[] {},
-//    /* 151 */ new Tick[] {},
-//    /* 152 */ new Tick[] {},
-//    /* 153 */ new Tick[] {},
-//    /* 154 */ new Tick[] {},
-//    /* 155 */ new Tick[] {},
-//    /* 156 */ new Tick[] {},
-//    /* 157 */ new Tick[] {},
-//    /* 158 */ new Tick[] {},
-//    /* 159 */ new Tick[] {},
-//    /* 160 */ new Tick[] {},
-//    /* 161 */ new Tick[] {},
-//    /* 162 */ new Tick[] {},
-//    /* 163 */ new Tick[] {},
-//    /* 164 */ new Tick[] {},
-//    /* 165 */ new Tick[] {},
-//    /* 166 */ new Tick[] {},
-//    /* 167 */ new Tick[] {},
-//    /* 168 */ new Tick[] {},
-//    /* 169 */ new Tick[] {},
-//    /* 170 */ new Tick[] {},
-//    /* 171 */ new Tick[] {},
-//    /* 172 */ new Tick[] {},
-//    /* 173 */ new Tick[] {},
-//    /* 174 */ new Tick[] {},
-//    /* 175 */ new Tick[] {},
-//    /* 176 */ new Tick[] {},
-//    /* 177 */ new Tick[] {},
-//    /* 178 */ new Tick[] {},
-//    /* 179 */ new Tick[] {},
-//    /* 180 */ new Tick[] {},
-//    /* 181 */ new Tick[] {},
-//    /* 182 */ new Tick[] {},
-//    /* 183 */ new Tick[] {},
-//    /* 184 */ new Tick[] {},
-//    /* 185 */ new Tick[] {},
-//    /* 186 */ new Tick[] {},
-//    /* 187 */ new Tick[] {},
-//    /* 188 */ new Tick[] {},
-//    /* 189 */ new Tick[] {},
-//    /* 190 */ new Tick[] {},
-//    /* 191 */ new Tick[] {},
-//    /* 192 */ new Tick[] {},
-//    /* 193 */ new Tick[] {},
-//    /* 194 */ new Tick[] {},
-//    /* 195 */ new Tick[] {},
-//    /* 196 */ new Tick[] {},
-//    /* 197 */ new Tick[] {},
-//    /* 198 */ new Tick[] {},
-//    /* 199 */ new Tick[] {},
-//    /* 200 */ new Tick[] {},
-//    /* 201 */ new Tick[] {},
-//    /* 202 */ new Tick[] {},
-//    /* 203 */ new Tick[] {},
-//    /* 204 */ new Tick[] {},
-//    /* 205 */ new Tick[] {},
-//    /* 206 */ new Tick[] {},
-//    /* 207 */ new Tick[] {},
-//    /* 208 */ new Tick[] {},
-//    /* 209 */ new Tick[] {},
-//    /* 210 */ new Tick[] {},
-//    /* 211 */ new Tick[] {},
-//    /* 212 */ new Tick[] {},
-//    /* 213 */ new Tick[] {},
-//    /* 214 */ new Tick[] {},
-//    /* 215 */ new Tick[] {},
-//    /* 216 */ new Tick[] {},
-//    /* 217 */ new Tick[] {},
-//    /* 218 */ new Tick[] {},
-//    /* 219 */ new Tick[] {},
-//    /* 220 */ new Tick[] {},
-//    /* 221 */ new Tick[] {},
-//    /* 222 */ new Tick[] {},
-//    /* 223 */ new Tick[] {},
-//    /* 224 */ new Tick[] {},
-//    /* 225 */ new Tick[] {},
-//    /* 226 */ new Tick[] {},
-//    /* 227 */ new Tick[] {},
-//    /* 228 */ new Tick[] {},
-//    /* 229 */ new Tick[] {},
-//    /* 230 */ new Tick[] {},
-//    /* 231 */ new Tick[] {},
-//    /* 232 */ new Tick[] {},
-//    /* 233 */ new Tick[] {},
-//    /* 234 */ new Tick[] {},
-//    /* 235 */ new Tick[] {},
-//    /* 236 */ new Tick[] {},
-//    /* 237 */ new Tick[] {},
-//    /* 238 */ new Tick[] {},
-//    /* 239 */ new Tick[] {},
-//    /* 240 */ new Tick[] {},
-//    /* 241 */ new Tick[] {},
-//    /* 242 */ new Tick[] {},
-//    /* 243 */ new Tick[] {},
-//    /* 244 */ new Tick[] {},
-//    /* 245 */ new Tick[] {},
-//    /* 246 */ new Tick[] {},
-//    /* 247 */ new Tick[] {},
-//    /* 248 */ new Tick[] {},
-//    /* 249 */ new Tick[] {},
-//    /* 250 */ new Tick[] {},
-//    /* 251 */ new Tick[] {},
-//    /* 252 */ new Tick[] {},
-//    /* 253 */ new Tick[] {},
-//    /* 254 */ new Tick[] {},
-//    /* 255 */ new Tick[] {},
-//    /* 256 */ new Tick[] {},
-//    /* 257 */ new Tick[] {},
-//    /* 258 */ new Tick[] {},
-//    /* 259 */ new Tick[] {},
-//    /* 260 */ new Tick[] {},
-//  };
+  private static final TickFn[][][] SCANLINES = {
+    /*   0 */ VISIBLE_SCANLINE,
+    /*   1 */ VISIBLE_SCANLINE,
+    /*   2 */ VISIBLE_SCANLINE,
+    /*   3 */ VISIBLE_SCANLINE,
+    /*   4 */ VISIBLE_SCANLINE,
+    /*   5 */ VISIBLE_SCANLINE,
+    /*   6 */ VISIBLE_SCANLINE,
+    /*   7 */ VISIBLE_SCANLINE,
+    /*   8 */ VISIBLE_SCANLINE,
+    /*   9 */ VISIBLE_SCANLINE,
+    /*  10 */ VISIBLE_SCANLINE,
+    /*  11 */ VISIBLE_SCANLINE,
+    /*  12 */ VISIBLE_SCANLINE,
+    /*  13 */ VISIBLE_SCANLINE,
+    /*  14 */ VISIBLE_SCANLINE,
+    /*  15 */ VISIBLE_SCANLINE,
+    /*  16 */ VISIBLE_SCANLINE,
+    /*  17 */ VISIBLE_SCANLINE,
+    /*  18 */ VISIBLE_SCANLINE,
+    /*  19 */ VISIBLE_SCANLINE,
+    /*  20 */ VISIBLE_SCANLINE,
+    /*  21 */ VISIBLE_SCANLINE,
+    /*  22 */ VISIBLE_SCANLINE,
+    /*  23 */ VISIBLE_SCANLINE,
+    /*  24 */ VISIBLE_SCANLINE,
+    /*  25 */ VISIBLE_SCANLINE,
+    /*  26 */ VISIBLE_SCANLINE,
+    /*  27 */ VISIBLE_SCANLINE,
+    /*  28 */ VISIBLE_SCANLINE,
+    /*  29 */ VISIBLE_SCANLINE,
+    /*  30 */ VISIBLE_SCANLINE,
+    /*  31 */ VISIBLE_SCANLINE,
+    /*  32 */ VISIBLE_SCANLINE,
+    /*  33 */ VISIBLE_SCANLINE,
+    /*  34 */ VISIBLE_SCANLINE,
+    /*  35 */ VISIBLE_SCANLINE,
+    /*  36 */ VISIBLE_SCANLINE,
+    /*  37 */ VISIBLE_SCANLINE,
+    /*  38 */ VISIBLE_SCANLINE,
+    /*  39 */ VISIBLE_SCANLINE,
+    /*  40 */ VISIBLE_SCANLINE,
+    /*  41 */ VISIBLE_SCANLINE,
+    /*  42 */ VISIBLE_SCANLINE,
+    /*  43 */ VISIBLE_SCANLINE,
+    /*  44 */ VISIBLE_SCANLINE,
+    /*  45 */ VISIBLE_SCANLINE,
+    /*  46 */ VISIBLE_SCANLINE,
+    /*  47 */ VISIBLE_SCANLINE,
+    /*  48 */ VISIBLE_SCANLINE,
+    /*  49 */ VISIBLE_SCANLINE,
+    /*  50 */ VISIBLE_SCANLINE,
+    /*  51 */ VISIBLE_SCANLINE,
+    /*  52 */ VISIBLE_SCANLINE,
+    /*  53 */ VISIBLE_SCANLINE,
+    /*  54 */ VISIBLE_SCANLINE,
+    /*  55 */ VISIBLE_SCANLINE,
+    /*  56 */ VISIBLE_SCANLINE,
+    /*  57 */ VISIBLE_SCANLINE,
+    /*  58 */ VISIBLE_SCANLINE,
+    /*  59 */ VISIBLE_SCANLINE,
+    /*  60 */ VISIBLE_SCANLINE,
+    /*  61 */ VISIBLE_SCANLINE,
+    /*  62 */ VISIBLE_SCANLINE,
+    /*  63 */ VISIBLE_SCANLINE,
+    /*  64 */ VISIBLE_SCANLINE,
+    /*  65 */ VISIBLE_SCANLINE,
+    /*  66 */ VISIBLE_SCANLINE,
+    /*  67 */ VISIBLE_SCANLINE,
+    /*  68 */ VISIBLE_SCANLINE,
+    /*  69 */ VISIBLE_SCANLINE,
+    /*  70 */ VISIBLE_SCANLINE,
+    /*  71 */ VISIBLE_SCANLINE,
+    /*  72 */ VISIBLE_SCANLINE,
+    /*  73 */ VISIBLE_SCANLINE,
+    /*  74 */ VISIBLE_SCANLINE,
+    /*  75 */ VISIBLE_SCANLINE,
+    /*  76 */ VISIBLE_SCANLINE,
+    /*  77 */ VISIBLE_SCANLINE,
+    /*  78 */ VISIBLE_SCANLINE,
+    /*  79 */ VISIBLE_SCANLINE,
+    /*  80 */ VISIBLE_SCANLINE,
+    /*  81 */ VISIBLE_SCANLINE,
+    /*  82 */ VISIBLE_SCANLINE,
+    /*  83 */ VISIBLE_SCANLINE,
+    /*  84 */ VISIBLE_SCANLINE,
+    /*  85 */ VISIBLE_SCANLINE,
+    /*  86 */ VISIBLE_SCANLINE,
+    /*  87 */ VISIBLE_SCANLINE,
+    /*  88 */ VISIBLE_SCANLINE,
+    /*  89 */ VISIBLE_SCANLINE,
+    /*  90 */ VISIBLE_SCANLINE,
+    /*  91 */ VISIBLE_SCANLINE,
+    /*  92 */ VISIBLE_SCANLINE,
+    /*  93 */ VISIBLE_SCANLINE,
+    /*  94 */ VISIBLE_SCANLINE,
+    /*  95 */ VISIBLE_SCANLINE,
+    /*  96 */ VISIBLE_SCANLINE,
+    /*  97 */ VISIBLE_SCANLINE,
+    /*  98 */ VISIBLE_SCANLINE,
+    /*  99 */ VISIBLE_SCANLINE,
+    /* 100 */ VISIBLE_SCANLINE,
+    /* 101 */ VISIBLE_SCANLINE,
+    /* 102 */ VISIBLE_SCANLINE,
+    /* 103 */ VISIBLE_SCANLINE,
+    /* 104 */ VISIBLE_SCANLINE,
+    /* 105 */ VISIBLE_SCANLINE,
+    /* 106 */ VISIBLE_SCANLINE,
+    /* 107 */ VISIBLE_SCANLINE,
+    /* 108 */ VISIBLE_SCANLINE,
+    /* 109 */ VISIBLE_SCANLINE,
+    /* 110 */ VISIBLE_SCANLINE,
+    /* 111 */ VISIBLE_SCANLINE,
+    /* 112 */ VISIBLE_SCANLINE,
+    /* 113 */ VISIBLE_SCANLINE,
+    /* 114 */ VISIBLE_SCANLINE,
+    /* 115 */ VISIBLE_SCANLINE,
+    /* 116 */ VISIBLE_SCANLINE,
+    /* 117 */ VISIBLE_SCANLINE,
+    /* 118 */ VISIBLE_SCANLINE,
+    /* 119 */ VISIBLE_SCANLINE,
+    /* 120 */ VISIBLE_SCANLINE,
+    /* 121 */ VISIBLE_SCANLINE,
+    /* 122 */ VISIBLE_SCANLINE,
+    /* 123 */ VISIBLE_SCANLINE,
+    /* 124 */ VISIBLE_SCANLINE,
+    /* 125 */ VISIBLE_SCANLINE,
+    /* 126 */ VISIBLE_SCANLINE,
+    /* 127 */ VISIBLE_SCANLINE,
+    /* 128 */ VISIBLE_SCANLINE,
+    /* 129 */ VISIBLE_SCANLINE,
+    /* 130 */ VISIBLE_SCANLINE,
+    /* 131 */ VISIBLE_SCANLINE,
+    /* 132 */ VISIBLE_SCANLINE,
+    /* 133 */ VISIBLE_SCANLINE,
+    /* 134 */ VISIBLE_SCANLINE,
+    /* 135 */ VISIBLE_SCANLINE,
+    /* 136 */ VISIBLE_SCANLINE,
+    /* 137 */ VISIBLE_SCANLINE,
+    /* 138 */ VISIBLE_SCANLINE,
+    /* 139 */ VISIBLE_SCANLINE,
+    /* 140 */ VISIBLE_SCANLINE,
+    /* 141 */ VISIBLE_SCANLINE,
+    /* 142 */ VISIBLE_SCANLINE,
+    /* 143 */ VISIBLE_SCANLINE,
+    /* 144 */ VISIBLE_SCANLINE,
+    /* 145 */ VISIBLE_SCANLINE,
+    /* 146 */ VISIBLE_SCANLINE,
+    /* 147 */ VISIBLE_SCANLINE,
+    /* 148 */ VISIBLE_SCANLINE,
+    /* 149 */ VISIBLE_SCANLINE,
+    /* 150 */ VISIBLE_SCANLINE,
+    /* 151 */ VISIBLE_SCANLINE,
+    /* 152 */ VISIBLE_SCANLINE,
+    /* 153 */ VISIBLE_SCANLINE,
+    /* 154 */ VISIBLE_SCANLINE,
+    /* 155 */ VISIBLE_SCANLINE,
+    /* 156 */ VISIBLE_SCANLINE,
+    /* 157 */ VISIBLE_SCANLINE,
+    /* 158 */ VISIBLE_SCANLINE,
+    /* 159 */ VISIBLE_SCANLINE,
+    /* 160 */ VISIBLE_SCANLINE,
+    /* 161 */ VISIBLE_SCANLINE,
+    /* 162 */ VISIBLE_SCANLINE,
+    /* 163 */ VISIBLE_SCANLINE,
+    /* 164 */ VISIBLE_SCANLINE,
+    /* 165 */ VISIBLE_SCANLINE,
+    /* 166 */ VISIBLE_SCANLINE,
+    /* 167 */ VISIBLE_SCANLINE,
+    /* 168 */ VISIBLE_SCANLINE,
+    /* 169 */ VISIBLE_SCANLINE,
+    /* 170 */ VISIBLE_SCANLINE,
+    /* 171 */ VISIBLE_SCANLINE,
+    /* 172 */ VISIBLE_SCANLINE,
+    /* 173 */ VISIBLE_SCANLINE,
+    /* 174 */ VISIBLE_SCANLINE,
+    /* 175 */ VISIBLE_SCANLINE,
+    /* 176 */ VISIBLE_SCANLINE,
+    /* 177 */ VISIBLE_SCANLINE,
+    /* 178 */ VISIBLE_SCANLINE,
+    /* 179 */ VISIBLE_SCANLINE,
+    /* 180 */ VISIBLE_SCANLINE,
+    /* 181 */ VISIBLE_SCANLINE,
+    /* 182 */ VISIBLE_SCANLINE,
+    /* 183 */ VISIBLE_SCANLINE,
+    /* 184 */ VISIBLE_SCANLINE,
+    /* 185 */ VISIBLE_SCANLINE,
+    /* 186 */ VISIBLE_SCANLINE,
+    /* 187 */ VISIBLE_SCANLINE,
+    /* 188 */ VISIBLE_SCANLINE,
+    /* 189 */ VISIBLE_SCANLINE,
+    /* 190 */ VISIBLE_SCANLINE,
+    /* 191 */ VISIBLE_SCANLINE,
+    /* 192 */ VISIBLE_SCANLINE,
+    /* 193 */ VISIBLE_SCANLINE,
+    /* 194 */ VISIBLE_SCANLINE,
+    /* 195 */ VISIBLE_SCANLINE,
+    /* 196 */ VISIBLE_SCANLINE,
+    /* 197 */ VISIBLE_SCANLINE,
+    /* 198 */ VISIBLE_SCANLINE,
+    /* 199 */ VISIBLE_SCANLINE,
+    /* 200 */ VISIBLE_SCANLINE,
+    /* 201 */ VISIBLE_SCANLINE,
+    /* 202 */ VISIBLE_SCANLINE,
+    /* 203 */ VISIBLE_SCANLINE,
+    /* 204 */ VISIBLE_SCANLINE,
+    /* 205 */ VISIBLE_SCANLINE,
+    /* 206 */ VISIBLE_SCANLINE,
+    /* 207 */ VISIBLE_SCANLINE,
+    /* 208 */ VISIBLE_SCANLINE,
+    /* 209 */ VISIBLE_SCANLINE,
+    /* 210 */ VISIBLE_SCANLINE,
+    /* 211 */ VISIBLE_SCANLINE,
+    /* 212 */ VISIBLE_SCANLINE,
+    /* 213 */ VISIBLE_SCANLINE,
+    /* 214 */ VISIBLE_SCANLINE,
+    /* 215 */ VISIBLE_SCANLINE,
+    /* 216 */ VISIBLE_SCANLINE,
+    /* 217 */ VISIBLE_SCANLINE,
+    /* 218 */ VISIBLE_SCANLINE,
+    /* 219 */ VISIBLE_SCANLINE,
+    /* 220 */ VISIBLE_SCANLINE,
+    /* 221 */ VISIBLE_SCANLINE,
+    /* 222 */ VISIBLE_SCANLINE,
+    /* 223 */ VISIBLE_SCANLINE,
+    /* 224 */ VISIBLE_SCANLINE,
+    /* 225 */ VISIBLE_SCANLINE,
+    /* 226 */ VISIBLE_SCANLINE,
+    /* 227 */ VISIBLE_SCANLINE,
+    /* 228 */ VISIBLE_SCANLINE,
+    /* 229 */ VISIBLE_SCANLINE,
+    /* 230 */ VISIBLE_SCANLINE,
+    /* 231 */ VISIBLE_SCANLINE,
+    /* 232 */ VISIBLE_SCANLINE,
+    /* 233 */ VISIBLE_SCANLINE,
+    /* 234 */ VISIBLE_SCANLINE,
+    /* 235 */ VISIBLE_SCANLINE,
+    /* 236 */ VISIBLE_SCANLINE,
+    /* 237 */ VISIBLE_SCANLINE,
+    /* 238 */ VISIBLE_SCANLINE,
+    /* 239 */ VISIBLE_SCANLINE,
+    /* 240 */ POST_RENDER_SCANLINE,
+    /* 241 */ VBLANK_SCANLINE,
+    /* 242 */ POST_RENDER_SCANLINE,
+    /* 243 */ POST_RENDER_SCANLINE,
+    /* 244 */ POST_RENDER_SCANLINE,
+    /* 245 */ POST_RENDER_SCANLINE,
+    /* 246 */ POST_RENDER_SCANLINE,
+    /* 247 */ POST_RENDER_SCANLINE,
+    /* 248 */ POST_RENDER_SCANLINE,
+    /* 249 */ POST_RENDER_SCANLINE,
+    /* 250 */ POST_RENDER_SCANLINE,
+    /* 251 */ POST_RENDER_SCANLINE,
+    /* 252 */ POST_RENDER_SCANLINE,
+    /* 253 */ POST_RENDER_SCANLINE,
+    /* 254 */ POST_RENDER_SCANLINE,
+    /* 255 */ POST_RENDER_SCANLINE,
+    /* 256 */ POST_RENDER_SCANLINE,
+    /* 257 */ POST_RENDER_SCANLINE,
+    /* 258 */ POST_RENDER_SCANLINE,
+    /* 259 */ POST_RENDER_SCANLINE,
+    /* 260 */ POST_RENDER_SCANLINE,
+    /* 261 */ PRE_RENDER_SCANLINE,
+  };
 
   private final NesMapper mapper;
-  private final DrawFrame drawFrame;
+  private final Display display;
   private final byte[] ram;
   private final byte[] oam;
-  private final byte[] palette;
+  private final NesPpuPalette palette;
+  private final byte[] paletteIndexes;
   private final byte[] frame = new byte[256 * 240 * 3];
+
+  private Runnable nmiHandler = null;
+  private Supplier<Integer> cycleCountFn = null;
+  private int nmiSetAt = 0;
 
   private int scanline = 0;
   private int pixel = 0;
   private byte buffer = 0;
-  private boolean nmi = false;
 
   private byte control = 0;
   private byte mask = 0;
@@ -690,23 +2060,32 @@ public final class NesPpu {
   private short attributeLoShift;
   private short attributeHiShift;
 
-  public NesPpu(NesMapper mapper, DrawFrame drawFrame) {
+  public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette) {
     this.mapper = mapper;
-    this.drawFrame = drawFrame;
+    this.display = display;
     this.ram = new byte[0x2000];
     this.oam = new byte[0x0100];
-    this.palette = new byte[0x0100];
+    this.paletteIndexes = new byte[0x20];
+    this.palette = palette;
+  }
+
+  public void setNmiHandler(Runnable nmiHandler) {
+    this.nmiHandler = nmiHandler;
+  }
+
+  public void setCycleCountFn(Supplier<Integer> cycleCountFn) {
+    this.cycleCountFn = cycleCountFn;
   }
 
   public void writeControl(byte data) {
-    boolean prev_generate_nmi = bit8(control, 7) == 1;
+    boolean oldNmiEnable = bit8(control, 7) == 1;
 
     control = data;
 
-    boolean generate_nmi = bit8(control, 7) == 1;
-    boolean in_vblank = bit8(status, 7) == 1;
-    if (!prev_generate_nmi && generate_nmi && in_vblank) {
-      nmi = true;
+    boolean newNmiEnable = bit8(control, 7) == 1;
+    boolean isInVBlank = bit8(status, 7) == 1;
+    if (!oldNmiEnable && newNmiEnable && isInVBlank) {
+      nmiHandler.run();
     }
 
     /*
@@ -824,7 +2203,7 @@ public final class NesPpu {
       return result;
     }
     if (0x3f00 <= v && v < 0x4000) {
-      result = palette[getPaletteAddress(v)];
+      result = paletteIndexes[getPaletteAddress(v)];
       buffer = ram[mapper.getNametableMirrorAddress(v)];
       incrementAddress();
       return result;
@@ -849,18 +2228,38 @@ public final class NesPpu {
       return;
     }
     if (0x3f00 <= v && v < 0x4000) {
-      palette[getPaletteAddress(v)] = data;
+      paletteIndexes[getPaletteAddress(v)] = data;
       incrementAddress();
       return;
     }
     throw new IllegalArgumentException("cannot write to PPU address " + v);
   }
 
-  private int getPaletteAddress(int address) {
-    if (address == 0x3f10 || address == 0x3f14 || address == 0x3f18 || address == 0x3f1c) {
-      return address - 0x0010 - 0x3f00;
+  public void tick() {
+    boolean isRenderingEnabled = bit8(mask, 3) == 1 || bit8(mask, 4) == 1;
+    Arrays.stream(SCANLINES[scanline][pixel]).forEach(fn -> fn.accept(this, isRenderingEnabled));
+    if (pixel++ == 340) {
+      pixel = 0;
+      if (scanline++ == 261) {
+        scanline = 0;
+        odd = !odd;
+      }
     }
-    return address - 0x3f00;
+    if (!odd && pixel == 0 && scanline == 0) {
+      pixel = 1;
+    }
+  }
+
+  private void drawFrame(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
+    display.draw(frame);
+  }
+
+  private int getPaletteAddress(short address) {
+    int addr = address & 0b0000_0000_0001_1111;
+    return addr == 0x10 ? 0x0 : addr;
   }
 
   private void incrementAddress() {
@@ -872,21 +2271,31 @@ public final class NesPpu {
   }
 
   // https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
-  private void incrementHorizontal() {
-    int coarseX = (v & 0b0000_0000_0001_1111) >>> 0;
 
-    coarseX = (coarseX + 1) % 32;
+  private void incrementHorizontal(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
 
-    if (coarseX == 0) {
-      // Switch horizontal nametable
+    int coarseX = (v & 0b0000_0000_0001_1111);
+
+    coarseX++;
+
+    if (coarseX == 32) {
+      // Coarse X wraps around. Set it to 0 and switch horizontal nametable.
+      coarseX = 0;
       v ^= 0b0000_0100_0000_0000;
     }
 
     v &= 0b0111_1111_1110_0000;
-    v |= (short) (coarseX << 0);
+    v |= (short) coarseX;
   }
 
-  private void incrementVertical() {
+  private void incrementVertical(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
+
     int fineY = (v & 0b0111_0000_0000_0000) >>> 12;
     int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
 
@@ -913,105 +2322,49 @@ public final class NesPpu {
     oamAddress = (byte) ((oamAddress + 1) % oam.length);
   }
 
-  public void tick() {
-    if (isRenderingEnabled()) {
-      if (0 <= scanline && scanline <= 239) {
-        doVisibleScanline(false);
-      }
-      if (scanline == 240) {
-        doPostRenderScanline();
-        if (pixel == 0) {
-          drawFrame.draw(frame);
-        }
-      }
-    }
-    if (241 <= scanline && scanline <= 260) {
-      doVerticalBlankingScanline();
-    }
-    if (scanline == 261) {
-      doVisibleScanline(true);
-    }
-    if (scanline == 261) {
-      if ((pixel == 339 && odd) || pixel == 340) {
-        scanline = 0;
-        pixel = 0;
-        odd = !odd;
-      } else {
-        pixel++;
-      }
-    } else {
-      if (pixel == 340) {
-        scanline++;
-        pixel = 0;
-      } else {
-        pixel++;
-      }
+  private void setVBlankNmi(boolean isRenderingEnabled) {
+    status = (byte) (status | 0b1000_0000);
+    if (bit8(control, 7) == 1) {
+      nmiSetAt = cycleCountFn.get();
+      System.out.printf("NMI set @ %s\n", nmiSetAt);
+      nmiHandler.run();
     }
   }
 
-  private void doVisibleScanline(boolean isPreRender) {
-    if (pixel == 0) {
-      idle();
-      return;
-    }
-    if (1 <= pixel && pixel <= 256) {
-      if (pixel == 1 && isPreRender) {
-        // clear vblank and sprite0 hit
-        status = (byte) (status & 0b0011_1111);
-        nmi = false;
-      }
-      if (!isPreRender) {
-        renderPixel();
-      }
-      shiftRegisters();
-      // Fetch tile data for this scanline
-      fetchTileData((pixel - 1) % 8);
-      if (pixel % 8 == 0) {
-        incrementHorizontal();
-        reloadShiftRegisters();
-      }
-      if (pixel == 256) {
-        incrementVertical();
-      }
-      return;
-    }
-    if (257 <= pixel && pixel <= 320) {
-      if (pixel == 257) {
-        // horiz(v) = horiz(t)
-        // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
-        v &= 0b0111_1011_1110_0000;
-        v |= (short) (t & 0b0000_0100_0001_1111);
-      }
-      if (isPreRender && 280 <= pixel && pixel <= 304) {
-        // vert(v) = vert(t)
-        // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
-        v &= 0b0000_0100_0001_1111;
-        v |= (short) (t & 0b0111_1011_1110_0000);
-      }
-      // Fetch sprite data for the *next* scanline
-      fetchSpriteData((pixel - 1) % 8);
-      return;
-    }
-    if (321 <= pixel && pixel <= 336) {
-      shiftRegisters();
-      // Fetch the first two tiles for the *next* scanline
-      fetchTileData((pixel - 1) % 8);
-      if (pixel % 8 == 0) {
-        incrementHorizontal();
-        reloadShiftRegisters();
-      }
-      return;
-    }
-    if (337 <= pixel && pixel <= 340) {
-      // Fetch unused bytes
-      fetchUnusedBytes((pixel - 1) % 4);
-      return;
-    }
-    // TODO: sprite evaluation for the next scanline
-    throw new IllegalStateException();
+  private void clearVBlankNmi(boolean isRenderingEnabled) {
+    Integer cycles = cycleCountFn.get();
+    System.out.printf("NMI clear @ %s (%s cycles)\n", cycles, cycles - nmiSetAt);
+    status = (byte) (status & 0b0111_1111);
   }
 
-  private NesPpu renderPixel() {
+  private void clearSprite0Hit(boolean isRenderingEnabled) {
+    status = (byte) (status & 0b1011_1111);
+  }
+
+  private void reloadVertical(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
+    // vert(v) = vert(t)
+    // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
+    v &= 0b0000_0100_0001_1111;
+    v |= (short) (t & 0b0111_1011_1110_0000);
+  }
+
+  private void reloadHorizontal(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
+    // horiz(v) = horiz(t)
+    // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
+    v &= 0b0111_1011_1110_0000;
+    v |= (short) (t & 0b0000_0100_0001_1111);
+  }
+
+  private void renderPixel(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
     int patternHi = bit16(patternHiShift, 15 - x);
     int patternLo = bit16(patternLoShift, 15 - x);
     int attributeHi = bit16(attributeHiShift, 15 - x);
@@ -1029,122 +2382,66 @@ public final class NesPpu {
     frame[i + 0] = color.r();
     frame[i + 1] = color.g();
     frame[i + 2] = color.b();
-    return this;
   }
 
-  private NesPpu shiftRegisters() {
+  private NesPpuColor[] getBackgroundPalette(int attribute) {
+    return new NesPpuColor[] {
+      palette.get(paletteIndexes[0]),
+      palette.get(paletteIndexes[attribute * 4 + 1]),
+      palette.get(paletteIndexes[attribute * 4 + 2]),
+      palette.get(paletteIndexes[attribute * 4 + 3]),
+    };
+  }
+
+  private void shiftRegisters(boolean isRenderingEnabled) {
+//    if (!isRenderingEnabled) {
+//      return;
+//    }
     patternLoShift <<= 1;
     patternHiShift <<= 1;
     attributeLoShift <<= 1;
     attributeHiShift <<= 1;
-    return this;
   }
 
-  private NesPpu idle() {
-    return this;
+  private void fetchNametableByte1(boolean isRenderingEnabled) {}
+
+  private void fetchNametableByte2(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
+    nametableByte = ram[v & 0x0fff];
   }
 
-  private NesPpu fetchNametableByte1() {
-    return this;
-  }
+  private void fetchAttributeByte1(boolean isRenderingEnabled) {}
 
-  private NesPpu fetchNametableByte2() {
-    nametableByte = fetchNametableByte();
-    return this;
-  }
-
-  private void fetchTileData(int phase) {
-    if (phase == 0) {
-      // start fetch of nametable byte
+  private void fetchAttributeByte2(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
       return;
     }
-    if (phase == 1) {
-      // finish fetch of nametable byte
-      nametableByte = fetchNametableByte();
-      return;
-    }
-    if (phase == 2) {
-      // start fetch of attribute table byte
-      return;
-    }
-    if (phase == 3) {
-      // finish fetch of attribute table byte
-      attributeByte = fetchAttributeByte();
-      return;
-    }
-    if (phase == 4) {
-      // start fetch of pattern table tile low byte into latch
-      return;
-    }
-    if (phase == 5) {
-      // finish fetch of pattern table tile low byte into latch
-      patternLoLatch = fetchPatternTableByte(0);
-      return;
-    }
-    if (phase == 6) {
-      // start fetch of pattern table tile high byte into latch
-      return;
-    }
-    if (phase == 7) {
-      // finish fetch of pattern table tile high byte into latch
-      patternHiLatch = fetchPatternTableByte(8);
-      return;
-    }
-    throw new IllegalStateException();
-  }
-
-  private void fetchSpriteData(int phase) {
-    // TODO: fetch sprite data
-  }
-
-  private void fetchUnusedBytes(int phase) {
-    if (phase == 0) {
-      // start fetch of first unused byte
-      return;
-    }
-    if (phase == 1) {
-      // finish fetch of first unused byte
-      fetchNametableByte();
-      return;
-    }
-    if (phase == 2) {
-      // start fetch of second unused byte
-      return;
-    }
-    if (phase == 3) {
-      // finish fetch of second unused byte
-      fetchNametableByte();
-      return;
-    }
-    throw new IllegalStateException();
-  }
-
-  private byte fetchNametableByte() {
-    short address = (short) (0x2000 | (v & 0x0fff));
-    //    return ram[mapper.getNametableMirrorAddress(address)];
-    return ram[v & 0x0fff];
-  }
-
-  private byte fetchAttributeByte() {
-    //    short mainNametable =
-    //        switch (Byte.toUnsignedInt(control) & 0b0000_0011) {
-    //          case 0 -> 0x0000;
-    //          case 1 -> (short) (mapper.isVerticalMirroring() ? 0x0400 : 0x0000);
-    //          case 2 -> (short) (mapper.isVerticalMirroring() ? 0x0000 : 0x0400);
-    //          case 3 -> 0x0400;
-    //          default -> throw new IllegalStateException();
-    //        };
-    //
-    //    int tileRow = scanline / 8;
-    //    int tileColumn = pixel / 8;
-    //    byte attrByte = ram[nametable + 0x03c0 + tileRow / 4 * 8 + tileColumn / 4];
-
-    int nametab = (v >> 0) & 0b0000_1100_0000_0000;
-    int coarseY = (v >> 4) & 0b0000_0000_0011_1000;
-    int coarseX = (v >> 2) & 0b0000_0000_0000_0111;
+    //                        0b0yyy_NNYY_YYYX_XXXX
+    int nametab = (v >>> 0) & 0b0000_1100_0000_0000;
+    int coarseY = (v >>> 4) & 0b0000_0000_0011_1000;
+    int coarseX = (v >>> 2) & 0b0000_0000_0000_0111;
     int address = 0b0000_0011_1100_0000 | nametab | coarseY | coarseX;
-    //    return ram[address % ram.length];
-    return ram[address];
+    attributeByte = ram[address];
+  }
+
+  private void fetchPatternByteLo1(boolean isRenderingEnabled) {}
+
+  private void fetchPatternByteLo2(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
+    patternLoLatch = fetchPatternTableByte(0);
+  }
+
+  private void fetchPatternByteHi1(boolean isRenderingEnabled) {}
+
+  private void fetchPatternByteHi2(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
+      return;
+    }
+    patternHiLatch = fetchPatternTableByte(8);
   }
 
   private byte fetchPatternTableByte(int offset) {
@@ -1154,21 +2451,11 @@ public final class NesPpu {
     return mapper.readChr((short) chrIndex);
   }
 
-  private void doPostRenderScanline() {
-    idle();
-  }
-
-  private void doVerticalBlankingScanline() {
-    if (pixel == 1 && scanline == 241) {
-      // set vblank
-      status = (byte) (status | 0b1000_0000);
-      nmi = bit8(control, 7) == 1;
+  private void reloadShiftRegisters(boolean isRenderingEnabled) {
+    if (!isRenderingEnabled) {
       return;
     }
-    idle();
-  }
 
-  private void reloadShiftRegisters() {
     attributeLoShift &= (short) 0xff00;
     attributeLoShift |= (short) (bit8(attributeByte, 0) == 0 ? 0x0000 : 0x00ff);
 
@@ -1180,25 +2467,6 @@ public final class NesPpu {
 
     patternHiShift &= (short) 0xff00;
     patternHiShift |= (short) Byte.toUnsignedInt(patternHiLatch);
-  }
-
-  private NesPpuColor[] getBackgroundPalette(int attribute) {
-    return new NesPpuColor[] {
-      NesPpuPalette.SYSTEM_PALETTE[palette[0]],
-      NesPpuPalette.SYSTEM_PALETTE[palette[attribute * 4 + 1]],
-      NesPpuPalette.SYSTEM_PALETTE[palette[attribute * 4 + 2]],
-      NesPpuPalette.SYSTEM_PALETTE[palette[attribute * 4 + 3]],
-    };
-  }
-
-  private boolean isRenderingEnabled() {
-    return bit8(mask, 3) == 1 || bit8(mask, 4) == 1;
-  }
-
-  public boolean nmi() {
-    boolean result = nmi;
-    nmi = false;
-    return result;
   }
 
   private static int bit8(byte value, int i) {

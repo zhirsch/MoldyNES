@@ -1,8 +1,11 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 public final class NesPpuPalette {
 
-  public static final NesPpuColor[] SYSTEM_PALETTE =
+  private static final NesPpuColor[] SYSTEM_PALETTE =
       new NesPpuColor[] {
         new NesPpuColor((byte) 0x65, (byte) 0x65, (byte) 0x65),
         new NesPpuColor((byte) 0x00, (byte) 0x2b, (byte) 0x9b),
@@ -70,23 +73,23 @@ public final class NesPpuPalette {
         new NesPpuColor((byte) 0x00, (byte) 0x00, (byte) 0x00),
       };
 
-  private final byte[] palette;
+  private final NesPpuColor[] colors;
 
-  public NesPpuPalette() {
-    this.palette = new byte[0x0100];
+  public NesPpuPalette(NesPpuColor[] colors) {
+    this.colors = colors;
   }
 
-  public NesPpuColor[] getSpritePalette(byte attrByte) {
-    int paletteIndex = getSpritePaletteIndex(attrByte);
-    return new NesPpuColor[] {
-      null,
-      SYSTEM_PALETTE[palette[16 + paletteIndex * 4 + 1]],
-      SYSTEM_PALETTE[palette[16 + paletteIndex * 4 + 2]],
-      SYSTEM_PALETTE[palette[16 + paletteIndex * 4 + 3]],
-    };
+  public static NesPpuPalette load(InputStream input) throws IOException {
+    byte[] bytes = input.readNBytes(3 * 64);
+    NesPpuColor[] colors = new NesPpuColor[64];
+    for (int i = 0; i < 64; i++) {
+      colors[i] = new NesPpuColor(bytes[3 * i], bytes[3 * i + 1], bytes[3 * i + 2]);
+    }
+    return new NesPpuPalette(colors);
+    //    return new NesPpuPalette(SYSTEM_PALETTE);
   }
 
-  private int getSpritePaletteIndex(byte attrByte) {
-    return attrByte & 0b0000_0011;
+  public NesPpuColor get(int paletteIndex) {
+    return colors[paletteIndex];
   }
 }

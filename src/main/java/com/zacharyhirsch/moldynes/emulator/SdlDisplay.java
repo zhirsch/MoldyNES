@@ -50,6 +50,7 @@ final class SdlDisplay implements AutoCloseable, Display {
 
   private static final int W = 256;
   private static final int H = 240;
+  private static final int SCALE = 3;
 
   private static final Map<Integer, NesJoypad.Button> JOYPAD1_KEYS =
       ImmutableMap.<Integer, NesJoypad.Button>builder()
@@ -94,11 +95,9 @@ final class SdlDisplay implements AutoCloseable, Display {
           "Unable to initialize SDL library (Error code " + result + "): " + SDL_GetError());
     }
 
-    int scale = 3;
-
     SDL_Window.Ref windowRef = new SDL_Window.Ref();
     SDL_Renderer.Ref rendererRef = new SDL_Renderer.Ref();
-    SDL_CreateWindowAndRenderer(W * scale, H * scale, 0, windowRef, rendererRef);
+    SDL_CreateWindowAndRenderer(W * SCALE, H * SCALE, 0, windowRef, rendererRef);
     window = windowRef.getWindow();
     renderer = rendererRef.getRenderer();
 
@@ -116,11 +115,10 @@ final class SdlDisplay implements AutoCloseable, Display {
   public void draw(byte[] frame) {
     Pointer pixelsPtr = new Memory(frame.length);
     pixelsPtr.write(0, frame, 0, frame.length);
-    SDL_UpdateTexture(texture, null, pixelsPtr, 3 * W);
 
+    SDL_UpdateTexture(texture, null, pixelsPtr, 3 * W);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, null, null);
-
     SDL_RenderPresent(renderer);
 
     SDL_Event evt = new SDL_Event();
