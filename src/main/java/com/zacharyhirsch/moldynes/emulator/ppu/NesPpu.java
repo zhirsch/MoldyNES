@@ -2326,14 +2326,12 @@ public final class NesPpu {
     status = (byte) (status | 0b1000_0000);
     if (bit8(control, 7) == 1) {
       nmiSetAt = cycleCountFn.get();
-      System.out.printf("NMI set @ %s\n", nmiSetAt);
       nmiHandler.run();
     }
   }
 
   private void clearVBlankNmi(boolean isRenderingEnabled) {
     Integer cycles = cycleCountFn.get();
-    System.out.printf("NMI clear @ %s (%s cycles)\n", cycles, cycles - nmiSetAt);
     status = (byte) (status & 0b0111_1111);
   }
 
@@ -2394,9 +2392,6 @@ public final class NesPpu {
   }
 
   private void shiftRegisters(boolean isRenderingEnabled) {
-//    if (!isRenderingEnabled) {
-//      return;
-//    }
     patternLoShift <<= 1;
     patternHiShift <<= 1;
     attributeLoShift <<= 1;
