@@ -1244,8 +1244,8 @@ public final class NesPpu {
   };
 
   private static final TickFn[][] PRE_RENDER_SCANLINE = {
-    /*   0 */ {NesPpu::clearVBlankNmi, NesPpu::clearSprite0Hit},
-    /*   1 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*   0 */ {NesPpu::clearSprite0Hit},
+    /*   1 */ {NesPpu::clearVBlankNmi, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*   2 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*   3 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
     /*   4 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
