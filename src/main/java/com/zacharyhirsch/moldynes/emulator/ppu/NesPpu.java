@@ -2031,6 +2031,7 @@ public final class NesPpu {
   private final byte[] paletteIndexes;
   private final byte[] frame = new byte[256 * 240 * 3];
 
+  private boolean suppressSettingVblFlagOnNextTick = false;
   private Runnable nmiHandler = null;
 
   private int scanline = 0;
@@ -2100,6 +2101,7 @@ public final class NesPpu {
     byte result = status;
     status &= 0b0111_1111;
     w = 0;
+    suppressSettingVblFlagOnNextTick = true;
     return result;
   }
 
@@ -2241,6 +2243,7 @@ public final class NesPpu {
     if (isRenderingEnabled && !odd && pixel == 0 && scanline == 0) {
       pixel = 1;
     }
+    suppressSettingVblFlagOnNextTick = false;
   }
 
   private void drawFrame(boolean isRenderingEnabled) {
@@ -2316,6 +2319,9 @@ public final class NesPpu {
   }
 
   private void setVBlankNmi(boolean isRenderingEnabled) {
+    if (suppressSettingVblFlagOnNextTick) {
+      return;
+    }
     status = (byte) (status | 0b1000_0000);
     if (bit8(control, 7) == 1) {
       nmiHandler.run();
