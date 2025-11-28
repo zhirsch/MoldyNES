@@ -17,14 +17,16 @@ final class Emulator {
   }
 
   public void run() {
-    while (step()) {}
+    while (cpu.isRunning()) {
+      step();
+    }
   }
 
-  public boolean step() {
+  public void step() {
     ppu.tick();
     ppu.tick();
     ppu.tick();
-    return cpu.tick();
+    cpu.tick();
   }
 
   public void reset() {

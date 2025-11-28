@@ -39,10 +39,8 @@ final class TestUtils {
       NesCpu cpu = new NesCpu(ppu, bus);
 
       Emulator emulator = new Emulator(cpu, ppu, apu);
-      while (emulator.step()) {
-        if (display.quit) {
-          break;
-        }
+      while (!display.quit) {
+        emulator.step();
       }
     }
   }
