@@ -2032,7 +2032,6 @@ public final class NesPpu {
   private final byte[] frame = new byte[256 * 240 * 3];
 
   private boolean suppressSettingVblFlagOnNextTick = false;
-  private Runnable nmiHandler = null;
 
   private int scanline = 0;
   private int pixel = 0;
@@ -2067,26 +2066,25 @@ public final class NesPpu {
     this.palette = palette;
   }
 
-  public void setNmiHandler(Runnable nmiHandler) {
-    this.nmiHandler = nmiHandler;
-  }
-
   public void writeControl(byte data) {
-    boolean oldNmiEnable = bit8(control, 7) == 1;
-
     control = data;
-
-    boolean newNmiEnable = bit8(control, 7) == 1;
-    boolean isInVBlank = bit8(status, 7) == 1;
-    if (!oldNmiEnable && newNmiEnable && isInVBlank) {
-      nmiHandler.run();
-    }
-
     /*
     t: ...GH.. ........ <- d: ......GH
        <used elsewhere> <- d: ABCDEF..
     */
     t = (short) ((t & 0b0111_0011_1111_1111) | ((Byte.toUnsignedInt(data) & 0b0000_0011) << 10));
+  }
+
+  public boolean nmi() {
+    return isInVBlank() && isNmiEnabled();
+  }
+
+  public boolean isInVBlank() {
+    return bit8(status, 7) == 1;
+  }
+
+  private boolean isNmiEnabled() {
+    return bit8(control, 7) == 1;
   }
 
   public byte readMask() {
@@ -2323,9 +2321,6 @@ public final class NesPpu {
       return;
     }
     status = (byte) (status | 0b1000_0000);
-    if (bit8(control, 7) == 1) {
-      nmiHandler.run();
-    }
   }
 
   private void clearVBlankNmi(boolean isRenderingEnabled) {

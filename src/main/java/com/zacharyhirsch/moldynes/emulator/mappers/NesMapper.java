@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 public interface NesMapper {
 
-  static NesMapper get(ByteBuffer buffer) {
+  static NesMapper load(ByteBuffer buffer) {
     byte[] header = new byte[16];
     buffer.get(0, header);
     if (!new String(header, 0, 4).equals("NES\u001a")) {

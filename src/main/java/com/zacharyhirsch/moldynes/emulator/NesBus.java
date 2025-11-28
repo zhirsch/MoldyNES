@@ -1,21 +1,56 @@
 package com.zacharyhirsch.moldynes.emulator;
 
+import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
+import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
 
 public class NesBus {
 
   private final byte[] cpuRam = new byte[0x0800];
   private final NesMapper mapper;
+  private final NesApu apu;
+  private final NesCpu cpu;
   private final NesPpu ppu;
   private final NesJoypad joypad1;
   private final NesJoypad joypad2;
 
-  public NesBus(NesMapper mapper, NesPpu ppu, NesJoypad joypad1, NesJoypad joypad2) {
+  public NesBus(
+      NesMapper mapper,
+      NesPpuPalette palette,
+      Display display,
+      NesJoypad joypad1,
+      NesJoypad joypad2) {
     this.mapper = mapper;
-    this.ppu = ppu;
+    this.apu = new NesApu();
+    this.cpu = new NesCpu(this);
+    this.ppu = new NesPpu(mapper, display, palette);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
+  }
+
+  public boolean isRunning() {
+    return cpu.isRunning();
+  }
+
+  public void tick() {
+    tick(ppu::tick);
+    tick(ppu::tick);
+    tick(ppu::tick);
+    tick(cpu::tick);
+  }
+
+  private void tick(Runnable tick) {
+    boolean nmi = ppu.nmi();
+    tick.run();
+    if (!nmi && ppu.nmi()) {
+      cpu.setNmi();
+    }
+  }
+
+  public void reset() {
+    cpu.reset();
   }
 
   public byte read(byte adh, byte adl) {

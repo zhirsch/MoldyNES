@@ -2,28 +2,10 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.io.Resources;
-import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
-import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
-import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
-import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
 public class InstrTestV5Tests {
-
-  private ByteBuffer read(String path) throws IOException {
-    try (InputStream is = getClass().getClassLoader().getResourceAsStream(path)) {
-      if (is == null) {
-        throw new RuntimeException("image " + path + " does not exist");
-      }
-      return ByteBuffer.wrap(is.readAllBytes());
-    }
-  }
 
   private static final class FakeDisplay implements Display {
 
@@ -31,25 +13,22 @@ public class InstrTestV5Tests {
     public void draw(byte[] frame) {}
   }
 
-  private void runTest(String path) throws IOException {
-    ByteBuffer buffer = read("instr_test-v5/" + path);
-    NesMapper mapper = NesMapper.get(buffer);
-    NesJoypad joypad1 = new NesJoypad();
-    NesJoypad joypad2 = new NesJoypad();
+  private static void runTest(String path) {
+    NesBus bus =
+        new NesBus(
+            TestUtils.loadMapper("instr_test-v5/%s".formatted(path)),
+            TestUtils.loadPalette("Composite_wiki.pal"),
+            new FakeDisplay(),
+            new NesJoypad(),
+            new NesJoypad());
 
-    NesApu apu = new NesApu();
-    NesPpu ppu = new NesPpu(mapper, new FakeDisplay(), loadPalette());
-    NesBus bus = new NesBus(mapper, ppu, joypad1, joypad2);
-    NesCpu cpu = new NesCpu(ppu, bus);
-    Emulator emulator = new Emulator(cpu, ppu, apu);
-
-    waitForStart(emulator, bus);
+    waitForStart(bus);
     byte status = (byte) 0xff;
-    while (cpu.isRunning()) {
-      emulator.step();
+    while (bus.isRunning()) {
+      bus.tick();
       status = readByte(bus, (short) 0x6000);
       if (status == (byte) 0x81) {
-        reset(emulator, bus);
+        reset(bus);
       }
       if (status >= 0) {
         break;
@@ -61,89 +40,83 @@ public class InstrTestV5Tests {
     assertThat(status).isEqualTo(0x00);
   }
 
-  private static NesPpuPalette loadPalette() throws IOException {
-    try (InputStream input = Resources.getResource("Composite_wiki.pal").openStream()) {
-      return NesPpuPalette.load(input);
-    }
-  }
-
   @Test
-  void basics() throws Exception {
+  void basics() {
     runTest("rom_singles/01-basics.nes");
   }
 
   @Test
-  void implied() throws Exception {
+  void implied() {
     runTest("rom_singles/02-implied.nes");
   }
 
   @Test
-  void immediate() throws Exception {
+  void immediate() {
     runTest("rom_singles/03-immediate.nes");
   }
 
   @Test
-  void zero_page() throws Exception {
+  void zero_page() {
     runTest("rom_singles/04-zero_page.nes");
   }
 
   @Test
-  void zp_xy() throws Exception {
+  void zp_xy() {
     runTest("rom_singles/05-zp_xy.nes");
   }
 
   @Test
-  void absolute() throws Exception {
+  void absolute() {
     runTest("rom_singles/06-absolute.nes");
   }
 
   @Test
-  void abs_xy() throws Exception {
+  void abs_xy() {
     runTest("rom_singles/07-abs_xy.nes");
   }
 
   @Test
-  void ind_x() throws Exception {
+  void ind_x() {
     runTest("rom_singles/08-ind_x.nes");
   }
 
   @Test
-  void ind_y() throws Exception {
+  void ind_y() {
     runTest("rom_singles/09-ind_y.nes");
   }
 
   @Test
-  void branches() throws Exception {
+  void branches() {
     runTest("rom_singles/10-branches.nes");
   }
 
   @Test
-  void stack() throws Exception {
+  void stack() {
     runTest("rom_singles/11-stack.nes");
   }
 
   @Test
-  void jmp_jsr() throws Exception {
+  void jmp_jsr() {
     runTest("rom_singles/12-jmp_jsr.nes");
   }
 
   @Test
-  void rts() throws Exception {
+  void rts() {
     runTest("rom_singles/13-rts.nes");
   }
 
   @Test
-  void rti() throws Exception {
+  void rti() {
     runTest("rom_singles/14-rti.nes");
   }
 
   @Test
-  void brk() throws Exception {
+  void brk() {
     runTest("rom_singles/15-brk.nes");
   }
 
   @Test
-  void special() throws Exception {
+  void special() {
     runTest("rom_singles/16-special.nes");
   }
 
@@ -160,21 +133,21 @@ public class InstrTestV5Tests {
     return accum.toString();
   }
 
-  private static void reset(Emulator emulator, NesBus bus) {
+  private static void reset(NesBus bus) {
     Instant resetAt = Instant.now().plusMillis(250);
     while (true) {
-      emulator.step();
+      bus.tick();
       if (Instant.now().isAfter(resetAt)) {
-        emulator.reset();
+        bus.reset();
         break;
       }
     }
-    waitForStart(emulator, bus);
+    waitForStart(bus);
   }
 
-  private static void waitForStart(Emulator emulator, NesBus bus) {
+  private static void waitForStart(NesBus bus) {
     while (true) {
-      emulator.step();
+      bus.tick();
       byte status1 = readByte(bus, (short) 0x6000);
       byte status2 = readByte(bus, (short) 0x6001);
       byte status3 = readByte(bus, (short) 0x6002);

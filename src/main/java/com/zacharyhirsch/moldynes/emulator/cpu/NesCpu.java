@@ -1,15 +1,12 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
 import com.zacharyhirsch.moldynes.emulator.NesBus;
-import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 
 public final class NesCpu {
 
-  private final NesPpu ppu;
   private final NesBus bus;
   private final NesCpuDecoder decoder;
 
-  public int cycleCount = 0;
   private NesCpuCycle cycle;
   private boolean halt;
   private boolean reset;
@@ -18,8 +15,7 @@ public final class NesCpu {
   public final NesCpuState state;
   public final NesAlu alu;
 
-  public NesCpu(NesPpu ppu, NesBus bus) {
-    this.ppu = ppu;
+  public NesCpu(NesBus bus) {
     this.bus = bus;
     this.decoder = new NesCpuDecoder();
 
@@ -30,13 +26,10 @@ public final class NesCpu {
 
     this.state = new NesCpuState();
     this.alu = new NesAlu();
-
-    this.ppu.setNmiHandler(() -> nmi = true);
   }
 
   public void tick() {
     try {
-      cycleCount++;
       cycle = cycle.execute(this);
       if (state.write) {
         bus.write(state.adh, state.adl, state.data);
@@ -72,6 +65,10 @@ public final class NesCpu {
 
   public void halt() {
     halt = true;
+  }
+
+  public void setNmi() {
+    nmi = true;
   }
 
   public void jump(byte pch, byte pcl) {
