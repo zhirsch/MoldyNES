@@ -2245,7 +2245,7 @@ public final class NesPpu {
         odd = !odd;
       }
     }
-    if (!odd && pixel == 0 && scanline == 0) {
+    if (isRenderingEnabled && !odd && pixel == 0 && scanline == 0) {
       pixel = 1;
     }
   }
