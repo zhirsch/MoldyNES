@@ -45,7 +45,8 @@ public class InstrTestV5Tests {
 
     waitForStart(emulator, bus);
     byte status = (byte) 0xff;
-    while (emulator.step()) {
+    while (cpu.isRunning()) {
+      emulator.step();
       status = readByte(bus, (short) 0x6000);
       if (status == (byte) 0x81) {
         reset(emulator, bus);
@@ -161,7 +162,8 @@ public class InstrTestV5Tests {
 
   private static void reset(Emulator emulator, NesBus bus) {
     Instant resetAt = Instant.now().plusMillis(250);
-    while (emulator.step()) {
+    while (true) {
+      emulator.step();
       if (Instant.now().isAfter(resetAt)) {
         emulator.reset();
         break;
@@ -171,7 +173,8 @@ public class InstrTestV5Tests {
   }
 
   private static void waitForStart(Emulator emulator, NesBus bus) {
-    while (emulator.step()) {
+    while (true) {
+      emulator.step();
       byte status1 = readByte(bus, (short) 0x6000);
       byte status2 = readByte(bus, (short) 0x6001);
       byte status3 = readByte(bus, (short) 0x6002);

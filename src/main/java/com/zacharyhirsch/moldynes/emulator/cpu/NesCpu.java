@@ -34,10 +34,7 @@ public final class NesCpu {
     this.ppu.setNmiHandler(() -> nmi = true);
   }
 
-  public boolean tick() {
-    if (halt) {
-      return false;
-    }
+  public void tick() {
     try {
       cycleCount++;
       cycle = cycle.execute(this);
@@ -49,7 +46,6 @@ public final class NesCpu {
     } catch (Exception exc) {
       throw new NesCpuCrashedException(state, exc);
     }
-    return true;
   }
 
   public void reset() {
@@ -68,6 +64,10 @@ public final class NesCpu {
       return new NesCpuNmi().execute(this);
     }
     return decoder.decode(state.data).execute(this);
+  }
+
+  public boolean isRunning() {
+    return !halt;
   }
 
   public void halt() {
