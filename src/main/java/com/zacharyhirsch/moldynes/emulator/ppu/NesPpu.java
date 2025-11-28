@@ -4,7 +4,6 @@ import com.zacharyhirsch.moldynes.emulator.Display;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 public final class NesPpu {
 
@@ -2033,8 +2032,6 @@ public final class NesPpu {
   private final byte[] frame = new byte[256 * 240 * 3];
 
   private Runnable nmiHandler = null;
-  private Supplier<Integer> cycleCountFn = null;
-  private int nmiSetAt = 0;
 
   private int scanline = 0;
   private int pixel = 0;
@@ -2071,10 +2068,6 @@ public final class NesPpu {
 
   public void setNmiHandler(Runnable nmiHandler) {
     this.nmiHandler = nmiHandler;
-  }
-
-  public void setCycleCountFn(Supplier<Integer> cycleCountFn) {
-    this.cycleCountFn = cycleCountFn;
   }
 
   public void writeControl(byte data) {
@@ -2325,13 +2318,11 @@ public final class NesPpu {
   private void setVBlankNmi(boolean isRenderingEnabled) {
     status = (byte) (status | 0b1000_0000);
     if (bit8(control, 7) == 1) {
-      nmiSetAt = cycleCountFn.get();
       nmiHandler.run();
     }
   }
 
   private void clearVBlankNmi(boolean isRenderingEnabled) {
-    Integer cycles = cycleCountFn.get();
     status = (byte) (status & 0b0111_1111);
   }
 

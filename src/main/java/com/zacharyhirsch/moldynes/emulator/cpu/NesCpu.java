@@ -32,7 +32,6 @@ public final class NesCpu {
     this.alu = new NesAlu();
 
     this.ppu.setNmiHandler(() -> nmi = true);
-    this.ppu.setCycleCountFn(() -> cycleCount);
   }
 
   public boolean tick() {
