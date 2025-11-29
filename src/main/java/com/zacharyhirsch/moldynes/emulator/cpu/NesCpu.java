@@ -67,7 +67,7 @@ public final class NesCpu {
     halt = true;
   }
 
-  public void setNmi() {
+  public void toggleNmi() {
     nmi = true;
   }
 
