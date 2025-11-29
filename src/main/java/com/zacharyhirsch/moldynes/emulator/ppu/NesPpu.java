@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
 import com.zacharyhirsch.moldynes.emulator.Display;
+import com.zacharyhirsch.moldynes.emulator.NesBus;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
@@ -900,10 +901,10 @@ public final class NesPpu {
     /* 340 */ {},
   };
   private static final TickFn[][] VBLANK_SCANLINE = {
-    /*   0 */ {NesPpu::drawFrame},
-    /*   1 */ {NesPpu::setVBlankNmi},
-    /*   2 */ {},
-    /*   3 */ {},
+    /*   0 */ {NesPpu::drawFrame, NesPpu::setVBlank0},
+    /*   1 */ {NesPpu::setVBlank1},
+    /*   2 */ {NesPpu::setVBlank2},
+    /*   3 */ {NesPpu::setVBlank3},
     /*   4 */ {},
     /*   5 */ {},
     /*   6 */ {},
@@ -1245,7 +1246,7 @@ public final class NesPpu {
 
   private static final TickFn[][] PRE_RENDER_SCANLINE = {
     /*   0 */ {NesPpu::clearSprite0Hit},
-    /*   1 */ {NesPpu::clearVBlankNmi, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
+    /*   1 */ {NesPpu::clearVBlank, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*   2 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*   3 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
     /*   4 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte2},
@@ -2023,6 +2024,7 @@ public final class NesPpu {
     /* 261 */ PRE_RENDER_SCANLINE,
   };
 
+  private final NesBus bus;
   private final NesMapper mapper;
   private final Display display;
   private final byte[] ram;
@@ -2031,10 +2033,8 @@ public final class NesPpu {
   private final byte[] paletteIndexes;
   private final byte[] frame = new byte[256 * 240 * 3];
 
-  private boolean suppressSettingVblFlagOnNextTick = false;
-
   private int scanline = 0;
-  private int pixel = 0;
+  private int dot = 0;
   private byte buffer = 0;
 
   private byte control = 0;
@@ -2057,7 +2057,11 @@ public final class NesPpu {
   private short attributeLoShift;
   private short attributeHiShift;
 
-  public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette) {
+  private boolean vblPending = false;
+  private boolean nmiPending = false;
+
+  public NesPpu(NesBus bus, NesMapper mapper, Display display, NesPpuPalette palette) {
+    this.bus = bus;
     this.mapper = mapper;
     this.display = display;
     this.ram = new byte[0x2000];
@@ -2075,18 +2079,6 @@ public final class NesPpu {
     t = (short) ((t & 0b0111_0011_1111_1111) | ((Byte.toUnsignedInt(data) & 0b0000_0011) << 10));
   }
 
-  public boolean nmi() {
-    return isInVBlank() && isNmiEnabled();
-  }
-
-  public boolean isInVBlank() {
-    return bit8(status, 7) == 1;
-  }
-
-  private boolean isNmiEnabled() {
-    return bit8(control, 7) == 1;
-  }
-
   public byte readMask() {
     return mask;
   }
@@ -2098,8 +2090,9 @@ public final class NesPpu {
   public byte readStatus() {
     byte result = status;
     status &= 0b0111_1111;
+    vblPending = false;
+    nmiPending = false;
     w = 0;
-    suppressSettingVblFlagOnNextTick = true;
     return result;
   }
 
@@ -2230,18 +2223,35 @@ public final class NesPpu {
 
   public void tick() {
     boolean isRenderingEnabled = bit8(mask, 3) == 1 || bit8(mask, 4) == 1;
-    Arrays.stream(SCANLINES[scanline][pixel]).forEach(fn -> fn.accept(this, isRenderingEnabled));
-    if (pixel++ == 340) {
-      pixel = 0;
-      if (scanline++ == 261) {
-        scanline = 0;
-        odd = !odd;
-      }
+    Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this, isRenderingEnabled));
+    advanceDot(isRenderingEnabled);
+  }
+
+  private void advanceDot(boolean isRenderingEnabled) {
+    assert dot >= 0 && dot <= 340;
+    if (dot == 340) {
+      dot = 0;
+      advanceScanline(isRenderingEnabled);
+      return;
     }
-    if (isRenderingEnabled && !odd && pixel == 0 && scanline == 0) {
-      pixel = 1;
+    dot++;
+  }
+
+  private void advanceScanline(boolean isRenderingEnabled) {
+    assert scanline >= 0 && scanline <= 261;
+    if (scanline == 261) {
+      scanline = 0;
+      advanceFrame(isRenderingEnabled);
+      return;
     }
-    suppressSettingVblFlagOnNextTick = false;
+    scanline++;
+  }
+
+  private void advanceFrame(boolean isRenderingEnabled) {
+    if (isRenderingEnabled && odd) {
+      dot = 1;
+    }
+    odd = !odd;
   }
 
   private void drawFrame(boolean isRenderingEnabled) {
@@ -2316,14 +2326,29 @@ public final class NesPpu {
     oamAddress = (byte) ((oamAddress + 1) % oam.length);
   }
 
-  private void setVBlankNmi(boolean isRenderingEnabled) {
-    if (suppressSettingVblFlagOnNextTick) {
-      return;
-    }
-    status = (byte) (status | 0b1000_0000);
+  private void setVBlank0(boolean isRenderingEnabled) {
+    vblPending = true;
   }
 
-  private void clearVBlankNmi(boolean isRenderingEnabled) {
+  private void setVBlank1(boolean isRenderingEnabled) {
+    if (vblPending) {
+      status = (byte) (status | 0b1000_0000);
+    }
+    vblPending = false;
+  }
+
+  private void setVBlank2(boolean isRenderingEnabled) {
+    nmiPending = bit8(status, 7) == 1 && bit8(control, 7) == 1;
+  }
+
+  private void setVBlank3(boolean isRenderingEnabled) {
+    if (nmiPending) {
+      bus.toggleNmi();
+    }
+    nmiPending = false;
+  }
+
+  private void clearVBlank(boolean isRenderingEnabled) {
     status = (byte) (status & 0b0111_1111);
   }
 
@@ -2368,7 +2393,7 @@ public final class NesPpu {
           case 3 -> colors[3];
           default -> throw new IllegalStateException();
         };
-    int i = 3 * (scanline * 256 + pixel - 1);
+    int i = 3 * (scanline * 256 + dot - 1);
     frame[i + 0] = color.r();
     frame[i + 1] = color.g();
     frame[i + 2] = color.b();
