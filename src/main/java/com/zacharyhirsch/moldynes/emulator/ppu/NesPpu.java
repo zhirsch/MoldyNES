@@ -3,11 +3,11 @@ package com.zacharyhirsch.moldynes.emulator.ppu;
 import com.zacharyhirsch.moldynes.emulator.Display;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import java.util.Arrays;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public final class NesPpu {
 
-  private interface TickFn extends BiConsumer<NesPpu, Boolean> {}
+  private interface TickFn extends Consumer<NesPpu> {}
 
   private static final TickFn[][] VISIBLE_SCANLINE = {
     /*   0 */ {},
@@ -1852,43 +1852,42 @@ public final class NesPpu {
   }
 
   public boolean tick() {
-    boolean isRenderingEnabled = isBgRenderingEnabled() || isFgRenderingEnabled();
-    Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this, isRenderingEnabled));
-    advanceDot(isRenderingEnabled);
+    Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this));
+    advanceDot();
     boolean nmi = this.nmi;
     this.nmi = false;
     return nmi;
   }
 
-  private void advanceDot(boolean isRenderingEnabled) {
+  private void advanceDot() {
     assert dot >= 0 && dot <= 340;
     if (dot == 340) {
       dot = 0;
-      advanceScanline(isRenderingEnabled);
+      advanceScanline();
       return;
     }
     dot++;
   }
 
-  private void advanceScanline(boolean isRenderingEnabled) {
+  private void advanceScanline() {
     assert scanline >= 0 && scanline <= 261;
     if (scanline == 261) {
       scanline = 0;
-      advanceFrame(isRenderingEnabled);
+      advanceFrame();
       return;
     }
     scanline++;
   }
 
-  private void advanceFrame(boolean isRenderingEnabled) {
-    if (isRenderingEnabled && odd) {
+  private void advanceFrame() {
+    if (isRenderingEnabled() && odd) {
       dot = 1;
     }
     odd = !odd;
   }
 
-  private void drawFrame(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void drawFrame() {
+    if (!isRenderingEnabled()) {
       return;
     }
     display.draw(frame);
@@ -1909,8 +1908,8 @@ public final class NesPpu {
 
   // https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
 
-  private void incrementHorizontal(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void incrementHorizontal() {
+    if (!isRenderingEnabled()) {
       return;
     }
 
@@ -1928,8 +1927,8 @@ public final class NesPpu {
     v |= (short) coarseX;
   }
 
-  private void incrementVertical(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void incrementVertical() {
+    if (!isRenderingEnabled()) {
       return;
     }
 
@@ -1959,38 +1958,38 @@ public final class NesPpu {
     oamAddress = (byte) ((oamAddress + 1) % oam.length);
   }
 
-  private void setVBlank0(boolean isRenderingEnabled) {
+  private void setVBlank0() {
     vblPending = true;
   }
 
-  private void setVBlank1(boolean isRenderingEnabled) {
+  private void setVBlank1() {
     if (vblPending) {
       status = (byte) (status | 0b1000_0000);
     }
     vblPending = false;
   }
 
-  private void setVBlank2(boolean isRenderingEnabled) {
+  private void setVBlank2() {
     nmiPending = isVblEnabled() && isNmiEnabled();
   }
 
-  private void setVBlank3(boolean isRenderingEnabled) {
+  private void setVBlank3() {
     if (nmiPending) {
       nmi = true;
     }
     nmiPending = false;
   }
 
-  private void clearVBlank(boolean isRenderingEnabled) {
+  private void clearVBlank() {
     status = (byte) (status & 0b0111_1111);
   }
 
-  private void clearSprite0Hit(boolean isRenderingEnabled) {
+  private void clearSprite0Hit() {
     status = (byte) (status & 0b1011_1111);
   }
 
-  private void reloadVertical(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void reloadVertical() {
+    if (!isRenderingEnabled()) {
       return;
     }
     // vert(v) = vert(t)
@@ -1999,8 +1998,8 @@ public final class NesPpu {
     v |= (short) (t & 0b0111_1011_1110_0000);
   }
 
-  private void reloadHorizontal(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void reloadHorizontal() {
+    if (!isRenderingEnabled()) {
       return;
     }
     // horiz(v) = horiz(t)
@@ -2009,8 +2008,8 @@ public final class NesPpu {
     v |= (short) (t & 0b0000_0100_0001_1111);
   }
 
-  private void renderPixel(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void renderPixel() {
+    if (!isRenderingEnabled()) {
       return;
     }
     int patternHi = bit16(patternHiShift, 15 - x);
@@ -2041,26 +2040,26 @@ public final class NesPpu {
     };
   }
 
-  private void shiftRegisters(boolean isRenderingEnabled) {
+  private void shiftRegisters() {
     patternLoShift <<= 1;
     patternHiShift <<= 1;
     attributeLoShift <<= 1;
     attributeHiShift <<= 1;
   }
 
-  private void fetchNametableByte1(boolean isRenderingEnabled) {}
+  private void fetchNametableByte1() {}
 
-  private void fetchNametableByte2(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void fetchNametableByte2() {
+    if (!isRenderingEnabled()) {
       return;
     }
     nametableByte = ram[v & 0x0fff];
   }
 
-  private void fetchAttributeByte1(boolean isRenderingEnabled) {}
+  private void fetchAttributeByte1() {}
 
-  private void fetchAttributeByte2(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void fetchAttributeByte2() {
+    if (!isRenderingEnabled()) {
       return;
     }
     //                        0b0yyy_NNYY_YYYX_XXXX
@@ -2071,19 +2070,19 @@ public final class NesPpu {
     attributeByte = ram[address];
   }
 
-  private void fetchPatternByteLo1(boolean isRenderingEnabled) {}
+  private void fetchPatternByteLo1() {}
 
-  private void fetchPatternByteLo2(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void fetchPatternByteLo2() {
+    if (!isRenderingEnabled()) {
       return;
     }
     patternLoLatch = fetchPatternTableByte(0);
   }
 
-  private void fetchPatternByteHi1(boolean isRenderingEnabled) {}
+  private void fetchPatternByteHi1() {}
 
-  private void fetchPatternByteHi2(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void fetchPatternByteHi2() {
+    if (!isRenderingEnabled()) {
       return;
     }
     patternHiLatch = fetchPatternTableByte(8);
@@ -2096,8 +2095,8 @@ public final class NesPpu {
     return mapper.readChr((short) chrIndex);
   }
 
-  private void reloadShiftRegisters(boolean isRenderingEnabled) {
-    if (!isRenderingEnabled) {
+  private void reloadShiftRegisters() {
+    if (!isRenderingEnabled()) {
       return;
     }
 
@@ -2128,6 +2127,10 @@ public final class NesPpu {
 
   private boolean isVblEnabled() {
     return bit8(status, 7) == 1;
+  }
+
+  private boolean isRenderingEnabled() {
+    return isBgRenderingEnabled() || isFgRenderingEnabled();
   }
 
   private boolean isBgRenderingEnabled() {
