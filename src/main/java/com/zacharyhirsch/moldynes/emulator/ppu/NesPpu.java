@@ -1,7 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
 import com.zacharyhirsch.moldynes.emulator.Display;
-import com.zacharyhirsch.moldynes.emulator.Register;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
@@ -1683,9 +1682,9 @@ public final class NesPpu {
   private short attributeLoShift;
   private short attributeHiShift;
 
-  private final Register<Boolean> vblPending = new Register<>(false);
-  private final Register<Boolean> nmiPending = new Register<>(false);
-  private final Register<Boolean> nmi = new Register<>(false);
+  private boolean vblPending = false;
+  private boolean nmiPending = false;
+  private boolean nmi = false;
 
   public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette) {
     this.mapper = mapper;
@@ -1699,9 +1698,9 @@ public final class NesPpu {
   public void writeControl(byte data) {
     ctrl = data;
     if (isNmiEnabled()) {
-      nmi.set(isVblEnabled());
+      nmi = isVblEnabled();
     } else {
-      nmiPending.set(false);
+      nmiPending = false;
     }
     /*
     t: ...GH.. ........ <- d: ......GH
@@ -1721,8 +1720,8 @@ public final class NesPpu {
   public byte readStatus() {
     byte result = status;
     status &= 0b0111_1111;
-    vblPending.set(false);
-    nmiPending.set(false);
+    vblPending = false;
+    nmiPending = false;
     w = 0;
     return result;
   }
@@ -1856,7 +1855,9 @@ public final class NesPpu {
     boolean isRenderingEnabled = isBgRenderingEnabled() || isFgRenderingEnabled();
     Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this, isRenderingEnabled));
     advanceDot(isRenderingEnabled);
-    return nmi.swap(false);
+    boolean nmi = this.nmi;
+    this.nmi = false;
+    return nmi;
   }
 
   private void advanceDot(boolean isRenderingEnabled) {
@@ -1959,23 +1960,25 @@ public final class NesPpu {
   }
 
   private void setVBlank0(boolean isRenderingEnabled) {
-    vblPending.set(true);
+    vblPending = true;
   }
 
   private void setVBlank1(boolean isRenderingEnabled) {
-    if (vblPending.swap(false)) {
+    if (vblPending) {
       status = (byte) (status | 0b1000_0000);
     }
+    vblPending = false;
   }
 
   private void setVBlank2(boolean isRenderingEnabled) {
-    nmiPending.set(isVblEnabled() && isNmiEnabled());
+    nmiPending = isVblEnabled() && isNmiEnabled();
   }
 
   private void setVBlank3(boolean isRenderingEnabled) {
-    if (nmiPending.swap(false)) {
-      nmi.set(true);
+    if (nmiPending) {
+      nmi = true;
     }
+    nmiPending = false;
   }
 
   private void clearVBlank(boolean isRenderingEnabled) {
