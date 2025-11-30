@@ -1,7 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
 import com.zacharyhirsch.moldynes.emulator.Display;
-import com.zacharyhirsch.moldynes.emulator.NesBus;
+import com.zacharyhirsch.moldynes.emulator.Register;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import java.util.Arrays;
 import java.util.function.BiConsumer;
@@ -2024,7 +2024,6 @@ public final class NesPpu {
     /* 261 */ PRE_RENDER_SCANLINE,
   };
 
-  private final NesBus bus;
   private final NesMapper mapper;
   private final Display display;
   private final byte[] ram;
@@ -2057,11 +2056,11 @@ public final class NesPpu {
   private short attributeLoShift;
   private short attributeHiShift;
 
-  private boolean vblPending = false;
-  private boolean nmiPending = false;
+  private final Register<Boolean> vblPending = new Register<>(false);
+  private final Register<Boolean> nmiPending = new Register<>(false);
+  private final Register<Boolean> nmi = new Register<>(false);
 
-  public NesPpu(NesBus bus, NesMapper mapper, Display display, NesPpuPalette palette) {
-    this.bus = bus;
+  public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette) {
     this.mapper = mapper;
     this.display = display;
     this.ram = new byte[0x2000];
@@ -2072,6 +2071,11 @@ public final class NesPpu {
 
   public void writeControl(byte data) {
     control = data;
+    if (bit8(control, 7) == 1) {
+      nmi.set(bit8(status, 7) == 1);
+    } else {
+      nmiPending.set(false);
+    }
     /*
     t: ...GH.. ........ <- d: ......GH
        <used elsewhere> <- d: ABCDEF..
@@ -2090,8 +2094,8 @@ public final class NesPpu {
   public byte readStatus() {
     byte result = status;
     status &= 0b0111_1111;
-    vblPending = false;
-    nmiPending = false;
+    vblPending.set(false);
+    nmiPending.set(false);
     w = 0;
     return result;
   }
@@ -2221,10 +2225,11 @@ public final class NesPpu {
     throw new IllegalArgumentException("cannot write to PPU address " + v);
   }
 
-  public void tick() {
+  public boolean tick() {
     boolean isRenderingEnabled = bit8(mask, 3) == 1 || bit8(mask, 4) == 1;
     Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this, isRenderingEnabled));
     advanceDot(isRenderingEnabled);
+    return nmi.swap(false);
   }
 
   private void advanceDot(boolean isRenderingEnabled) {
@@ -2327,25 +2332,23 @@ public final class NesPpu {
   }
 
   private void setVBlank0(boolean isRenderingEnabled) {
-    vblPending = true;
+    vblPending.set(true);
   }
 
   private void setVBlank1(boolean isRenderingEnabled) {
-    if (vblPending) {
+    if (vblPending.swap(false)) {
       status = (byte) (status | 0b1000_0000);
     }
-    vblPending = false;
   }
 
   private void setVBlank2(boolean isRenderingEnabled) {
-    nmiPending = bit8(status, 7) == 1 && bit8(control, 7) == 1;
+    nmiPending.set(bit8(status, 7) == 1 && bit8(control, 7) == 1);
   }
 
   private void setVBlank3(boolean isRenderingEnabled) {
-    if (nmiPending) {
-      bus.toggleNmi();
+    if (nmiPending.swap(false)) {
+      nmi.set(true);
     }
-    nmiPending = false;
   }
 
   private void clearVBlank(boolean isRenderingEnabled) {
