@@ -19,13 +19,7 @@ public final class NesPpu {
     /*   5 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*   6 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*   7 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*   8 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*   8 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*   9 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  10 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  11 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -33,13 +27,7 @@ public final class NesPpu {
     /*  13 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  14 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  15 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  16 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  16 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  17 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  18 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  19 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -47,13 +35,7 @@ public final class NesPpu {
     /*  21 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  22 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  23 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  24 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  24 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  25 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  26 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  27 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -61,13 +43,7 @@ public final class NesPpu {
     /*  29 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  30 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  31 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  32 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  32 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  33 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  34 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  35 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -75,13 +51,7 @@ public final class NesPpu {
     /*  37 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  38 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  39 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  40 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  40 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  41 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  42 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  43 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -89,13 +59,7 @@ public final class NesPpu {
     /*  45 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  46 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  47 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  48 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  48 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  49 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  50 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  51 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -103,13 +67,7 @@ public final class NesPpu {
     /*  53 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  54 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  55 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  56 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  56 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  57 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  58 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  59 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -117,13 +75,7 @@ public final class NesPpu {
     /*  61 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  62 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  63 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  64 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  64 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  65 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  66 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  67 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -131,13 +83,7 @@ public final class NesPpu {
     /*  69 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  70 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  71 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  72 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  72 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  73 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  74 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  75 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -145,13 +91,7 @@ public final class NesPpu {
     /*  77 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  78 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  79 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  80 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  80 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  81 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  82 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  83 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -159,13 +99,7 @@ public final class NesPpu {
     /*  85 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  86 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  87 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  88 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  88 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  89 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  90 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  91 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -173,13 +107,7 @@ public final class NesPpu {
     /*  93 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  94 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  95 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  96 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  96 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  97 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  98 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  99 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -187,13 +115,7 @@ public final class NesPpu {
     /* 101 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 102 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 103 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 104 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 104 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 105 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 106 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 107 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -201,13 +123,7 @@ public final class NesPpu {
     /* 109 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 110 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 111 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 112 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 112 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 113 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 114 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 115 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -215,13 +131,7 @@ public final class NesPpu {
     /* 117 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 118 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 119 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 120 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 120 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 121 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 122 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 123 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -229,13 +139,7 @@ public final class NesPpu {
     /* 125 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 126 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 127 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 128 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 128 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 129 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 130 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 131 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -243,13 +147,7 @@ public final class NesPpu {
     /* 133 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 134 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 135 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 136 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 136 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 137 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 138 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 139 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -257,13 +155,7 @@ public final class NesPpu {
     /* 141 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 142 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 143 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 144 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 144 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 145 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 146 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 147 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -271,13 +163,7 @@ public final class NesPpu {
     /* 149 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 150 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 151 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 152 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 152 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 153 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 154 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 155 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -285,13 +171,7 @@ public final class NesPpu {
     /* 157 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 158 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 159 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 160 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 160 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 161 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 162 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 163 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -299,13 +179,7 @@ public final class NesPpu {
     /* 165 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 166 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 167 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 168 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 168 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 169 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 170 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 171 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -313,13 +187,7 @@ public final class NesPpu {
     /* 173 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 174 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 175 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 176 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 176 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 177 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 178 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 179 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -327,13 +195,7 @@ public final class NesPpu {
     /* 181 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 182 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 183 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 184 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 184 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 185 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 186 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 187 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -341,13 +203,7 @@ public final class NesPpu {
     /* 189 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 190 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 191 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 192 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 192 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 193 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 194 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 195 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -355,13 +211,7 @@ public final class NesPpu {
     /* 197 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 198 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 199 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 200 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 200 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 201 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 202 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 203 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -369,13 +219,7 @@ public final class NesPpu {
     /* 205 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 206 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 207 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 208 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 208 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 209 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 210 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 211 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -383,13 +227,7 @@ public final class NesPpu {
     /* 213 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 214 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 215 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 216 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 216 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 217 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 218 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 219 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -397,13 +235,7 @@ public final class NesPpu {
     /* 221 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 222 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 223 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 224 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 224 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 225 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 226 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 227 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -411,13 +243,7 @@ public final class NesPpu {
     /* 229 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 230 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 231 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 232 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 232 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 233 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 234 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 235 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -425,13 +251,7 @@ public final class NesPpu {
     /* 237 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 238 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 239 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 240 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 240 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 241 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 242 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 243 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -439,13 +259,7 @@ public final class NesPpu {
     /* 245 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 246 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 247 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 248 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 248 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 249 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 250 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 251 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -453,14 +267,7 @@ public final class NesPpu {
     /* 253 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 254 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 255 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 256 */ {
-      NesPpu::renderPixel,
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::incrementVertical,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 256 */ {NesPpu::renderPixel, NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::incrementVertical, NesPpu::reloadShiftRegisters},
     /* 257 */ {NesPpu::reloadHorizontal, NesPpu::fetchNametableByte1},
     /* 258 */ {NesPpu::fetchNametableByte2},
     /* 259 */ {NesPpu::fetchNametableByte1},
@@ -532,12 +339,7 @@ public final class NesPpu {
     /* 325 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 326 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 327 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 328 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 328 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 329 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 330 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 331 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -545,12 +347,7 @@ public final class NesPpu {
     /* 333 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 334 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 335 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 336 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 336 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 337 */ {NesPpu::fetchNametableByte1},
     /* 338 */ {NesPpu::fetchNametableByte2},
     /* 339 */ {NesPpu::fetchNametableByte1},
@@ -900,6 +697,7 @@ public final class NesPpu {
     /* 339 */ {},
     /* 340 */ {},
   };
+
   private static final TickFn[][] VBLANK_SCANLINE = {
     /*   0 */ {NesPpu::drawFrame, NesPpu::setVBlank0},
     /*   1 */ {NesPpu::setVBlank1},
@@ -1253,12 +1051,7 @@ public final class NesPpu {
     /*   5 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*   6 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*   7 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*   8 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*   8 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*   9 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  10 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  11 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1266,12 +1059,7 @@ public final class NesPpu {
     /*  13 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  14 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  15 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  16 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  16 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  17 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  18 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  19 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1279,12 +1067,7 @@ public final class NesPpu {
     /*  21 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  22 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  23 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  24 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  24 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  25 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  26 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  27 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1292,12 +1075,7 @@ public final class NesPpu {
     /*  29 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  30 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  31 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  32 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  32 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  33 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  34 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  35 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1305,12 +1083,7 @@ public final class NesPpu {
     /*  37 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  38 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  39 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  40 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  40 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  41 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  42 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  43 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1318,12 +1091,7 @@ public final class NesPpu {
     /*  45 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  46 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  47 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  48 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  48 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  49 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  50 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  51 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1331,12 +1099,7 @@ public final class NesPpu {
     /*  53 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  54 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  55 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  56 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  56 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  57 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  58 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  59 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1344,12 +1107,7 @@ public final class NesPpu {
     /*  61 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  62 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  63 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  64 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  64 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  65 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  66 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  67 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1357,12 +1115,7 @@ public final class NesPpu {
     /*  69 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  70 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  71 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  72 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  72 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  73 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  74 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  75 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1370,12 +1123,7 @@ public final class NesPpu {
     /*  77 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  78 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  79 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  80 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  80 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  81 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  82 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  83 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1383,12 +1131,7 @@ public final class NesPpu {
     /*  85 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  86 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  87 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  88 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  88 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  89 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  90 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  91 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1396,12 +1139,7 @@ public final class NesPpu {
     /*  93 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /*  94 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /*  95 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /*  96 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /*  96 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /*  97 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /*  98 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /*  99 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1409,12 +1147,7 @@ public final class NesPpu {
     /* 101 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 102 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 103 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 104 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 104 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 105 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 106 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 107 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1422,12 +1155,7 @@ public final class NesPpu {
     /* 109 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 110 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 111 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 112 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 112 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 113 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 114 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 115 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1435,12 +1163,7 @@ public final class NesPpu {
     /* 117 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 118 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 119 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 120 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 120 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 121 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 122 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 123 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1448,12 +1171,7 @@ public final class NesPpu {
     /* 125 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 126 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 127 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 128 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 128 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 129 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 130 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 131 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1461,12 +1179,7 @@ public final class NesPpu {
     /* 133 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 134 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 135 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 136 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 136 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 137 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 138 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 139 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1474,12 +1187,7 @@ public final class NesPpu {
     /* 141 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 142 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 143 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 144 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 144 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 145 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 146 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 147 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1487,12 +1195,7 @@ public final class NesPpu {
     /* 149 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 150 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 151 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 152 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 152 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 153 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 154 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 155 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1500,12 +1203,7 @@ public final class NesPpu {
     /* 157 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 158 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 159 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 160 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 160 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 161 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 162 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 163 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1513,12 +1211,7 @@ public final class NesPpu {
     /* 165 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 166 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 167 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 168 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 168 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 169 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 170 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 171 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1526,12 +1219,7 @@ public final class NesPpu {
     /* 173 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 174 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 175 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 176 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 176 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 177 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 178 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 179 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1539,12 +1227,7 @@ public final class NesPpu {
     /* 181 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 182 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 183 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 184 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 184 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 185 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 186 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 187 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1552,12 +1235,7 @@ public final class NesPpu {
     /* 189 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 190 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 191 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 192 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 192 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 193 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 194 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 195 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1565,12 +1243,7 @@ public final class NesPpu {
     /* 197 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 198 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 199 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 200 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 200 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 201 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 202 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 203 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1578,12 +1251,7 @@ public final class NesPpu {
     /* 205 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 206 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 207 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 208 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 208 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 209 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 210 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 211 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1591,12 +1259,7 @@ public final class NesPpu {
     /* 213 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 214 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 215 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 216 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 216 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 217 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 218 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 219 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1604,12 +1267,7 @@ public final class NesPpu {
     /* 221 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 222 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 223 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 224 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 224 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 225 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 226 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 227 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1617,12 +1275,7 @@ public final class NesPpu {
     /* 229 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 230 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 231 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 232 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 232 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 233 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 234 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 235 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1630,12 +1283,7 @@ public final class NesPpu {
     /* 237 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 238 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 239 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 240 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 240 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 241 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 242 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 243 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1643,12 +1291,7 @@ public final class NesPpu {
     /* 245 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 246 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 247 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 248 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 248 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 249 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 250 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 251 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1656,13 +1299,7 @@ public final class NesPpu {
     /* 253 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 254 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 255 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 256 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::incrementVertical,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 256 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::incrementVertical, NesPpu::reloadShiftRegisters},
     /* 257 */ {NesPpu::reloadHorizontal, NesPpu::fetchNametableByte1},
     /* 258 */ {NesPpu::fetchNametableByte2},
     /* 259 */ {NesPpu::fetchNametableByte1},
@@ -1734,12 +1371,7 @@ public final class NesPpu {
     /* 325 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 326 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 327 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 328 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 328 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 329 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 330 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 331 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -1747,12 +1379,7 @@ public final class NesPpu {
     /* 333 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo1},
     /* 334 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteLo2},
     /* 335 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi1},
-    /* 336 */ {
-      NesPpu::shiftRegisters,
-      NesPpu::fetchPatternByteHi2,
-      NesPpu::incrementHorizontal,
-      NesPpu::reloadShiftRegisters
-    },
+    /* 336 */ {NesPpu::shiftRegisters, NesPpu::fetchPatternByteHi2, NesPpu::incrementHorizontal, NesPpu::reloadShiftRegisters},
     /* 337 */ {NesPpu::fetchNametableByte1},
     /* 338 */ {NesPpu::fetchNametableByte2},
     /* 339 */ {NesPpu::fetchNametableByte1},
