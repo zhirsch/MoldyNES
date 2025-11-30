@@ -25,7 +25,7 @@ public class NesBus {
     this.mapper = mapper;
     this.apu = new NesApu();
     this.cpu = new NesCpu(this);
-    this.ppu = new NesPpu(this, mapper, display, palette);
+    this.ppu = new NesPpu(mapper, display, palette);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
   }
@@ -34,15 +34,15 @@ public class NesBus {
     return cpu.isRunning();
   }
 
-  public void toggleNmi() {
-    cpu.toggleNmi();
-  }
-
   public void tick() {
-    ppu.tick();
-    ppu.tick();
-    ppu.tick();
+    boolean nmi = false;
+    nmi = nmi | ppu.tick();
+    nmi = nmi | ppu.tick();
+    nmi = nmi | ppu.tick();
     cpu.tick();
+    if (nmi) {
+      cpu.nmi.set(true);
+    }
   }
 
   public void reset() {

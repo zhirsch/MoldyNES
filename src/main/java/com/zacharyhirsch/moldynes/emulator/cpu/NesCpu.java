@@ -1,5 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
+import com.zacharyhirsch.moldynes.emulator.DelayLatch;
 import com.zacharyhirsch.moldynes.emulator.NesBus;
 
 public final class NesCpu {
@@ -10,10 +11,10 @@ public final class NesCpu {
   private NesCpuCycle cycle;
   private boolean halt;
   private boolean reset;
-  private boolean nmi;
 
   public final NesCpuState state;
   public final NesAlu alu;
+  public final DelayLatch<Boolean> nmi;
 
   public NesCpu(NesBus bus) {
     this.bus = bus;
@@ -22,7 +23,7 @@ public final class NesCpu {
     this.cycle = new NesCpuInit();
     this.halt = false;
     this.reset = false;
-    this.nmi = false;
+    this.nmi = new DelayLatch<>(false);
 
     this.state = new NesCpuState();
     this.alu = new NesAlu();
@@ -36,6 +37,7 @@ public final class NesCpu {
       } else {
         state.data = bus.read(state.adh, state.adl);
       }
+      nmi.tick();
     } catch (Exception exc) {
       throw new NesCpuCrashedException(state, exc);
     }
@@ -51,8 +53,8 @@ public final class NesCpu {
       state.p |= NesCpuState.STATUS_I;
       return new NesCpuInit().execute(this);
     }
-    if (nmi) {
-      nmi = false;
+    if (nmi.value()) {
+      nmi.set(false);
       state.pc--;
       return new NesCpuNmi().execute(this);
     }
@@ -65,10 +67,6 @@ public final class NesCpu {
 
   public void halt() {
     halt = true;
-  }
-
-  public void toggleNmi() {
-    nmi = true;
   }
 
   public void jump(byte pch, byte pcl) {
