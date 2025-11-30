@@ -2036,7 +2036,7 @@ public final class NesPpu {
   private int dot = 0;
   private byte buffer = 0;
 
-  private byte control = 0;
+  private byte ctrl = 0;
   private byte mask = 0;
   private byte status = 0;
   private byte oamAddress = 0;
@@ -2070,9 +2070,9 @@ public final class NesPpu {
   }
 
   public void writeControl(byte data) {
-    control = data;
-    if (bit8(control, 7) == 1) {
-      nmi.set(bit8(status, 7) == 1);
+    ctrl = data;
+    if (isNmiEnabled()) {
+      nmi.set(isVblEnabled());
     } else {
       nmiPending.set(false);
     }
@@ -2226,7 +2226,7 @@ public final class NesPpu {
   }
 
   public boolean tick() {
-    boolean isRenderingEnabled = bit8(mask, 3) == 1 || bit8(mask, 4) == 1;
+    boolean isRenderingEnabled = isBgRenderingEnabled() || isFgRenderingEnabled();
     Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this, isRenderingEnabled));
     advanceDot(isRenderingEnabled);
     return nmi.swap(false);
@@ -2272,7 +2272,7 @@ public final class NesPpu {
   }
 
   private void incrementAddress() {
-    if (bit8(control, 2) == 1) {
+    if (isVramIncrementVertical()) {
       v += 32;
     } else {
       v += 1;
@@ -2342,7 +2342,7 @@ public final class NesPpu {
   }
 
   private void setVBlank2(boolean isRenderingEnabled) {
-    nmiPending.set(bit8(status, 7) == 1 && bit8(control, 7) == 1);
+    nmiPending.set(isVblEnabled() && isNmiEnabled());
   }
 
   private void setVBlank3(boolean isRenderingEnabled) {
@@ -2460,7 +2460,7 @@ public final class NesPpu {
   }
 
   private byte fetchPatternTableByte(int offset) {
-    int chrBank = bit8(control, 4) == 0 ? 0b0000_0000_0000_0000 : 0b0001_0000_0000_0000;
+    int chrBank = isAltBgPatternTable() ? 0b0001_0000_0000_0000 : 0b0000_0000_0000_0000;
     int fineY = (v >> 12) & 0b0111;
     int chrIndex = chrBank | (Byte.toUnsignedInt(nametableByte) << 4) | offset | fineY;
     return mapper.readChr((short) chrIndex);
@@ -2482,6 +2482,30 @@ public final class NesPpu {
 
     patternHiShift &= (short) 0xff00;
     patternHiShift |= (short) Byte.toUnsignedInt(patternHiLatch);
+  }
+
+  private boolean isVramIncrementVertical() {
+    return bit8(ctrl, 2) == 1;
+  }
+
+  private boolean isAltBgPatternTable() {
+    return bit8(ctrl, 4) == 1;
+  }
+
+  private boolean isNmiEnabled() {
+    return bit8(ctrl, 7) == 1;
+  }
+
+  private boolean isVblEnabled() {
+    return bit8(status, 7) == 1;
+  }
+
+  private boolean isBgRenderingEnabled() {
+    return bit8(mask, 3) == 1;
+  }
+
+  private boolean isFgRenderingEnabled() {
+    return bit8(mask, 4) == 1;
   }
 
   private static int bit8(byte value, int i) {
