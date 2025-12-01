@@ -35,14 +35,7 @@ public class NesBus {
   }
 
   public void tick() {
-    boolean nmi = false;
-    nmi = nmi | ppu.tick();
-    nmi = nmi | ppu.tick();
-    nmi = nmi | ppu.tick();
-    cpu.tick();
-    if (nmi) {
-      cpu.nmi.set(true);
-    }
+    cpu.tick(ppu.tick() | ppu.tick() | ppu.tick());
   }
 
   public void reset() {
