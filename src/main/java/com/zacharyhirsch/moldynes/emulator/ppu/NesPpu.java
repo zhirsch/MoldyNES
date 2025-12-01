@@ -1660,6 +1660,8 @@ public final class NesPpu {
 
   private int scanline = 0;
   private int dot = 0;
+  private boolean odd = false;
+
   private byte buffer = 0;
 
   private byte ctrl = 0;
@@ -1667,20 +1669,15 @@ public final class NesPpu {
   private byte status = 0;
   private byte oamAddress = 0;
 
-  private boolean odd = false;
   private short v = 0;
   private short t = 0;
   private byte x = 0;
   private byte w = 0;
 
-  private byte nametableByte;
-  private byte attributeByte;
-  private byte patternLoLatch;
-  private byte patternHiLatch;
-  private short patternLoShift;
-  private short patternHiShift;
-  private short attributeLoShift;
-  private short attributeHiShift;
+  private final NesPpuNametableByte nametableByte = new NesPpuNametableByte();
+  private final NesPpuAttributeByte attributeByte = new NesPpuAttributeByte();
+  private final NesPpuPatternByte patternLoByte = new NesPpuPatternByte();
+  private final NesPpuPatternByte patternHiByte = new NesPpuPatternByte();
 
   private boolean vblPending = false;
   private boolean nmiPending = false;
@@ -2012,11 +2009,10 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    int patternHi = bit16(patternHiShift, 15 - x);
-    int patternLo = bit16(patternLoShift, 15 - x);
-    int attributeHi = bit16(attributeHiShift, 15 - x);
-    int attributeLo = bit16(attributeLoShift, 15 - x);
-    NesPpuColor[] colors = getBackgroundPalette((attributeHi << 1) | attributeLo);
+    int patternHi = patternHiByte.value(x);
+    int patternLo = patternLoByte.value(x);
+    int attribute = attributeByte.value();
+    NesPpuColor[] colors = getBackgroundPalette(attribute);
     NesPpuColor color =
         switch ((patternHi << 1) | patternLo) {
           case 0 -> colors[0];
@@ -2041,10 +2037,10 @@ public final class NesPpu {
   }
 
   private void shiftRegisters() {
-    patternLoShift <<= 1;
-    patternHiShift <<= 1;
-    attributeLoShift <<= 1;
-    attributeHiShift <<= 1;
+    nametableByte.shift();
+    attributeByte.shift();
+    patternLoByte.shift();
+    patternHiByte.shift();
   }
 
   private void fetchNametableByte1() {}
@@ -2053,7 +2049,7 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    nametableByte = ram[v & 0x0fff];
+    nametableByte.set(ram[v & 0x0fff]);
   }
 
   private void fetchAttributeByte1() {}
@@ -2067,7 +2063,7 @@ public final class NesPpu {
     int coarseY = (v >>> 4) & 0b0000_0000_0011_1000;
     int coarseX = (v >>> 2) & 0b0000_0000_0000_0111;
     int address = 0b0000_0011_1100_0000 | nametab | coarseY | coarseX;
-    attributeByte = ram[address];
+    attributeByte.set(ram[address]);
   }
 
   private void fetchPatternByteLo1() {}
@@ -2076,7 +2072,7 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    patternLoLatch = fetchPatternTableByte(0);
+    patternLoByte.set(fetchPatternTableByte(0));
   }
 
   private void fetchPatternByteHi1() {}
@@ -2085,13 +2081,14 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    patternHiLatch = fetchPatternTableByte(8);
+    patternHiByte.set(fetchPatternTableByte(8));
   }
 
   private byte fetchPatternTableByte(int offset) {
     int chrBank = isAltBgPatternTable() ? 0b0001_0000_0000_0000 : 0b0000_0000_0000_0000;
+    int nametable = Byte.toUnsignedInt(nametableByte.value()) << 4;
     int fineY = (v >> 12) & 0b0111;
-    int chrIndex = chrBank | (Byte.toUnsignedInt(nametableByte) << 4) | offset | fineY;
+    int chrIndex = chrBank | nametable | offset | fineY;
     return mapper.readChr((short) chrIndex);
   }
 
@@ -2099,18 +2096,10 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-
-    attributeLoShift &= (short) 0xff00;
-    attributeLoShift |= (short) (bit8(attributeByte, 0) == 0 ? 0x0000 : 0x00ff);
-
-    attributeHiShift &= (short) 0xff00;
-    attributeHiShift |= (short) (bit8(attributeByte, 1) == 0 ? 0x0000 : 0x00ff);
-
-    patternLoShift &= (short) 0xff00;
-    patternLoShift |= (short) Byte.toUnsignedInt(patternLoLatch);
-
-    patternHiShift &= (short) 0xff00;
-    patternHiShift |= (short) Byte.toUnsignedInt(patternHiLatch);
+    nametableByte.reload();
+    attributeByte.reload();
+    patternLoByte.reload();
+    patternHiByte.reload();
   }
 
   private boolean isVramIncrementVertical() {
@@ -2143,9 +2132,5 @@ public final class NesPpu {
 
   private static int bit8(byte value, int i) {
     return (Byte.toUnsignedInt(value) >>> i) & 1;
-  }
-
-  private int bit16(short value, int i) {
-    return (Short.toUnsignedInt(value) >>> i) & 1;
   }
 }
