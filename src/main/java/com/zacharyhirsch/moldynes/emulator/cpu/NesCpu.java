@@ -88,4 +88,12 @@ public final class NesCpu {
     state.data = data;
     state.write = true;
   }
+
+  public void store(short address, byte data) {
+    store((byte) (address >>> 8), (byte) address, data);
+  }
+
+  public void startOamDma(byte address) {
+    cycle = new NesCpuOamDma(address, cycle);
+  }
 }

@@ -161,12 +161,7 @@ public class NesBus {
       return;
     }
     if (addr == 0x4014) {
-      byte[] buffer = new byte[0x100];
-      for (int i = 0; i < 256; i++) {
-        buffer[i] = read(data, (byte) i);
-      }
-      ppu.writeOamDma(buffer);
-      // TODO: account for cycles during DMA
+      cpu.startOamDma(data);
       return;
     }
     if (addr == 0x4015) {
