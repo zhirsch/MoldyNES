@@ -271,66 +271,66 @@ public final class NesPpu {
     /* 258 */ {NesPpu::fetchNametableByte2},
     /* 259 */ {NesPpu::fetchNametableByte1},
     /* 260 */ {NesPpu::fetchNametableByte2},
-    /* 261 */ {}, // TODO: sprite
-    /* 262 */ {}, // TODO: sprite
-    /* 263 */ {}, // TODO: sprite
-    /* 264 */ {}, // TODO: sprite
+    /* 261 */ {NesPpu::fetchSprite0PatternByteLo1},
+    /* 262 */ {NesPpu::fetchSprite0PatternByteLo2},
+    /* 263 */ {NesPpu::fetchSprite0PatternByteHi1},
+    /* 264 */ {NesPpu::fetchSprite0PatternByteHi2},
     /* 265 */ {NesPpu::fetchNametableByte1},
     /* 266 */ {NesPpu::fetchNametableByte2},
     /* 267 */ {NesPpu::fetchNametableByte1},
     /* 268 */ {NesPpu::fetchNametableByte2},
-    /* 269 */ {}, // TODO: sprite
-    /* 270 */ {}, // TODO: sprite
-    /* 271 */ {}, // TODO: sprite
-    /* 272 */ {}, // TODO: sprite
+    /* 269 */ {NesPpu::fetchSprite1PatternByteLo1},
+    /* 270 */ {NesPpu::fetchSprite1PatternByteLo2},
+    /* 271 */ {NesPpu::fetchSprite1PatternByteHi1},
+    /* 272 */ {NesPpu::fetchSprite1PatternByteHi2},
     /* 273 */ {NesPpu::fetchNametableByte1},
     /* 274 */ {NesPpu::fetchNametableByte2},
     /* 275 */ {NesPpu::fetchNametableByte1},
     /* 276 */ {NesPpu::fetchNametableByte2},
-    /* 277 */ {}, // TODO: sprite
-    /* 278 */ {}, // TODO: sprite
-    /* 279 */ {}, // TODO: sprite
-    /* 280 */ {}, // TODO: sprite
+    /* 277 */ {NesPpu::fetchSprite2PatternByteLo1},
+    /* 278 */ {NesPpu::fetchSprite2PatternByteLo2},
+    /* 279 */ {NesPpu::fetchSprite2PatternByteHi1},
+    /* 280 */ {NesPpu::fetchSprite2PatternByteHi2},
     /* 281 */ {NesPpu::fetchNametableByte1},
     /* 282 */ {NesPpu::fetchNametableByte2},
     /* 283 */ {NesPpu::fetchNametableByte1},
     /* 284 */ {NesPpu::fetchNametableByte2},
-    /* 285 */ {}, // TODO: sprite
-    /* 286 */ {}, // TODO: sprite
-    /* 287 */ {}, // TODO: sprite
-    /* 288 */ {}, // TODO: sprite
+    /* 285 */ {NesPpu::fetchSprite3PatternByteLo1},
+    /* 286 */ {NesPpu::fetchSprite3PatternByteLo2},
+    /* 287 */ {NesPpu::fetchSprite3PatternByteHi1},
+    /* 288 */ {NesPpu::fetchSprite3PatternByteHi2},
     /* 289 */ {NesPpu::fetchNametableByte1},
     /* 290 */ {NesPpu::fetchNametableByte2},
     /* 291 */ {NesPpu::fetchNametableByte1},
     /* 292 */ {NesPpu::fetchNametableByte2},
-    /* 293 */ {}, // TODO: sprite
-    /* 294 */ {}, // TODO: sprite
-    /* 295 */ {}, // TODO: sprite
-    /* 296 */ {}, // TODO: sprite
+    /* 293 */ {NesPpu::fetchSprite4PatternByteLo1},
+    /* 294 */ {NesPpu::fetchSprite4PatternByteLo2},
+    /* 295 */ {NesPpu::fetchSprite4PatternByteHi1},
+    /* 296 */ {NesPpu::fetchSprite4PatternByteHi2},
     /* 297 */ {NesPpu::fetchNametableByte1},
     /* 298 */ {NesPpu::fetchNametableByte2},
     /* 299 */ {NesPpu::fetchNametableByte1},
     /* 300 */ {NesPpu::fetchNametableByte2},
-    /* 301 */ {}, // TODO: sprite
-    /* 302 */ {}, // TODO: sprite
-    /* 303 */ {}, // TODO: sprite
-    /* 304 */ {}, // TODO: sprite
+    /* 301 */ {NesPpu::fetchSprite5PatternByteLo1},
+    /* 302 */ {NesPpu::fetchSprite5PatternByteLo2},
+    /* 303 */ {NesPpu::fetchSprite5PatternByteHi1},
+    /* 304 */ {NesPpu::fetchSprite5PatternByteHi2},
     /* 305 */ {NesPpu::fetchNametableByte1},
     /* 306 */ {NesPpu::fetchNametableByte2},
     /* 307 */ {NesPpu::fetchNametableByte1},
     /* 308 */ {NesPpu::fetchNametableByte2},
-    /* 309 */ {}, // TODO: sprite
-    /* 310 */ {}, // TODO: sprite
-    /* 311 */ {}, // TODO: sprite
-    /* 312 */ {}, // TODO: sprite
+    /* 309 */ {NesPpu::fetchSprite6PatternByteLo1},
+    /* 310 */ {NesPpu::fetchSprite6PatternByteLo2},
+    /* 311 */ {NesPpu::fetchSprite6PatternByteHi1},
+    /* 312 */ {NesPpu::fetchSprite6PatternByteHi2},
     /* 313 */ {NesPpu::fetchNametableByte1},
     /* 314 */ {NesPpu::fetchNametableByte2},
     /* 315 */ {NesPpu::fetchNametableByte1},
     /* 316 */ {NesPpu::fetchNametableByte2},
-    /* 317 */ {}, // TODO: sprite
-    /* 318 */ {}, // TODO: sprite
-    /* 319 */ {}, // TODO: sprite
-    /* 320 */ {}, // TODO: sprite
+    /* 317 */ {NesPpu::fetchSprite7PatternByteLo1},
+    /* 318 */ {NesPpu::fetchSprite7PatternByteLo2},
+    /* 319 */ {NesPpu::fetchSprite7PatternByteHi1},
+    /* 320 */ {NesPpu::fetchSprite7PatternByteHi2},
     /* 321 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte1},
     /* 322 */ {NesPpu::shiftRegisters, NesPpu::fetchNametableByte2},
     /* 323 */ {NesPpu::shiftRegisters, NesPpu::fetchAttributeByte1},
@@ -2095,6 +2095,70 @@ public final class NesPpu {
     }
     oam.tick(scanline, dot);
   }
+
+  private void fetchSprite0PatternByteLo1() {}
+
+  private void fetchSprite0PatternByteLo2() {}
+
+  private void fetchSprite0PatternByteHi1() {}
+
+  private void fetchSprite0PatternByteHi2() {}
+
+  private void fetchSprite1PatternByteLo1() {}
+
+  private void fetchSprite1PatternByteLo2() {}
+
+  private void fetchSprite1PatternByteHi1() {}
+
+  private void fetchSprite1PatternByteHi2() {}
+
+  private void fetchSprite2PatternByteLo1() {}
+
+  private void fetchSprite2PatternByteLo2() {}
+
+  private void fetchSprite2PatternByteHi1() {}
+
+  private void fetchSprite2PatternByteHi2() {}
+
+  private void fetchSprite3PatternByteLo1() {}
+
+  private void fetchSprite3PatternByteLo2() {}
+
+  private void fetchSprite3PatternByteHi1() {}
+
+  private void fetchSprite3PatternByteHi2() {}
+
+  private void fetchSprite4PatternByteLo1() {}
+
+  private void fetchSprite4PatternByteLo2() {}
+
+  private void fetchSprite4PatternByteHi1() {}
+
+  private void fetchSprite4PatternByteHi2() {}
+
+  private void fetchSprite5PatternByteLo1() {}
+
+  private void fetchSprite5PatternByteLo2() {}
+
+  private void fetchSprite5PatternByteHi1() {}
+
+  private void fetchSprite5PatternByteHi2() {}
+
+  private void fetchSprite6PatternByteLo1() {}
+
+  private void fetchSprite6PatternByteLo2() {}
+
+  private void fetchSprite6PatternByteHi1() {}
+
+  private void fetchSprite6PatternByteHi2() {}
+
+  private void fetchSprite7PatternByteLo1() {}
+
+  private void fetchSprite7PatternByteLo2() {}
+
+  private void fetchSprite7PatternByteHi1() {}
+
+  private void fetchSprite7PatternByteHi2() {}
 
   private boolean isVramIncrementVertical() {
     return bit8(ctrl, 2) == 1;
