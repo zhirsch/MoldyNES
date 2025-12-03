@@ -34,6 +34,14 @@ final class NesPpuOam {
     oamBuffer[Byte.toUnsignedInt(address++)] = data;
   }
 
+  NesPpuSprite sprite(int index) {
+    return new NesPpuSprite(
+        secondaryOamBuffer[4 * index + 0],
+        secondaryOamBuffer[4 * index + 1],
+        secondaryOamBuffer[4 * index + 2],
+        secondaryOamBuffer[4 * index + 3]);
+  }
+
   void tick(int scanline, int dot) {
     assert 0 <= scanline && scanline <= 261;
     assert 0 <= dot && dot <= 340;
