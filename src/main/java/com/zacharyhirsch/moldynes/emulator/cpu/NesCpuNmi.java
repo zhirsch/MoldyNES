@@ -24,7 +24,7 @@ public class NesCpuNmi implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    byte p = (byte) (cpu.state.p & ~NesCpuState.STATUS_B | 0b0010_0000);
+    byte p = (byte) ((cpu.state.p & ~NesCpuState.STATUS_B) | 0b0010_0000);
     cpu.store((byte) 0x01, cpu.state.sp--, p);
     return this::cycle5;
   }

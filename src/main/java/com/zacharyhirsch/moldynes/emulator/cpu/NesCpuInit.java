@@ -8,7 +8,7 @@ public class NesCpuInit implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle1(NesCpu cpu) {
-    cpu.state.adl += 1;
+    cpu.state.adl = (byte) (cpu.state.adl + 1);
     return this::cycle2;
   }
 

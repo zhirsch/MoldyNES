@@ -7,7 +7,7 @@ public interface NesMapper {
   static NesMapper load(ByteBuffer buffer) {
     byte[] header = new byte[16];
     buffer.get(0, header);
-    if (!new String(header, 0, 4).equals("NES\u001a")) {
+    if (!(header[0] == 'N' && header[1] == 'E' && header[2] == 'S' && header[3] == 0x1a)) {
       throw new IllegalArgumentException("bad magic string");
     }
     if ((header[6] & 0b0000_0100) == 0b0000_0100) {

@@ -10,7 +10,7 @@ public class NesBus {
 
   private final byte[] cpuRam = new byte[0x0800];
   private final NesMapper mapper;
-  private final NesApu apu;
+  private @SuppressWarnings("unused") final NesApu apu;
   private final NesCpu cpu;
   private final NesPpu ppu;
   private final NesJoypad joypad1;
@@ -35,7 +35,11 @@ public class NesBus {
   }
 
   public void tick() {
-    cpu.tick(ppu.tick() | ppu.tick() | ppu.tick());
+    boolean nmi = false;
+    for (int i = 0; i < 3; i++) {
+      nmi = ppu.tick() || nmi;
+    }
+    cpu.tick(nmi);
   }
 
   public void reset() {

@@ -1905,9 +1905,9 @@ public final class NesPpu {
 
   private void incrementAddress() {
     if (isVramIncrementVertical()) {
-      v += 32;
+      v = (short) (v + 32);
     } else {
-      v += 1;
+      v = (short) (v + 1);
     }
   }
 

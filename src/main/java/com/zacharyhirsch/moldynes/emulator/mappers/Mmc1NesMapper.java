@@ -12,8 +12,8 @@ final class Mmc1NesMapper implements NesMapper {
 
   private byte load = 0b10000;
   private byte control = 0b01100;
-  private byte chrBank0 = 0;
-  private byte chrBank1 = 0;
+  private @SuppressWarnings("unused") byte chrBank0 = 0;
+  private @SuppressWarnings("unused") byte chrBank1 = 0;
   private byte prgBank = 0;
 
   public Mmc1NesMapper(byte[] header, ByteBuffer buffer) {

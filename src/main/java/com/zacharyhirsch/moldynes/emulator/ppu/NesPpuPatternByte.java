@@ -14,7 +14,7 @@ final class NesPpuPatternByte {
   }
 
   void shift() {
-    value <<= 1;
+    value = (byte) (value << 1);
   }
 
   void reload() {

@@ -7,11 +7,10 @@ public class Pla implements NesCpuCycle {
 
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
-    return cycle1(cpu);
+    return cycle1();
   }
 
-  private NesCpuCycle cycle1(NesCpu cpu) {
-    // cpu.fetch(cpu.state.pc++);
+  private NesCpuCycle cycle1() {
     return this::cycle2;
   }
 
