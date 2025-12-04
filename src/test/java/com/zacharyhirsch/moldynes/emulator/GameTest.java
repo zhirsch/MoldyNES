@@ -23,4 +23,9 @@ class GameTest {
   void iceclimber() {
     TestUtils.run("iceclimber.nes");
   }
+
+  @Test
+  void icehockey() {
+    TestUtils.run("icehockey.nes");
+  }
 }

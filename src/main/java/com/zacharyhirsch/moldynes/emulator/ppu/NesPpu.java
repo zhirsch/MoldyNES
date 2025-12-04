@@ -2123,12 +2123,14 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    //                        0b0yyy_NNYY_YYYX_XXXX
-    int nametab = (v >>> 0) & 0b0000_1100_0000_0000;
-    int coarseY = (v >>> 4) & 0b0000_0000_0011_1000;
-    int coarseX = (v >>> 2) & 0b0000_0000_0000_0111;
-    int address = 0b0000_0011_1100_0000 | nametab | coarseY | coarseX;
-    attributeByte.set(ram[address]);
+    //                 0b0yyy_NNYY_YYYX_XXXX
+    int nametab = (v & 0b0000_1100_0000_0000) >>> 10;
+    int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
+    int coarseX = (v & 0b0000_0000_0001_1111) >>> 0;
+    int address = 0b0010_0011_1100_0000 | nametab | ((coarseY / 4) << 3) | (coarseX / 4);
+    byte value = ram[address & 0b0000_0111_1111_1111];
+    byte shift = (byte) (((coarseY & 0b0000_0010) << 1) | (coarseX & 0b0000_0010));
+    attributeByte.set((byte) (value >> shift));
   }
 
   private void fetchPatternByteLo1() {}
