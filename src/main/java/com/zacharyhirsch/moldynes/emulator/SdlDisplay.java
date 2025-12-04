@@ -38,6 +38,7 @@ import static io.github.libsdl4j.api.render.SdlRender.SDL_UpdateTexture;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.RateLimiter;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import io.github.libsdl4j.api.event.SDL_Event;
@@ -76,6 +77,7 @@ final class SdlDisplay implements AutoCloseable, Display {
           .put(SDLK_SLASH, NesJoypad.Button.BUTTON_B)
           .build();
 
+  private final RateLimiter fps;
   private final NesJoypad joypad1;
   private final NesJoypad joypad2;
   private final SDL_Window window;
@@ -85,6 +87,7 @@ final class SdlDisplay implements AutoCloseable, Display {
   public boolean quit = false;
 
   public SdlDisplay(NesJoypad joypad1, NesJoypad joypad2) {
+    this.fps = RateLimiter.create(60.0988);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
 
@@ -113,6 +116,7 @@ final class SdlDisplay implements AutoCloseable, Display {
 
   @Override
   public void draw(byte[] frame) {
+    fps.acquire();
     Pointer pixelsPtr = new Memory(frame.length);
     pixelsPtr.write(0, frame, 0, frame.length);
 
