@@ -36,7 +36,6 @@ final class NromNesMapper implements NesMapper {
       }
       return prgRom[addr];
     }
-    //    throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
     return (byte) 0xff;
   }
 
@@ -52,15 +51,12 @@ final class NromNesMapper implements NesMapper {
 
   @Override
   public byte readChr(short address) {
-    int addr = Short.toUnsignedInt(address);
-    return chrRam[addr];
+    return chrRam[Short.toUnsignedInt(address)];
   }
 
   @Override
   public void writeChr(short address, byte data) {
-    int addr = Short.toUnsignedInt(address);
-    //    throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
-    chrRam[addr] = data;
+    chrRam[Short.toUnsignedInt(address)] = data;
   }
 
   @Override
@@ -99,38 +95,5 @@ final class NromNesMapper implements NesMapper {
 
     int index = address & 0b0000_0011_1111_1111;
     return (short) (offset | index);
-
-    //    boolean vertical = isVerticalMirroring();
-    //
-    //    short ramIndex = (short) (address & 0b0000_1111_1111_1111);
-    //    int nametable = ramIndex >>> 10;
-    //    if (vertical && (nametable == 2 || nametable == 3)) {
-    //      return (short) (ramIndex - 0x0800);
-    //    }
-    //    if (!vertical && (nametable == 1 || nametable == 2)) {
-    //      short x = (short) (ramIndex - 0b0000_0100_0000_0000);
-    //      short y = (short) (ramIndex & 0b0000_1011_1111_1111);
-    //
-    //      return (short) (ramIndex - 0x0400);
-    //    }
-    //    if (!vertical && nametable == 3) {
-    //      return (short) (ramIndex - 0x0800);
-    //    }
-    //    return ramIndex;
-
-    //    boolean vertical = isVerticalMirroring();
-    //
-    //    short ramIndex = (short) (address & 0b0000_1111_1111_1111);
-    //    int nametable = ramIndex >>> 10;
-    //    if (vertical && (nametable == 2 || nametable == 3)) {
-    //      return (short) (ramIndex - 0b0000_1000_0000_0000);
-    //    }
-    //    if (!vertical && (nametable == 1 || nametable == 2)) {
-    //      return (short) (ramIndex - 0b0000_0100_0000_0000);
-    //    }
-    //    if (!vertical && nametable == 3) {
-    //      return (short) (ramIndex - 0b0000_0100_00000_0000);
-    //    }
-    //    return ramIndex;
   }
 }

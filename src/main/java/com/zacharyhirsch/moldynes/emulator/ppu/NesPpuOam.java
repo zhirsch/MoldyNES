@@ -3,43 +3,54 @@ package com.zacharyhirsch.moldynes.emulator.ppu;
 final class NesPpuOam {
 
   private final byte[] oamBuffer;
-  private final byte[] secondaryOamBuffer;
+  final byte[] secondaryOamBuffer;
+  private final byte[] indices;
 
   private int oamN;
   private int secondaryOamN;
   private byte buffer;
-  private boolean selected;
+  private boolean copying;
+  private boolean inRange;
+  private int m;
 
-  private byte address;
+  private int address;
 
   NesPpuOam() {
     this.oamBuffer = new byte[4 * 64];
     this.secondaryOamBuffer = new byte[4 * 8];
+    this.indices = new byte[8];
     this.oamN = 0;
     this.secondaryOamN = 0;
     this.buffer = 0;
-    this.selected = false;
+    this.copying = false;
+    this.inRange = false;
+    this.m = 0;
     this.address = 0;
   }
 
   void setAddress(byte address) {
-    this.address = address;
+    this.address = Byte.toUnsignedInt(address);
   }
 
   byte get() {
-    return oamBuffer[Byte.toUnsignedInt(address)];
+    return oamBuffer[address];
   }
 
   void put(byte data) {
-    oamBuffer[Byte.toUnsignedInt(address++)] = data;
+    oamBuffer[address] = data;
+    address++;
+    if (address == 0x100) {
+      address = 0;
+    }
   }
 
   NesPpuSprite sprite(int index) {
     return new NesPpuSprite(
-        secondaryOamBuffer[4 * index + 0],
-        secondaryOamBuffer[4 * index + 1],
-        secondaryOamBuffer[4 * index + 2],
-        secondaryOamBuffer[4 * index + 3]);
+        Byte.toUnsignedInt(indices[index]),
+        Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 0]),
+        Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 1]),
+        Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 2]),
+        Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 3]));
   }
 
   void tick(int scanline, int dot) {
@@ -94,45 +105,53 @@ final class NesPpuOam {
     if (dot == 65) {
       oamN = 0;
       secondaryOamN = 0;
+      copying = false;
+      inRange = false;
+      m = 0;
     }
-    switch (dot % 8) {
-      // y
-      case 1 -> buffer = oamBuffer[oamN * 4 + 0];
-      case 2 -> {
-        if (secondaryOamN != 8) {
-          secondaryOamBuffer[secondaryOamN * 4 + 0] = buffer;
+
+    if (!copying && oamN >= 64) {
+      return;
+    }
+
+    if (secondaryOamN >= 8) {
+      return;
+    }
+
+    if (copying) {
+      switch (dot % 2) {
+        case 1 -> buffer = oamBuffer[oamN * 4 + m];
+        case 0 -> {
+          secondaryOamBuffer[secondaryOamN * 4 + m] = buffer;
+          m++;
+          if (m >= 4) {
+            oamN++;
+            secondaryOamN++;
+            copying = false;
+            inRange = false;
+            m = 0;
+          }
         }
-        selected = secondaryOamN != 8 && isSpriteOnScanline(scanline, buffer);
       }
-      // tile index
-      case 3 -> buffer = oamBuffer[oamN * 4 + 1];
-      case 4 -> {
-        if (selected) {
-          secondaryOamBuffer[secondaryOamN * 4 + 1] = buffer;
-        }
-      }
-      // attributes
-      case 5 -> buffer = oamBuffer[oamN * 4 + 2];
-      case 6 -> {
-        if (selected) {
-          secondaryOamBuffer[secondaryOamN * 4 + 2] = buffer;
-        }
-      }
-      // x
-      case 7 -> {
-        buffer = oamBuffer[oamN * 4 + 3];
-        oamN++;
-      }
+      return;
+    }
+
+    switch (dot % 2) {
+      case 1 -> buffer = oamBuffer[oamN * 4 + m];
       case 0 -> {
-        if (selected) {
-          secondaryOamBuffer[secondaryOamN * 4 + 3] = buffer;
-          secondaryOamN++;
+        inRange = isSpriteOnScanline(scanline, Byte.toUnsignedInt(buffer));
+        if (inRange) {
+          secondaryOamBuffer[secondaryOamN * 4 + m] = buffer;
+          m++;
+          copying = true;
+        } else {
+          oamN++;
         }
       }
     }
   }
 
-  private boolean isSpriteOnScanline(int scanline, byte y) {
+  private boolean isSpriteOnScanline(int scanline, int y) {
     return y <= scanline && scanline < y + 8;
   }
 }

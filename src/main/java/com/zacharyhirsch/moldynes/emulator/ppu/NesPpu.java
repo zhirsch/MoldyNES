@@ -1677,8 +1677,12 @@ public final class NesPpu {
   private final NesPpuAttributeByte attributeByte = new NesPpuAttributeByte();
   private final NesPpuPatternByte patternLoByte = new NesPpuPatternByte();
   private final NesPpuPatternByte patternHiByte = new NesPpuPatternByte();
-  private final NesPpuAttributeByte[] spritePatternLoBytes = new NesPpuAttributeByte[8];
-  private final NesPpuAttributeByte[] spritePatternHiBytes = new NesPpuAttributeByte[8];
+
+  private final byte[] spriteOamIndex = new byte[8];
+  private final byte[] spriteAttributes = new byte[8];
+  private final byte[] spritePatternLoBytes = new byte[8];
+  private final byte[] spritePatternHiBytes = new byte[8];
+  private final byte[] spriteXOffsets = new byte[8];
 
   private boolean vblPending = false;
   private boolean nmiPending = false;
@@ -1691,10 +1695,6 @@ public final class NesPpu {
     this.oam = new NesPpuOam();
     this.paletteIndexes = new byte[0x20];
     this.palette = palette;
-    for (int i = 0; i < 8; i++) {
-      spritePatternLoBytes[i] = new NesPpuAttributeByte();
-      spritePatternHiBytes[i] = new NesPpuAttributeByte();
-    }
   }
 
   public void writeControl(byte data) {
@@ -1887,6 +1887,14 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
+    //    int scanline = 82;
+    //    NesPpuColor color = new NesPpuColor((byte) 0xff, (byte) 0xff, (byte) 0xff);
+    //    for (int dot = 1; dot <= 256; dot++) {
+    //      int pos = 3 * (scanline * 256 + dot - 1);
+    //      frame[pos + 0] = color.r();
+    //      frame[pos + 1] = color.g();
+    //      frame[pos + 2] = color.b();
+    //    }
     display.draw(frame);
   }
 
@@ -2005,22 +2013,29 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    int patternHi = patternHiByte.value(x);
+
+    NesPpuBgPixel bgPixel = getBgPixel();
+    NesPpuSpritePixel spritePixel = getSpritePixel(dot - 1);
+    NesPpuColor color = getPixelColor(bgPixel, spritePixel);
+
+    int pos = 3 * (scanline * 256 + dot - 1);
+    frame[pos + 0] = color.r();
+    frame[pos + 1] = color.g();
+    frame[pos + 2] = color.b();
+  }
+
+  private record NesPpuBgPixel(int pattern, NesPpuColor color) {}
+
+  private NesPpuBgPixel getBgPixel() {
+    int pattern = getBgPattern();
+    NesPpuColor[] palette = getBackgroundPalette(attributeByte.value());
+    return new NesPpuBgPixel(pattern, palette[pattern]);
+  }
+
+  private int getBgPattern() {
     int patternLo = patternLoByte.value(x);
-    int attribute = attributeByte.value();
-    NesPpuColor[] colors = getBackgroundPalette(attribute);
-    NesPpuColor color =
-        switch ((patternHi << 1) | patternLo) {
-          case 0 -> colors[0];
-          case 1 -> colors[1];
-          case 2 -> colors[2];
-          case 3 -> colors[3];
-          default -> throw new IllegalStateException();
-        };
-    int i = 3 * (scanline * 256 + dot - 1);
-    frame[i + 0] = color.r();
-    frame[i + 1] = color.g();
-    frame[i + 2] = color.b();
+    int patternHi = patternHiByte.value(x);
+    return (patternHi << 1) | patternLo;
   }
 
   private NesPpuColor[] getBackgroundPalette(int attribute) {
@@ -2030,6 +2045,60 @@ public final class NesPpu {
       palette.get(paletteIndexes[attribute * 4 + 2]),
       palette.get(paletteIndexes[attribute * 4 + 3]),
     };
+  }
+
+  private record NesPpuSpritePixel(boolean sprite0, int pattern, int priority, NesPpuColor color) {}
+
+  private NesPpuSpritePixel getSpritePixel(int pixel) {
+    for (int i = 0; i < 8; i++) {
+      int x = Byte.toUnsignedInt(spriteXOffsets[i]);
+      if (x <= pixel && pixel < x + 8) {
+        int pattern = getSpritePattern(i, pixel - x);
+        if (pattern != 0) {
+          boolean sprite0 = spriteOamIndex[i] == 0;
+          NesPpuColor[] palette = getSpritePalette(spriteAttributes[i] & 0b0000_0011);
+          return new NesPpuSpritePixel(sprite0, pattern, getSpritePriority(i), palette[pattern]);
+        }
+      }
+    }
+    return new NesPpuSpritePixel(false, 0, 0, palette.get(paletteIndexes[0]));
+  }
+
+  private int getSpritePattern(int spriteIndex, int px) {
+    int bitIndex = bit8(spriteAttributes[spriteIndex], 6) == 0 ? px : 7 - px;
+    int shift = 7 - bitIndex;
+    int patternLo = (spritePatternLoBytes[spriteIndex] >>> shift) & 1;
+    int patternHi = (spritePatternHiBytes[spriteIndex] >>> shift) & 1;
+    return (patternHi << 1) | patternLo;
+  }
+
+  private int getSpritePriority(int i) {
+    return bit8(spriteAttributes[i], 5);
+  }
+
+  private NesPpuColor[] getSpritePalette(int attribute) {
+    return new NesPpuColor[] {
+      palette.get(paletteIndexes[0]),
+      palette.get(paletteIndexes[0x10 + attribute * 4 + 1]),
+      palette.get(paletteIndexes[0x10 + attribute * 4 + 2]),
+      palette.get(paletteIndexes[0x10 + attribute * 4 + 3]),
+    };
+  }
+
+  private NesPpuColor getPixelColor(NesPpuBgPixel bgPixel, NesPpuSpritePixel spritePixel) {
+    if (bgPixel.pattern() == 0 && spritePixel.pattern() == 0) {
+      return bgPixel.color();
+    }
+    if (bgPixel.pattern() == 0) {
+      return spritePixel.color();
+    }
+    if (spritePixel.pattern() == 0) {
+      return bgPixel.color();
+    }
+    if (spritePixel.sprite0()) {
+      status |= 0b0100_0000;
+    }
+    return spritePixel.priority() == 0 ? spritePixel.color() : bgPixel.color();
   }
 
   private void shiftRegisters() {
@@ -2065,13 +2134,13 @@ public final class NesPpu {
   private void fetchPatternByteLo1() {}
 
   private void fetchPatternByteLo2() {
-    fetchPatternByteLo(0);
+    fetchPatternByteLo();
   }
 
   private void fetchPatternByteHi1() {}
 
   private void fetchPatternByteHi2() {
-    fetchPatternByteHi(8);
+    fetchPatternByteHi();
   }
 
   private void reloadShiftRegisters() {
@@ -2187,49 +2256,57 @@ public final class NesPpu {
     fetchSpritePatternByteHi(7);
   }
 
-  private void fetchPatternByteLo(int offset) {
+  private void fetchPatternByteLo() {
     if (!isRenderingEnabled()) {
       return;
     }
-    patternLoByte.set(fetchPatternByte(offset));
+    patternLoByte.set(fetchPatternByte(0));
   }
 
-  private void fetchPatternByteHi(int offset) {
+  private void fetchPatternByteHi() {
     if (!isRenderingEnabled()) {
       return;
     }
-    patternHiByte.set(fetchPatternByte(offset));
+    patternHiByte.set(fetchPatternByte(8));
   }
 
   private void fetchSpritePatternByteLo(int index) {
     if (!isRenderingEnabled()) {
       return;
     }
-    spritePatternLoBytes[index].set(fetchSpritePatternByte(index, 0));
+    NesPpuSprite sprite = oam.sprite(index);
+    spritePatternLoBytes[index] = fetchSpritePatternByte(sprite, 0);
   }
 
   private void fetchSpritePatternByteHi(int index) {
     if (!isRenderingEnabled()) {
       return;
     }
-    spritePatternHiBytes[index].set(fetchSpritePatternByte(index, 8));
+    NesPpuSprite sprite = oam.sprite(index);
+    spritePatternHiBytes[index] = fetchSpritePatternByte(sprite, 8);
+
+    spriteOamIndex[index] = (byte) sprite.index();
+    spriteAttributes[index] = (byte) sprite.attributes();
+    spriteXOffsets[index] = (byte) sprite.x();
   }
 
   private byte fetchPatternByte(int offset) {
     int fineY = (v >> 12) & 0b0111;
     int chrBank = bit8(ctrl, 4) == 0 ? 0x0000 : 0x1000;
     int nametable = Byte.toUnsignedInt(nametableByte.value()) << 4;
-    int address = chrBank + nametable + offset + fineY;
+    int address = chrBank | nametable | offset | fineY;
     return mapper.readChr((short) address);
   }
 
-  private byte fetchSpritePatternByte(int index, int offset) {
-    NesPpuSprite sprite = oam.sprite(index);
+  private byte fetchSpritePatternByte(NesPpuSprite sprite, int offset) {
+    if (!sprite.valid()) {
+      return (byte) 0;
+    }
     int row = scanline - sprite.y();
-    int fineY = bit8(sprite.attributes(), 7) == 0 ? row : 7 - row;
+    int fineY = bit8((byte) sprite.attributes(), 7) == 0 ? row : 7 - row;
     int chrBank = bit8(ctrl, 3) == 0 ? 0x0000 : 0x1000;
-    int nametable = Byte.toUnsignedInt(sprite.tileIndex()) << 4;
-    int address = chrBank + nametable + offset + fineY;
+    int nametable = sprite.tileIndex() << 4;
+    int address = chrBank | nametable | offset | fineY;
     return mapper.readChr((short) address);
   }
 

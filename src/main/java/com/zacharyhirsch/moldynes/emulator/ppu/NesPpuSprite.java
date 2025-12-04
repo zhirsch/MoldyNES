@@ -1,3 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
-record NesPpuSprite(byte y, byte tileIndex, byte attributes, byte x) {}
+record NesPpuSprite(int index, int y, int tileIndex, int attributes, int x) {
+
+  public boolean valid() {
+    return y() != 0xff && tileIndex() != 0xff && attributes() != 0xff && x() != 0xff;
+  }
+}
