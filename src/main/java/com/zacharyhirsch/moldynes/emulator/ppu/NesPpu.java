@@ -1744,33 +1744,30 @@ public final class NesPpu {
   }
 
   public void writeScroll(byte data) {
+    int idata = Byte.toUnsignedInt(data);
+    int abcde = idata & 0b0000_0000_1111_1000;
+    int fgh = idata & 0b0000_0000_0000_0111;
     if (w == 0) {
       /*
       t: ....... ...ABCDE <- d: ABCDE...
       x:              FGH <- d: .....FGH
       w:                  <- 1
       */
-      t =
-          (short)
-              ((t & 0b0111_1111_1110_0000)
-                  | (byte) ((Byte.toUnsignedInt(data) & 0b0001_1111) >>> 3));
-      x = (byte) (Byte.toUnsignedInt(data) & 0b0000_0111);
+      t = (short) ((t & 0b0111_1111_1110_0000) | (abcde >>> 3));
+      x = (byte) fgh;
       w = 1;
     } else {
       /*
       t: FGH..AB CDE..... <- d: ABCDEFGH
       w:                  <- 0
       */
-      t =
-          (short)
-              ((t & 0b0000_1100_0001_1111)
-                  | ((Byte.toUnsignedInt(data) & 0b1111_1000) << 2)
-                  | ((Byte.toUnsignedInt(data) & 0b0000_0111) << 12));
+      t = (short) ((t & 0b0000_1100_0001_1111) | (abcde << 2) | (fgh << 12));
       w = 0;
     }
   }
 
   public void writeAddress(byte data) {
+    int idata = Byte.toUnsignedInt(data);
     if (w == 0) {
       /*
       t: .CDEFGH ........ <- d: ..CDEFGH
@@ -1778,18 +1775,16 @@ public final class NesPpu {
       t: Z...... ........ <- 0 (bit Z is cleared)
       w:                  <- 1
       */
-      t =
-          (short)
-              ((t & 0b0000_0000_1111_1111)
-                  | (short) ((Byte.toUnsignedInt(data) << 8) & 0b0011_1111_0000_0000));
+      t = (short) ((t & 0b0000_0000_1111_1111) | ((idata << 8) & 0b0011_1111_0000_0000));
       w = 1;
     } else {
       /*
       t: ....... ABCDEFGH <- d: ABCDEFGH
       v: <...all bits...> <- t: <...all bits...>
       w:                  <- 0
+
       */
-      t = (short) ((t & 0b0111_1111_0000_0000) | Byte.toUnsignedInt(data));
+      t = (short) ((t & 0b0111_1111_0000_0000) | idata);
       v = t;
       w = 0;
     }
@@ -1904,6 +1899,8 @@ public final class NesPpu {
   }
 
   private void incrementAddress() {
+    boolean rendering = isRenderingEnabled() && ((scanline == 261) || (0 <= scanline && scanline < 240));
+    assert !rendering;
     if (isVramIncrementVertical()) {
       v = (short) (v + 32);
     } else {
@@ -1995,8 +1992,8 @@ public final class NesPpu {
     }
     // vert(v) = vert(t)
     // v: GHIA.BC DEF..... <- t: GHIA.BC DEF.....
-    v &= 0b0000_0100_0001_1111;
-    v |= (short) (t & 0b0111_1011_1110_0000);
+    final int mask = 0b0000_0100_0001_1111;
+    v = (short) ((v & mask) | (t & ~mask));
   }
 
   private void reloadHorizontal() {
@@ -2005,8 +2002,8 @@ public final class NesPpu {
     }
     // horiz(v) = horiz(t)
     // v: ....A.. ...BCDEF <- t: ....A.. ...BCDEF
-    v &= 0b0111_1011_1110_0000;
-    v |= (short) (t & 0b0000_0100_0001_1111);
+    final int mask = 0b0111_1011_1110_0000;
+    v = (short) ((v & mask) | (t & ~mask));
   }
 
   private void renderPixel() {
@@ -2125,7 +2122,13 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    nametableByte.set(ram[v & 0x0fff]);
+    int nametableLo = bit8(ctrl, 0);
+    int nametableHi = bit8(ctrl, 1);
+    int nametable = ((nametableHi << 1) | nametableLo) << 10;
+    int coarseY = (v & 0b0000_0011_1110_0000);
+    int coarseX = (v & 0b0000_0000_0001_1111);
+    int address = nametable | coarseY | coarseX;
+    nametableByte.set(ram[mapper.getNametableMirrorAddress((short) address)]);
   }
 
   private void fetchAttributeByte1() {}
@@ -2134,12 +2137,13 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    //                 0b0yyy_NNYY_YYYX_XXXX
-    int nametab = (v & 0b0000_1100_0000_0000) >>> 10;
+    int nametableLo = bit8(ctrl, 0);
+    int nametableHi = bit8(ctrl, 1);
+    int nametab = ((nametableHi << 1) | nametableLo) << 10;
     int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
     int coarseX = (v & 0b0000_0000_0001_1111) >>> 0;
     int address = 0b0010_0011_1100_0000 | nametab | ((coarseY / 4) << 3) | (coarseX / 4);
-    byte value = ram[address & 0b0000_0111_1111_1111];
+    byte value = ram[mapper.getNametableMirrorAddress((short) address)];
     byte shift = (byte) (((coarseY & 0b0000_0010) << 1) | (coarseX & 0b0000_0010));
     attributeByte.set((byte) (value >> shift));
   }
