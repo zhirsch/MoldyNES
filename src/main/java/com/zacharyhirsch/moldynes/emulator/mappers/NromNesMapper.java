@@ -26,6 +26,15 @@ final class NromNesMapper implements NesMapper {
   @Override
   public byte read(short address) {
     int addr = Short.toUnsignedInt(address);
+    if (0x0000 <= addr && addr < 0x2000) {
+      return chrRam[addr];
+    }
+    if (0x2000 <= addr && addr < 0x3000) {
+      throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+    }
+    if (0x3000 <= addr && addr < 0x6000) {
+      return (byte) 0xff;
+    }
     if (0x6000 <= addr && addr < 0x8000) {
       return ram[addr - 0x6000];
     }
@@ -36,36 +45,35 @@ final class NromNesMapper implements NesMapper {
       }
       return prgRom[addr];
     }
-    return (byte) 0xff;
+    throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
   }
 
   @Override
   public void write(short address, byte data) {
     int addr = Short.toUnsignedInt(address);
+    if (0x0000 <= addr && addr < 0x2000) {
+      chrRam[addr] = data;
+      return;
+    }
+    if (0x2000 <= addr && addr < 0x6000) {
+      throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+    }
     if (0x6000 <= addr && addr < 0x8000) {
       ram[addr - 0x6000] = data;
       return;
     }
+    if (0x8000 <= addr && addr < 0x10000) {
+      throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+    }
     throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
   }
 
-  @Override
-  public byte readChr(short address) {
-    return chrRam[Short.toUnsignedInt(address)];
-  }
-
-  @Override
-  public void writeChr(short address, byte data) {
-    chrRam[Short.toUnsignedInt(address)] = data;
-  }
-
-  @Override
   public boolean isVerticalMirroring() {
     return (header[6] & 1) == 1;
   }
 
   @Override
-  public short getNametableMirrorAddress(short address) {
+  public short mirror(short address) {
     // Horizontal mirroring:
     //   [ A ] [ a ]
     //   [ B ] [ b ]
@@ -75,25 +83,18 @@ final class NromNesMapper implements NesMapper {
     //   [ a ] [ b ]
 
     int nametable = (address & 0b0000_1100_0000_0000) >>> 10;
-
-    short offset;
-    if (isVerticalMirroring()) {
-      offset =
-          switch (nametable) {
-            case 0, 2 -> 0b0000_0000_0000_0000;
-            case 1, 3 -> 0b0000_0100_0000_0000;
-            default -> throw new IllegalStateException();
-          };
-    } else {
-      offset =
-          switch (nametable) {
-            case 0, 1 -> 0b0000_0000_0000_0000;
-            case 2, 3 -> 0b0000_0100_0000_0000;
-            default -> throw new IllegalStateException();
-          };
-    }
-
+    int offset = mirror(nametable);
     int index = address & 0b0000_0011_1111_1111;
-    return (short) (offset | index);
+    return (short) ((offset << 10) | index);
+  }
+
+  private int mirror(int nametable) {
+    return switch (nametable) {
+      case 0 -> 0;
+      case 1 -> isVerticalMirroring() ? 0 : 1;
+      case 2 -> isVerticalMirroring() ? 1 : 0;
+      case 3 -> 1;
+      default -> throw new IllegalStateException();
+    };
   }
 }

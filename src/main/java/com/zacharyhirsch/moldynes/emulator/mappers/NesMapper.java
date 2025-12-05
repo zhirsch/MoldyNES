@@ -19,7 +19,6 @@ public interface NesMapper {
     byte mapper = (byte) ((header[7] & 0b1111_0000) | ((header[6] & 0b1111_0000) >>> 4));
     return switch (mapper) {
       case 0x00 -> new NromNesMapper(header, buffer);
-      case 0x01 -> new Mmc1NesMapper(header, buffer);
       default -> throw new IllegalArgumentException("mapper unimplemented: " + mapper);
     };
   }
@@ -28,11 +27,5 @@ public interface NesMapper {
 
   void write(short address, byte data);
 
-  byte readChr(short address);
-
-  void writeChr(short address, byte data);
-
-  boolean isVerticalMirroring();
-
-  short getNametableMirrorAddress(short address);
+  short mirror(short address);
 }
