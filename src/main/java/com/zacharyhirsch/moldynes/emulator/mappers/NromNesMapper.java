@@ -91,8 +91,8 @@ final class NromNesMapper implements NesMapper {
   private int mirror(int nametable) {
     return switch (nametable) {
       case 0 -> 0;
-      case 1 -> isVerticalMirroring() ? 0 : 1;
-      case 2 -> isVerticalMirroring() ? 1 : 0;
+      case 1 -> isVerticalMirroring() ? 1 : 0;
+      case 2 -> isVerticalMirroring() ? 0 : 1;
       case 3 -> 1;
       default -> throw new IllegalStateException();
     };
