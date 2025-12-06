@@ -1928,25 +1928,28 @@ public final class NesPpu {
       return;
     }
 
-    int fineY = (v & 0b0111_0000_0000_0000) >>> 12;
-    int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
+    int fineY   = (v >>> 12) & 0x7;    // bits 12–14
+    int coarseY = (v >>> 5)  & 0x1F;   // bits 5–9
 
-    fineY = (fineY + 1) % 8;
-
-    if (fineY == 0) {
-      coarseY++;
-      if (coarseY == 30) {
-        // Coarse Y wraps around.  Set it to 0 and switch vertical nametable.
+    if (fineY < 7) {
+      fineY++;
+    } else {
+      fineY = 0;
+      if (coarseY == 29) {
         coarseY = 0;
+        // toggle vertical nametable bit (bit 11)
         v ^= 0b0000_1000_0000_0000;
-      } else if (coarseY == 32) {
-        // Coarse Y wraps around, BUT don't switch the vertical nametable.
+      } else if (coarseY == 31) {
+        // wrap 31 -> 0 WITHOUT toggling nametable
         coarseY = 0;
+      } else {
+        coarseY++;
       }
     }
 
+    // Clear fineY + coarseY bits, then reinsert
     v &= 0b0000_1100_0001_1111;
-    v |= (short) (fineY << 12);
+    v |= (short) (fineY   << 12);
     v |= (short) (coarseY << 5);
   }
 
@@ -2116,12 +2119,7 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    int nametableLo = bit8(ctrl, 0);
-    int nametableHi = bit8(ctrl, 1);
-    int nametable = ((nametableHi << 1) | nametableLo) << 10;
-    int coarseY = (v & 0b0000_0011_1110_0000);
-    int coarseX = (v & 0b0000_0000_0001_1111);
-    int address = nametable | coarseY | coarseX;
+    int address = v & 0x0fff;
     nametableByte.set(ram[mapper.mirror((short) address)]);
   }
 
@@ -2131,11 +2129,9 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    int nametableLo = bit8(ctrl, 0);
-    int nametableHi = bit8(ctrl, 1);
-    int nametab = ((nametableHi << 1) | nametableLo) << 10;
+    int nametab = (v & 0b0000_1100_0000_0000);
     int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
-    int coarseX = (v & 0b0000_0000_0001_1111) >>> 0;
+    int coarseX = (v & 0b0000_0000_0001_1111);
     int address = nametab | 0b0000_0011_1100_0000 | ((coarseY / 4) << 3) | (coarseX / 4);
     byte value = ram[mapper.mirror((short) address)];
     byte shift = (byte) (((coarseY & 0b0000_0010) << 1) | (coarseX & 0b0000_0010));
