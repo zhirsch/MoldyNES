@@ -1878,14 +1878,6 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    //    int scanline = 82;
-    //    NesPpuColor color = new NesPpuColor((byte) 0xff, (byte) 0xff, (byte) 0xff);
-    //    for (int dot = 1; dot <= 256; dot++) {
-    //      int pos = 3 * (scanline * 256 + dot - 1);
-    //      frame[pos + 0] = color.r();
-    //      frame[pos + 1] = color.g();
-    //      frame[pos + 2] = color.b();
-    //    }
     display.draw(frame);
   }
 
