@@ -2,6 +2,10 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.zacharyhirsch.moldynes.emulator.io.Display;
+import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
+import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
+import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
@@ -16,8 +20,8 @@ public class InstrTestV5Tests {
   private static void runTest(String path) {
     NesBus bus =
         new NesBus(
-            TestUtils.loadMapper("instr_test-v5/%s".formatted(path)),
-            TestUtils.loadPalette("Composite_wiki.pal"),
+            NesMapper.load("roms/instr_test-v5/%s".formatted(path)),
+            NesPpuPalette.load("Composite_wiki.pal"),
             new FakeDisplay(),
             new NesJoypad(),
             new NesJoypad());

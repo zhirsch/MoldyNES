@@ -1,8 +1,18 @@
 package com.zacharyhirsch.moldynes.emulator.mappers;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public interface NesMapper {
+
+  static NesMapper load(String path) {
+    try (FileInputStream input = new FileInputStream(path)) {
+      return load(ByteBuffer.wrap(input.readAllBytes()));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   static NesMapper load(ByteBuffer buffer) {
     byte[] header = new byte[16];

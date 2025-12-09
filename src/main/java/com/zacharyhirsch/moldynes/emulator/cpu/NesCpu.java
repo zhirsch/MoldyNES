@@ -1,10 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
-import com.zacharyhirsch.moldynes.emulator.NesBus;
 
 public final class NesCpu {
 
-  private final NesBus bus;
   private final NesCpuDecoder decoder;
   private final NesCpuNmiPin nmi;
 
@@ -15,8 +13,7 @@ public final class NesCpu {
   public final NesCpuState state;
   public final NesAlu alu;
 
-  public NesCpu(NesBus bus) {
-    this.bus = bus;
+  public NesCpu() {
     this.decoder = new NesCpuDecoder();
     this.nmi = new NesCpuNmiPin();
 
@@ -28,18 +25,14 @@ public final class NesCpu {
     this.alu = new NesAlu();
   }
 
-  public void tick(boolean nmi) {
+  public NesCpuState tick(boolean nmi) {
     try {
       cycle = cycle.execute(this);
-      if (state.write) {
-        bus.write(state.adh, state.adl, state.data);
-      } else {
-        state.data = bus.read(state.adh, state.adl);
-      }
       this.nmi.set(nmi);
     } catch (Exception exc) {
       throw new NesCpuCrashedException(state, exc);
     }
+    return state;
   }
 
   public void reset() {

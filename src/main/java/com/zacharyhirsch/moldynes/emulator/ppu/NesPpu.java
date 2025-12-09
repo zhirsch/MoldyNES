@@ -1,6 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
-import com.zacharyhirsch.moldynes.emulator.Display;
+import com.zacharyhirsch.moldynes.emulator.io.Display;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import java.util.Arrays;
 import java.util.function.Consumer;

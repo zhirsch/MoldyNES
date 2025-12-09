@@ -2,6 +2,9 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.io.Display;
+import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
 import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
@@ -24,7 +27,7 @@ public class NesBus {
       NesJoypad joypad2) {
     this.mapper = mapper;
     this.apu = new NesApu();
-    this.cpu = new NesCpu(this);
+    this.cpu = new NesCpu();
     this.ppu = new NesPpu(mapper, display, palette);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
@@ -39,7 +42,12 @@ public class NesBus {
     for (int i = 0; i < 3; i++) {
       nmi = ppu.tick() || nmi;
     }
-    cpu.tick(nmi);
+    NesCpuState state = cpu.tick(nmi);
+    if (state.write) {
+      write(state.adh, state.adl, state.data);
+    } else {
+      state.data = read(state.adh, state.adl);
+    }
   }
 
   public void reset() {
