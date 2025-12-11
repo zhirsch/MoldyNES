@@ -114,7 +114,7 @@ public class NesBus {
       throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
     }
     if (0x4020 <= addr && addr < 0x10000) {
-      return mapper.read((short) addr);
+      return mapper.read((short) addr, null);
     }
     throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
   }
@@ -192,7 +192,7 @@ public class NesBus {
       throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
     }
     if (0x4020 <= addr && addr < 0x10000) {
-      mapper.write((short) addr, data);
+      mapper.write((short) addr, null, data);
       return;
     }
     throw new IllegalArgumentException(String.format("unable to write address %04x", addr));

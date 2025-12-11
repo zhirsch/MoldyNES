@@ -33,9 +33,7 @@ public interface NesMapper {
     };
   }
 
-  byte read(short address);
+  byte read(short address, byte[] ppuRam);
 
-  void write(short address, byte data);
-
-  short mirror(short address);
+  void write(short address, byte[] ppuRam, byte data);
 }

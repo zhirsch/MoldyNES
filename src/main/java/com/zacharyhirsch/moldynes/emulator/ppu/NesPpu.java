@@ -1792,16 +1792,10 @@ public final class NesPpu {
   }
 
   public byte readData() {
-    byte result;
-    if (0 <= v && v < 0x2000) {
-      result = buffer;
-      buffer = mapper.read(v);
-      incrementAddress();
-      return result;
-    }
-    if (0x2000 <= v && v < 0x3000) {
-      result = buffer;
-      buffer = ram[mapper.mirror(v)];
+    assert 0x0000 <= v && v < 0x4000;
+    if (0x0000 <= v && v < 0x3000) {
+      byte result = buffer;
+      buffer = mapper.read(v, ram);
       incrementAddress();
       return result;
     }
@@ -1809,8 +1803,8 @@ public final class NesPpu {
       throw new IllegalArgumentException("cannot read from PPU address %04x".formatted(v));
     }
     if (0x3f00 <= v && v < 0x4000) {
-      result = paletteIndexes[getPaletteAddress(v)];
-      buffer = ram[mapper.mirror(v)];
+      byte result = paletteIndexes[getPaletteAddress(v)];
+      buffer = mapper.read(v, ram);
       incrementAddress();
       return result;
     }
@@ -1818,13 +1812,9 @@ public final class NesPpu {
   }
 
   public void writeData(byte data) {
-    if (0 <= v && v < 0x2000) {
-      mapper.write(v, data);
-      incrementAddress();
-      return;
-    }
-    if (0x2000 <= v && v < 0x3000) {
-      ram[mapper.mirror(v)] = data;
+    assert 0x0000 <= v && v < 0x4000;
+    if (0x0000 <= v && v < 0x3000) {
+      mapper.write(v, ram, data);
       incrementAddress();
       return;
     }
@@ -2111,8 +2101,9 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    int address = v & 0x0fff;
-    nametableByte.set(ram[mapper.mirror((short) address)]);
+    int address = 0x2000 | (v & 0x0fff);
+    byte value = mapper.read((short) address, ram);
+    nametableByte.set(value);
   }
 
   private void fetchAttributeByte1() {}
@@ -2124,8 +2115,8 @@ public final class NesPpu {
     int nametab = (v & 0b0000_1100_0000_0000);
     int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
     int coarseX = (v & 0b0000_0000_0001_1111);
-    int address = nametab | 0b0000_0011_1100_0000 | ((coarseY / 4) << 3) | (coarseX / 4);
-    byte value = ram[mapper.mirror((short) address)];
+    int address = 0x2000 | nametab | 0b0000_0011_1100_0000 | ((coarseY / 4) << 3) | (coarseX / 4);
+    byte value = mapper.read((short) address, ram);
     byte shift = (byte) (((coarseY & 0b0000_0010) << 1) | (coarseX & 0b0000_0010));
     attributeByte.set((byte) (value >> shift));
   }
@@ -2304,7 +2295,7 @@ public final class NesPpu {
     int chrBank = bit8(ctrl, 4) == 0 ? 0x0000 : 0x1000;
     int nametable = Byte.toUnsignedInt(nametableByte.value()) << 4;
     int address = chrBank | nametable | offset | fineY;
-    return mapper.read((short) address);
+    return mapper.read((short) address, ram);
   }
 
   private byte fetchSpritePatternByte(NesPpuSprite sprite, int offset) {
@@ -2316,7 +2307,7 @@ public final class NesPpu {
     int chrBank = bit8(ctrl, 3) == 0 ? 0x0000 : 0x1000;
     int nametable = sprite.tileIndex() << 4;
     int address = chrBank | nametable | offset | fineY;
-    return mapper.read((short) address);
+    return mapper.read((short) address, ram);
   }
 
   private boolean isVramIncrementVertical() {

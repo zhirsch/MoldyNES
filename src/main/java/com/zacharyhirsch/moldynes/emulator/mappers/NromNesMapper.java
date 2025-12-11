@@ -28,13 +28,13 @@ final class NromNesMapper implements NesMapper {
   }
 
   @Override
-  public byte read(short address) {
+  public byte read(short address, byte[] ppuRam) {
     int addr = Short.toUnsignedInt(address);
     if (0x0000 <= addr && addr < 0x2000) {
       return chrRam[addr];
     }
     if (0x2000 <= addr && addr < 0x3000) {
-      throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+      return ppuRam[mirror(address)];
     }
     if (0x3000 <= addr && addr < 0x6000) {
       return (byte) 0xff;
@@ -53,13 +53,17 @@ final class NromNesMapper implements NesMapper {
   }
 
   @Override
-  public void write(short address, byte data) {
+  public void write(short address, byte[] ppuRam, byte data) {
     int addr = Short.toUnsignedInt(address);
     if (0x0000 <= addr && addr < 0x2000) {
       chrRam[addr] = data;
       return;
     }
-    if (0x2000 <= addr && addr < 0x6000) {
+    if (0x2000 <= addr && addr < 0x3000) {
+      ppuRam[mirror(address)] = data;
+      return;
+    }
+    if (0x3000 <= addr && addr < 0x6000) {
       throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
     }
     if (0x6000 <= addr && addr < 0x8000) {
@@ -76,8 +80,7 @@ final class NromNesMapper implements NesMapper {
     return (header[6] & 1) == 1;
   }
 
-  @Override
-  public short mirror(short address) {
+  private short mirror(short address) {
     // Horizontal mirroring:
     //   [ A ] [ a ]
     //   [ B ] [ b ]
