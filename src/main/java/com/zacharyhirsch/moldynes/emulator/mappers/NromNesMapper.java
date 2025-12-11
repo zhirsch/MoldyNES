@@ -15,12 +15,16 @@ final class NromNesMapper implements NesMapper {
     ram = new byte[0x2000];
 
     prgRom = new byte[header[4] << 14];
-    buffer.get(0x10, prgRom, 0, prgRom.length);
+    buffer.get(prgRom);
 
     int chrRomLength = header[5] << 13;
     int chrRamLength = Math.max(chrRomLength, 0x2000);
     chrRam = new byte[chrRamLength];
-    buffer.get(0x10 + prgRom.length, chrRam, 0, chrRomLength);
+    buffer.get(chrRam, 0, chrRomLength);
+
+    if (buffer.hasRemaining()) {
+      throw new IllegalStateException("Buffer is not empty.");
+    }
   }
 
   @Override
@@ -68,7 +72,7 @@ final class NromNesMapper implements NesMapper {
     throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
   }
 
-  public boolean isVerticalMirroring() {
+  private boolean isVerticalMirroring() {
     return (header[6] & 1) == 1;
   }
 
@@ -83,18 +87,15 @@ final class NromNesMapper implements NesMapper {
     //   [ a ] [ b ]
 
     int nametable = (address & 0b0000_1100_0000_0000) >>> 10;
-    int offset = mirror(nametable);
+    int offset =
+        switch (nametable) {
+          case 0 -> 0;
+          case 1 -> isVerticalMirroring() ? 1 : 0;
+          case 2 -> isVerticalMirroring() ? 0 : 1;
+          case 3 -> 1;
+          default -> throw new IllegalStateException();
+        };
     int index = address & 0b0000_0011_1111_1111;
     return (short) ((offset << 10) | index);
-  }
-
-  private int mirror(int nametable) {
-    return switch (nametable) {
-      case 0 -> 0;
-      case 1 -> isVerticalMirroring() ? 1 : 0;
-      case 2 -> isVerticalMirroring() ? 0 : 1;
-      case 3 -> 1;
-      default -> throw new IllegalStateException();
-    };
   }
 }
