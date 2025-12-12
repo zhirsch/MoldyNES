@@ -1,7 +1,16 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
+public class NesCpuInterrupt implements NesCpuCycle {
 
-public class NesCpuNmi implements NesCpuCycle {
+  private final short handlerAddressLo;
+  private final short handlerAddressHi;
+  private final boolean isBrk;
+
+  public NesCpuInterrupt(short handlerAddressLo, short handlerAddressHi, boolean isBrk) {
+    this.handlerAddressLo = handlerAddressLo;
+    this.handlerAddressHi = handlerAddressHi;
+    this.isBrk = isBrk;
+  }
 
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
@@ -24,19 +33,24 @@ public class NesCpuNmi implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    byte p = (byte) ((cpu.state.p & ~NesCpuState.STATUS_B) | 0b0010_0000);
-    cpu.store((byte) 0x01, cpu.state.sp--, p);
+    byte p;
+    if (isBrk) {
+      p = (byte) (cpu.state.p | NesCpuState.STATUS_B);
+    } else {
+      p = (byte) (cpu.state.p & ~NesCpuState.STATUS_B);
+    }
+    cpu.store((byte) 0x01, cpu.state.sp--, (byte) (p | 0b0010_0000));
     return this::cycle5;
   }
 
   private NesCpuCycle cycle5(NesCpu cpu) {
-    cpu.fetch((byte) 0xff, (byte) 0xfa);
+    cpu.fetch(handlerAddressLo);
     return this::cycle6;
   }
 
   private NesCpuCycle cycle6(NesCpu cpu) {
     cpu.state.hold = cpu.state.data;
-    cpu.fetch((byte) 0xff, (byte) 0xfb);
+    cpu.fetch(handlerAddressHi);
     cpu.state.pI(true);
     return this::cycle7;
   }

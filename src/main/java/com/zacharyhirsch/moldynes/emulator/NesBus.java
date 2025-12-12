@@ -42,7 +42,8 @@ public class NesBus {
     for (int i = 0; i < 3; i++) {
       nmi = ppu.tick() || nmi;
     }
-    NesCpuState state = cpu.tick(nmi);
+    boolean irq = false;
+    NesCpuState state = cpu.tick(nmi, irq);
     if (state.write) {
       write(state.adh, state.adl, state.data);
     } else {
