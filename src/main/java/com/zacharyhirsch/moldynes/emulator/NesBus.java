@@ -61,10 +61,11 @@ public class NesBus {
 
   private byte read(short address) {
     int addr = Short.toUnsignedInt(address);
-    if (0x0000 <= addr && addr < 0x0800) {
+    assert 0x0000 <= addr && addr <= 0xffff;
+    if (0x0000 <= addr && addr <= 0x07ff) {
       return cpuRam[addr];
     }
-    if (0x0800 <= addr && addr < 0x2000) {
+    if (0x0800 <= addr && addr <= 0x1fff) {
       return read((short) (addr & 0b0000_0111_1111_1111));
     }
     if (addr == 0x2000) {
@@ -91,18 +92,34 @@ public class NesBus {
     if (addr == 0x2007) {
       return ppu.readData();
     }
-    if (0x2008 <= addr && addr < 0x4000) {
+    if (0x2008 <= addr && addr <= 0x3fff) {
       return read((short) (addr & 0b0010_0000_0000_0111));
     }
-    if (0x4000 <= addr && addr < 0x4014) {
-      // APU
+    if (0x4000 <= addr && addr <= 0x4003) {
+      // APU Pulse 1
+      return (byte) 0x00;
+    }
+    if (0x4004 <= addr && addr <= 0x4007) {
+      // APU Pulse 2
+      return (byte) 0x00;
+    }
+    if (0x4008 <= addr && addr <= 0x400b) {
+      // APU Triangle
+      return (byte) 0x00;
+    }
+    if (0x400c <= addr && addr <= 0x400f) {
+      // APU Noise
+      return (byte) 0x00;
+    }
+    if (0x4010 <= addr && addr <= 0x4013) {
+      // APU DMC
       return (byte) 0x00;
     }
     if (addr == 0x4014) {
       throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
     }
     if (addr == 0x4015) {
-      // APU
+      // APU Status
       return (byte) 0x00;
     }
     if (addr == 0x4016) {
@@ -111,10 +128,10 @@ public class NesBus {
     if (addr == 0x4017) {
       return joypad2.read();
     }
-    if (0x4018 <= addr && addr < 0x4020) {
+    if (0x4018 <= addr && addr <= 0x401f) {
       throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
     }
-    if (0x4020 <= addr && addr < 0x10000) {
+    if (0x4020 <= addr && addr <= 0xffff) {
       return mapper.read((short) addr, null);
     }
     throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
@@ -126,11 +143,12 @@ public class NesBus {
 
   private void write(short address, byte data) {
     int addr = Short.toUnsignedInt(address);
-    if (0x0000 <= addr && addr < 0x0800) {
+    assert 0x0000 <= addr && addr <= 0xffff;
+    if (0x0000 <= addr && addr <= 0x07ff) {
       cpuRam[addr] = data;
       return;
     }
-    if (0x0800 <= addr && addr < 0x2000) {
+    if (0x0800 <= addr && addr <= 0x1fff) {
       write((short) (addr & 0b0000_0111_1111_1111), data);
       return;
     }
@@ -165,12 +183,28 @@ public class NesBus {
       ppu.writeData(data);
       return;
     }
-    if (0x2008 <= addr && addr < 0x4000) {
+    if (0x2008 <= addr && addr <= 0x3fff) {
       write((short) (addr & 0b0010_0000_0000_0111), data);
       return;
     }
-    if (0x4000 <= addr && addr < 0x4014) {
-      // APU
+    if (0x4000 <= addr && addr <= 0x4003) {
+      // APU Pulse 1
+      return;
+    }
+    if (0x4004 <= addr && addr <= 0x4007) {
+      // APU Pulse 2
+      return;
+    }
+    if (0x4008 <= addr && addr <= 0x400b) {
+      // APU Triangle
+      return;
+    }
+    if (0x400c <= addr && addr <= 0x400f) {
+      // APU Noise
+      return;
+    }
+    if (0x4010 <= addr && addr <= 0x4013) {
+      // APU DMC
       return;
     }
     if (addr == 0x4014) {
@@ -178,7 +212,7 @@ public class NesBus {
       return;
     }
     if (addr == 0x4015) {
-      // APU
+      // APU Status
       return;
     }
     if (addr == 0x4016) {
@@ -187,12 +221,13 @@ public class NesBus {
       return;
     }
     if (addr == 0x4017) {
+      // APU Frame Counter
       return;
     }
-    if (0x4018 <= addr && addr < 0x4020) {
+    if (0x4018 <= addr && addr <= 0x401f) {
       throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
     }
-    if (0x4020 <= addr && addr < 0x10000) {
+    if (0x4020 <= addr && addr <= 0xffff) {
       mapper.write((short) addr, null, data);
       return;
     }
