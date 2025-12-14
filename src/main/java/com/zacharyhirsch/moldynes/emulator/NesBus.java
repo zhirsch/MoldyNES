@@ -11,13 +11,17 @@ import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
 
 public class NesBus {
 
-  private final byte[] cpuRam = new byte[0x0800];
+  private final NesClock clock;
   private final NesMapper mapper;
   private @SuppressWarnings("unused") final NesApu apu;
   private final NesCpu cpu;
   private final NesPpu ppu;
   private final NesJoypad joypad1;
   private final NesJoypad joypad2;
+  private final byte[] cpuRam;
+
+  private boolean nmi = false;
+  private boolean irq = false;
 
   public NesBus(
       NesMapper mapper,
@@ -25,12 +29,14 @@ public class NesBus {
       Display display,
       NesJoypad joypad1,
       NesJoypad joypad2) {
+    this.clock = new NesClock();
     this.mapper = mapper;
     this.apu = new NesApu();
     this.cpu = new NesCpu();
     this.ppu = new NesPpu(mapper, display, palette);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
+    this.cpuRam = new byte[0x0800];
   }
 
   public boolean isRunning() {
@@ -38,18 +44,50 @@ public class NesBus {
   }
 
   public void tick() {
-    boolean nmi = false;
-    for (int i = 0; i < 3; i++) {
-      nmi = ppu.tick() || nmi;
+    switch (clock.tick() % 24) {
+      case 0 -> ppuTick();
+      case 1 -> cpuTick();
+      case 2 -> apuTick();
+      case 3 -> {}
+      case 4 -> ppuTick();
+      case 5 -> {}
+      case 6 -> {}
+      case 7 -> {}
+      case 8 -> ppuTick();
+      case 9 -> {}
+      case 10 -> {}
+      case 11 -> {}
+      case 12 -> ppuTick();
+      case 13 -> cpuTick();
+      case 14 -> {}
+      case 15 -> {}
+      case 16 -> ppuTick();
+      case 17 -> {}
+      case 18 -> {}
+      case 19 -> {}
+      case 20 -> ppuTick();
+      case 21 -> {}
+      case 22 -> {}
+      case 23 -> {}
+      default -> throw new IllegalStateException();
     }
-    boolean irq = false;
+  }
+
+  private void ppuTick() {
+    nmi = ppu.tick() || nmi;
+  }
+
+  private void cpuTick() {
     NesCpuState state = cpu.tick(nmi, irq);
     if (state.write) {
       write(state.adh, state.adl, state.data);
     } else {
       state.data = read(state.adh, state.adl);
     }
+    nmi = false;
   }
+
+  private void apuTick() {}
 
   public void reset() {
     cpu.reset();
