@@ -54,8 +54,10 @@ public final class NesCpu {
     }
     if (irq) {
       irq = false;
-      state.pc--;
-      return new NesCpuInterrupt((short) 0xfffe, (short) 0xffff, false).execute(this);
+      if (!state.pI()) {
+        state.pc--;
+        return new NesCpuInterrupt((short) 0xfffe, (short) 0xffff, false).execute(this);
+      }
     }
     return decoder.decode(state.data).execute(this);
   }

@@ -64,6 +64,10 @@ public final class NesCpuState {
     return testN().test(p);
   }
 
+  public boolean pI() {
+    return testI().test(p);
+  }
+
   public boolean pZ() {
     return testZ().test(p);
   }
@@ -74,6 +78,10 @@ public final class NesCpuState {
 
   public static Predicate<Byte> testV() {
     return p -> (p & STATUS_V) == STATUS_V;
+  }
+
+  public static Predicate<Byte> testI() {
+    return p -> (p & STATUS_I) == STATUS_I;
   }
 
   public static Predicate<Byte> testZ() {

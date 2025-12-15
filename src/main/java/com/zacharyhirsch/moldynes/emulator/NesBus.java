@@ -13,7 +13,7 @@ public class NesBus {
 
   private final NesClock clock;
   private final NesMapper mapper;
-  private @SuppressWarnings("unused") final NesApu apu;
+  private final NesApu apu;
   private final NesCpu cpu;
   private final NesPpu ppu;
   private final NesJoypad joypad1;
@@ -21,7 +21,6 @@ public class NesBus {
   private final byte[] cpuRam;
 
   private boolean nmi = false;
-  private boolean irq = false;
 
   public NesBus(
       NesMapper mapper,
@@ -78,7 +77,7 @@ public class NesBus {
   }
 
   private void cpuTick() {
-    NesCpuState state = cpu.tick(nmi, irq);
+    NesCpuState state = cpu.tick(nmi, apu.irq());
     if (state.write) {
       write(state.adh, state.adl, state.data);
     } else {
@@ -87,7 +86,9 @@ public class NesBus {
     nmi = false;
   }
 
-  private void apuTick() {}
+  private void apuTick() {
+    apu.tick();
+  }
 
   public void reset() {
     cpu.reset();
@@ -135,30 +136,34 @@ public class NesBus {
     }
     if (0x4000 <= addr && addr <= 0x4003) {
       // APU Pulse 1
-      return (byte) 0x00;
+      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+      return 0;
     }
     if (0x4004 <= addr && addr <= 0x4007) {
       // APU Pulse 2
-      return (byte) 0x00;
+      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+      return 0;
     }
     if (0x4008 <= addr && addr <= 0x400b) {
       // APU Triangle
-      return (byte) 0x00;
+      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+      return 0;
     }
     if (0x400c <= addr && addr <= 0x400f) {
       // APU Noise
-      return (byte) 0x00;
+      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+      return 0;
     }
     if (0x4010 <= addr && addr <= 0x4013) {
       // APU DMC
-      return (byte) 0x00;
+      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+      return 0;
     }
     if (addr == 0x4014) {
       throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
     }
     if (addr == 0x4015) {
-      // APU Status
-      return (byte) 0x00;
+      return apu.readStatus();
     }
     if (addr == 0x4016) {
       return joypad1.read();
@@ -226,23 +231,23 @@ public class NesBus {
       return;
     }
     if (0x4000 <= addr && addr <= 0x4003) {
-      // APU Pulse 1
+      apu.writePulse1((short) addr, data);
       return;
     }
     if (0x4004 <= addr && addr <= 0x4007) {
-      // APU Pulse 2
+      apu.writePulse2((short) addr, data);
       return;
     }
     if (0x4008 <= addr && addr <= 0x400b) {
-      // APU Triangle
+      apu.writeTriangle((short) addr, data);
       return;
     }
     if (0x400c <= addr && addr <= 0x400f) {
-      // APU Noise
+      apu.writeNoise((short) addr, data);
       return;
     }
     if (0x4010 <= addr && addr <= 0x4013) {
-      // APU DMC
+      apu.writeDmc((short) addr, data);
       return;
     }
     if (addr == 0x4014) {
@@ -250,7 +255,7 @@ public class NesBus {
       return;
     }
     if (addr == 0x4015) {
-      // APU Status
+      apu.writeControl(data);
       return;
     }
     if (addr == 0x4016) {
@@ -259,7 +264,7 @@ public class NesBus {
       return;
     }
     if (addr == 0x4017) {
-      // APU Frame Counter
+      apu.writeFrameCounter(data);
       return;
     }
     if (0x4018 <= addr && addr <= 0x401f) {
