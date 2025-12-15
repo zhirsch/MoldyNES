@@ -12,7 +12,6 @@ public final class NesCpu {
   private boolean irq = false;
 
   public final NesCpuState state;
-  public final NesAlu alu;
 
   public NesCpu() {
     this.decoder = new NesCpuDecoder();
@@ -23,7 +22,6 @@ public final class NesCpu {
     this.reset = false;
     
     this.state = new NesCpuState();
-    this.alu = new NesAlu();
   }
 
   public NesCpuState tick(boolean nmi, boolean irq) {
