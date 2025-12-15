@@ -8,7 +8,7 @@ public final class Lda implements FetchInstruction {
   @Override
   public void execute(NesCpu cpu) {
     cpu.state.a = cpu.state.data;
-    cpu.state.pN(cpu.state.data < 0);
-    cpu.state.pZ(cpu.state.data == 0);
+    cpu.state.p.n(cpu.state.data < 0);
+    cpu.state.p.z(cpu.state.data == 0);
   }
 }

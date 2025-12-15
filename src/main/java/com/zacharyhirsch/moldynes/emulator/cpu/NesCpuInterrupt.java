@@ -33,13 +33,7 @@ public class NesCpuInterrupt implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    byte p;
-    if (isBrk) {
-      p = (byte) (cpu.state.p | NesCpuState.STATUS_B);
-    } else {
-      p = (byte) (cpu.state.p & ~NesCpuState.STATUS_B);
-    }
-    cpu.store((byte) 0x01, cpu.state.sp--, (byte) (p | 0b0010_0000));
+    cpu.store((byte) 0x01, cpu.state.sp--, cpu.state.p.toByte(isBrk));
     return this::cycle5;
   }
 
@@ -51,7 +45,7 @@ public class NesCpuInterrupt implements NesCpuCycle {
   private NesCpuCycle cycle6(NesCpu cpu) {
     cpu.state.hold = cpu.state.data;
     cpu.fetch(handlerAddressHi);
-    cpu.state.pI(true);
+    cpu.state.p.i(true);
     return this::cycle7;
   }
 

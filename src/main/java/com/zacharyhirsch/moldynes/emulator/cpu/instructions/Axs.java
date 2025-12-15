@@ -10,8 +10,8 @@ public final class Axs implements FetchInstruction {
   public void execute(NesCpu cpu) {
     var result = NesAlu.cmp((byte) (cpu.state.a & cpu.state.x), cpu.state.data);
     cpu.state.x = result.output();
-    cpu.state.pN(result.n());
-    cpu.state.pZ(result.z());
-    cpu.state.pC(result.c());
+    cpu.state.p.n(result.n());
+    cpu.state.p.z(result.z());
+    cpu.state.p.c(result.c());
   }
 }

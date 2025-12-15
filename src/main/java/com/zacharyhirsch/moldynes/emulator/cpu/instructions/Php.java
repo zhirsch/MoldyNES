@@ -5,8 +5,6 @@ import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
 public class Php implements NesCpuCycle {
 
-  private static final byte MASK = 0b011_0000;
-
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
     return cycle1();
@@ -17,7 +15,7 @@ public class Php implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle2(NesCpu cpu) {
-    cpu.store((byte) 0x01, cpu.state.sp--, (byte) (cpu.state.p | MASK));
+    cpu.store((byte) 0x01, cpu.state.sp--, cpu.state.p.toByte(true));
     return this::cycle3;
   }
 

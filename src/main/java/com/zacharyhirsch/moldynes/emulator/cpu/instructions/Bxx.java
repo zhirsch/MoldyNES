@@ -2,13 +2,14 @@ package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuStatusRegister;
 import java.util.function.Predicate;
 
 public abstract class Bxx implements NesCpuCycle {
 
-  private final Predicate<Byte> predicate;
+  private final Predicate<NesCpuStatusRegister> predicate;
 
-  public Bxx(Predicate<Byte> predicate) {
+  public Bxx(Predicate<NesCpuStatusRegister> predicate) {
     this.predicate = predicate;
   }
 

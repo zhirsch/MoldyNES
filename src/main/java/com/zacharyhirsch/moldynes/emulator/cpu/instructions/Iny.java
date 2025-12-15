@@ -8,7 +8,7 @@ public final class Iny implements ImpliedInstruction {
   @Override
   public void execute(NesCpu cpu) {
     cpu.state.y = (byte) (cpu.state.y + 1);
-    cpu.state.pN(cpu.state.y < 0);
-    cpu.state.pZ(cpu.state.y == 0);
+    cpu.state.p.n(cpu.state.y < 0);
+    cpu.state.p.z(cpu.state.y == 0);
   }
 }

@@ -7,10 +7,10 @@ public final class Ror implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    byte output = (byte) ((Byte.toUnsignedInt(value) >>> 1) | (cpu.state.pC() ? 0b1000_0000 : 0));
-    cpu.state.pN(output < 0);
-    cpu.state.pZ(output == 0);
-    cpu.state.pC((value & 1) == 1);
+    byte output = (byte) ((Byte.toUnsignedInt(value) >>> 1) | (cpu.state.p.c() ? 0b1000_0000 : 0));
+    cpu.state.p.n(output < 0);
+    cpu.state.p.z(output == 0);
+    cpu.state.p.c((value & 1) == 1);
     return output;
   }
 }

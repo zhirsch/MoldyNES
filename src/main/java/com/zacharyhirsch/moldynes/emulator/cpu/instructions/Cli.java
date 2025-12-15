@@ -7,6 +7,6 @@ public final class Cli implements ImpliedInstruction {
 
   @Override
   public void execute(NesCpu cpu) {
-    cpu.state.pI(false);
+    cpu.state.p.i(false);
   }
 }

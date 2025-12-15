@@ -5,8 +5,6 @@ import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
 public class Plp implements NesCpuCycle {
 
-  private static final byte MASK = (byte) 0b1100_1111;
-
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
     return cycle1();
@@ -27,7 +25,7 @@ public class Plp implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    cpu.state.p = (byte) ((cpu.state.data & MASK) | 0b0010_0000);
+    cpu.state.p.fromByte(cpu.state.data);
     cpu.fetch(cpu.state.pc++);
     return cpu::next;
   }

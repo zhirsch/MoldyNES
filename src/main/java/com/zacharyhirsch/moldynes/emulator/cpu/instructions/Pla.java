@@ -26,8 +26,8 @@ public class Pla implements NesCpuCycle {
 
   private NesCpuCycle cycle4(NesCpu cpu) {
     cpu.state.a = cpu.state.data;
-    cpu.state.pN(cpu.state.a < 0);
-    cpu.state.pZ(cpu.state.a == 0);
+    cpu.state.p.n(cpu.state.a < 0);
+    cpu.state.p.z(cpu.state.a == 0);
     cpu.fetch(cpu.state.pc++);
     return cpu::next;
   }

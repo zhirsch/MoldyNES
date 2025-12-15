@@ -7,11 +7,11 @@ public final class Rla implements ReadModifyWriteInstruction {
 
   @Override
   public byte execute(NesCpu cpu, byte value) {
-    byte output = (byte) ((value << 1) | (cpu.state.pC() ? 1 : 0));
+    byte output = (byte) ((value << 1) | (cpu.state.p.c() ? 1 : 0));
     cpu.state.a = (byte) (cpu.state.a & output);
-    cpu.state.pN(cpu.state.a < 0);
-    cpu.state.pZ(cpu.state.a == 0);
-    cpu.state.pC(value < 0);
+    cpu.state.p.n(cpu.state.a < 0);
+    cpu.state.p.z(cpu.state.a == 0);
+    cpu.state.p.c(value < 0);
     return output;
   }
 }

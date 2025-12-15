@@ -8,7 +8,7 @@ public final class Inx implements ImpliedInstruction {
   @Override
   public void execute(NesCpu cpu) {
     cpu.state.x = (byte) (cpu.state.x + 1);
-    cpu.state.pN(cpu.state.x < 0);
-    cpu.state.pZ(cpu.state.x == 0);
+    cpu.state.p.n(cpu.state.x < 0);
+    cpu.state.p.z(cpu.state.x == 0);
   }
 }

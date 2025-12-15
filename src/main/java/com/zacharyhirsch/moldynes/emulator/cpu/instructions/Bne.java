@@ -1,10 +1,11 @@
 package com.zacharyhirsch.moldynes.emulator.cpu.instructions;
 
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuStatusRegister;
+import java.util.function.Predicate;
 
 public class Bne extends Bxx {
 
   public Bne() {
-    super(NesCpuState.testZ().negate());
+    super(Predicate.not(NesCpuStatusRegister::z));
   }
 }

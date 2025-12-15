@@ -7,6 +7,6 @@ public final class Sei implements ImpliedInstruction {
 
   @Override
   public void execute(NesCpu cpu) {
-    cpu.state.pI(true);
+    cpu.state.p.i(true);
   }
 }

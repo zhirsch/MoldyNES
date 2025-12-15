@@ -8,7 +8,7 @@ public final class And implements FetchInstruction {
   @Override
   public void execute(NesCpu cpu) {
     cpu.state.a = (byte) (cpu.state.a & cpu.state.data);
-    cpu.state.pN(cpu.state.a < 0);
-    cpu.state.pZ(cpu.state.a == 0);
+    cpu.state.p.n(cpu.state.a < 0);
+    cpu.state.p.z(cpu.state.a == 0);
   }
 }

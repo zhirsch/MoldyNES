@@ -9,8 +9,8 @@ public final class Cpx implements FetchInstruction {
   @Override
   public void execute(NesCpu cpu) {
     var result = NesAlu.cmp(cpu.state.x, cpu.state.data);
-    cpu.state.pN(result.n());
-    cpu.state.pZ(result.z());
-    cpu.state.pC(result.c());
+    cpu.state.p.n(result.n());
+    cpu.state.p.z(result.z());
+    cpu.state.p.c(result.c());
   }
 }

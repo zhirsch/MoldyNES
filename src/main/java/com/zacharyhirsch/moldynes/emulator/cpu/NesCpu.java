@@ -42,7 +42,7 @@ public final class NesCpu {
   public NesCpuCycle next(NesCpu ignored) {
     if (reset) {
       reset = false;
-      state.p |= NesCpuState.STATUS_I;
+      state.p.i(true);
       return new NesCpuInit().execute(this);
     }
     if (nmi.value()) {
@@ -52,7 +52,7 @@ public final class NesCpu {
     }
     if (irq) {
       irq = false;
-      if (!state.pI()) {
+      if (!state.p.i()) {
         state.pc--;
         return new NesCpuInterrupt((short) 0xfffe, (short) 0xffff, false).execute(this);
       }

@@ -7,6 +7,6 @@ public final class Sed implements ImpliedInstruction {
 
   @Override
   public void execute(NesCpu cpu) {
-    cpu.state.pD(true);
+    cpu.state.p.d(true);
   }
 }

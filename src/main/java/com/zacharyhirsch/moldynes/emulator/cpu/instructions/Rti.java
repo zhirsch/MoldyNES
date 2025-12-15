@@ -5,8 +5,6 @@ import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuCycle;
 
 public class Rti implements NesCpuCycle {
 
-  private static final byte MASK = (byte) 0b1100_1111;
-
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
     return cycle1(cpu);
@@ -28,7 +26,7 @@ public class Rti implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle4(NesCpu cpu) {
-    cpu.state.p = (byte) ((cpu.state.data & MASK) | 0b0010_0000);
+    cpu.state.p.fromByte(cpu.state.data);
     cpu.fetch((byte) 0x01, cpu.state.sp++);
     return this::cycle5;
   }
