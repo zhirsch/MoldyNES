@@ -40,38 +40,35 @@ public class NesBus {
     return cpu.isRunning();
   }
 
+  @SuppressWarnings("DuplicateBranchesInSwitch")
   public void tick() {
     switch (clock.tick() % 24) {
-      case 0 -> ppuTick();
+      case 0 -> ppu.tick();
       case 1 -> cpuTick();
-      case 2 -> apuTick();
+      case 2 -> apu.tick();
       case 3 -> {}
-      case 4 -> ppuTick();
+      case 4 -> ppu.tick();
       case 5 -> {}
       case 6 -> {}
       case 7 -> {}
-      case 8 -> ppuTick();
+      case 8 -> ppu.tick();
       case 9 -> {}
       case 10 -> {}
       case 11 -> {}
-      case 12 -> ppuTick();
+      case 12 -> ppu.tick();
       case 13 -> cpuTick();
       case 14 -> {}
       case 15 -> {}
-      case 16 -> ppuTick();
+      case 16 -> ppu.tick();
       case 17 -> {}
       case 18 -> {}
       case 19 -> {}
-      case 20 -> ppuTick();
+      case 20 -> ppu.tick();
       case 21 -> {}
       case 22 -> {}
       case 23 -> {}
       default -> throw new IllegalStateException();
     }
-  }
-
-  private void ppuTick() {
-    ppu.tick();
   }
 
   private void cpuTick() {
@@ -81,10 +78,6 @@ public class NesBus {
     } else {
       state.data = read(state.adh, state.adl);
     }
-  }
-
-  private void apuTick() {
-    apu.tick();
   }
 
   public void reset() {
