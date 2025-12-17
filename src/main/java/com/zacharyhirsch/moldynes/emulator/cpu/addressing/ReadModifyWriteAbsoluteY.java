@@ -53,7 +53,6 @@ public class ReadModifyWriteAbsoluteY implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle7(NesCpu cpu) {
-    cpu.fetch(cpu.state.pc++);
-    return cpu::next;
+    return cpu.next();
   }
 }

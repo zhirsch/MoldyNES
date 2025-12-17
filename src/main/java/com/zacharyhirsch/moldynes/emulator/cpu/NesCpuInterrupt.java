@@ -51,7 +51,6 @@ public class NesCpuInterrupt implements NesCpuCycle {
 
   private NesCpuCycle cycle7(NesCpu cpu) {
     cpu.jump(cpu.state.data, cpu.state.hold);
-    cpu.fetch(cpu.state.pc++);
-    return cpu::next;
+    return cpu.next();
   }
 }

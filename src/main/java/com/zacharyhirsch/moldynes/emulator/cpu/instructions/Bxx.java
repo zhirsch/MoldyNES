@@ -25,8 +25,7 @@ public abstract class Bxx implements NesCpuCycle {
 
   private NesCpuCycle cycle2(NesCpu cpu) {
     if (!predicate.test(cpu.state.p)) {
-      cpu.fetch(cpu.state.pc++);
-      return cpu::next;
+      return cpu.next();
     }
     return this::cycle3;
   }
@@ -35,8 +34,7 @@ public abstract class Bxx implements NesCpuCycle {
     int pcl = Byte.toUnsignedInt(cpu.state.pcl()) + cpu.state.data;
     if (0x00 <= pcl && pcl <= 0xff) {
       cpu.jump(cpu.state.pch(), (byte) pcl);
-      cpu.fetch(cpu.state.pc++);
-      return cpu::next;
+      return cpu.next();
     }
     return this::cycle4;
   }
@@ -45,7 +43,6 @@ public abstract class Bxx implements NesCpuCycle {
     int pcl = Byte.toUnsignedInt(cpu.state.pcl()) + cpu.state.data;
     byte pch = (byte) (cpu.state.pch() + (pcl < 0x00 ? -1 : 1));
     cpu.jump(pch, (byte) pcl);
-    cpu.fetch(cpu.state.pc++);
-    return cpu::next;
+    return cpu.next();
   }
 }

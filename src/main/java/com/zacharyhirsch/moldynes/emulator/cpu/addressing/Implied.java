@@ -17,13 +17,12 @@ public final class Implied implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle1(NesCpu cpu) {
-    cpu.fetch(cpu.state.pc++);
+    cpu.fetch(cpu.state.pc);
     return this::cycle2;
   }
 
   private NesCpuCycle cycle2(NesCpu cpu) {
     instruction.execute(cpu);
-    cpu.fetch(cpu.state.adh, cpu.state.adl);
-    return cpu::next;
+    return cpu.next();
   }
 }

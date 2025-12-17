@@ -38,7 +38,6 @@ public class Rts implements NesCpuCycle {
   }
 
   private NesCpuCycle cycle6(NesCpu cpu) {
-    cpu.fetch(cpu.state.pc++);
-    return cpu::next;
+    return cpu.next();
   }
 }

@@ -26,7 +26,6 @@ public class Plp implements NesCpuCycle {
 
   private NesCpuCycle cycle4(NesCpu cpu) {
     cpu.state.p.fromByte(cpu.state.data);
-    cpu.fetch(cpu.state.pc++);
-    return cpu::next;
+    return cpu.next();
   }
 }

@@ -28,7 +28,6 @@ public class FetchZeropage implements NesCpuCycle {
 
   private NesCpuCycle cycle3(NesCpu cpu) {
     instruction.execute(cpu);
-    cpu.fetch(cpu.state.pc++);
-    return cpu::next;
+    return cpu.next();
   }
 }

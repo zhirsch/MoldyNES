@@ -100,11 +100,11 @@ import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Txs;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.Tya;
 import com.zacharyhirsch.moldynes.emulator.cpu.instructions.UnknownOpcodeException;
 
-public final class NesCpuDecoder {
+final class NesCpuDecoder {
 
-  public NesCpuDecoder() {}
+  private NesCpuDecoder() {}
 
-  public NesCpuCycle decode(byte opcode) {
+  static NesCpuCycle decode(byte opcode) {
     return switch (Byte.toUnsignedInt(opcode)) {
       case 0x00 -> new Brk();
       case 0x01 -> new FetchIndirectX(new Ora());

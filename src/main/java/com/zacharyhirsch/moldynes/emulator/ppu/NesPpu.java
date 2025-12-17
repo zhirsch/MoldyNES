@@ -1652,11 +1652,12 @@ public final class NesPpu {
 
   private final NesMapper mapper;
   private final Display display;
+  private final Runnable nmi;
   private final byte[] ram;
   private final NesPpuOam oam;
   private final NesPpuPalette palette;
   private final byte[] paletteIndexes;
-  private final byte[] frame = new byte[256 * 240 * 3];
+  private final byte[] frame;
 
   private int scanline = 0;
   private int dot = 0;
@@ -1686,15 +1687,16 @@ public final class NesPpu {
 
   private boolean vblPending = false;
   private boolean nmiPending = false;
-  private boolean nmi = false;
 
-  public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette) {
+  public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette, Runnable nmi) {
     this.mapper = mapper;
     this.display = display;
+    this.nmi = nmi;
+    this.palette = palette;
     this.ram = new byte[0x2000];
     this.oam = new NesPpuOam();
     this.paletteIndexes = new byte[0x20];
-    this.palette = palette;
+    this.frame = new byte[256 * 240 * 3];
   }
 
   public void writeControl(byte data) {
@@ -1703,7 +1705,9 @@ public final class NesPpu {
       throw new IllegalStateException();
     }
     if (isNmiEnabled()) {
-      nmi = isVblEnabled();
+      if (isVblEnabled()) {
+        nmi.run();
+      }
     } else {
       nmiPending = false;
     }
@@ -1829,12 +1833,9 @@ public final class NesPpu {
     throw new IllegalArgumentException("cannot write to PPU address %04x".formatted(v));
   }
 
-  public boolean tick() {
+  public void tick() {
     Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this));
     advanceDot();
-    boolean nmi = this.nmi;
-    this.nmi = false;
-    return nmi;
   }
 
   private void advanceDot() {
@@ -1952,7 +1953,7 @@ public final class NesPpu {
 
   private void setVBlank3() {
     if (nmiPending) {
-      nmi = true;
+      nmi.run();
     }
     nmiPending = false;
   }

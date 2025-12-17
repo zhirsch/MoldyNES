@@ -20,8 +20,6 @@ public class NesBus {
   private final NesJoypad joypad2;
   private final byte[] cpuRam;
 
-  private boolean nmi = false;
-
   public NesBus(
       NesMapper mapper,
       NesPpuPalette palette,
@@ -32,7 +30,7 @@ public class NesBus {
     this.mapper = mapper;
     this.apu = new NesApu();
     this.cpu = new NesCpu();
-    this.ppu = new NesPpu(mapper, display, palette);
+    this.ppu = new NesPpu(mapper, display, palette, cpu::nmi);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
     this.cpuRam = new byte[0x0800];
@@ -73,17 +71,16 @@ public class NesBus {
   }
 
   private void ppuTick() {
-    nmi = ppu.tick() || nmi;
+    ppu.tick();
   }
 
   private void cpuTick() {
-    NesCpuState state = cpu.tick(nmi, apu.irq());
+    NesCpuState state = cpu.tick(apu.irq());
     if (state.write) {
       write(state.adh, state.adl, state.data);
     } else {
       state.data = read(state.adh, state.adl);
     }
-    nmi = false;
   }
 
   private void apuTick() {
