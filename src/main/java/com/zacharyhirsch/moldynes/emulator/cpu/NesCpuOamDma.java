@@ -12,9 +12,12 @@ class NesCpuOamDma implements NesCpuCycle {
 
   @Override
   public NesCpuCycle execute(NesCpu cpu) {
-    // TODO: alignment cycle, if needed.
-    cpu.fetch(address, (byte) 0);
-    return c -> cycle1(c, 0);
+    if (cpu.state.cycleType != NesCpuState.CycleType.GET) {
+      // alignment cycle
+      cpu.fetch(address, (byte) 0);
+      return this;
+    }
+    return cycle1(cpu, 0);
   }
 
   private NesCpuCycle cycle1(NesCpu cpu, int index) {

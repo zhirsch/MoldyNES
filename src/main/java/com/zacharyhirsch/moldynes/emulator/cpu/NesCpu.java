@@ -37,6 +37,7 @@ public final class NesCpu {
       nmi = false;
     }
     this.irq = irq;
+    state.cycleType = state.cycleType.next();
     return state;
   }
 
