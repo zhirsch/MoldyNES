@@ -1,37 +1,24 @@
-package com.zacharyhirsch.moldynes.emulator.mappers;
+package com.zacharyhirsch.moldynes.emulator.mapper;
 
-import java.nio.ByteBuffer;
+import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
+import com.zacharyhirsch.moldynes.emulator.rom.NesRomProperties.NametableLayout;
 
 // https://www.nesdev.org/wiki/NROM
 final class NromNesMapper implements NesMapper {
 
-  private final byte[] header;
+  private final NesRom rom;
   private final byte[] ram;
-  private final byte[] prgRom;
-  private final byte[] chrRam;
 
-  public NromNesMapper(byte[] header, ByteBuffer buffer) {
-    this.header = header;
-    ram = new byte[0x2000];
-
-    prgRom = new byte[header[4] << 14];
-    buffer.get(prgRom);
-
-    int chrRomLength = header[5] << 13;
-    int chrRamLength = Math.max(chrRomLength, 0x2000);
-    chrRam = new byte[chrRamLength];
-    buffer.get(chrRam, 0, chrRomLength);
-
-    if (buffer.hasRemaining()) {
-      throw new IllegalStateException("Buffer is not empty.");
-    }
+  NromNesMapper(NesRom rom) {
+    this.rom = rom;
+    this.ram = new byte[0x2000];
   }
 
   @Override
   public byte read(short address, byte[] ppuRam) {
     int addr = Short.toUnsignedInt(address);
     if (0x0000 <= addr && addr < 0x2000) {
-      return chrRam[addr];
+      return rom.chr()[addr];
     }
     if (0x2000 <= addr && addr < 0x3000) {
       return ppuRam[mirror(address)];
@@ -44,10 +31,10 @@ final class NromNesMapper implements NesMapper {
     }
     if (0x8000 <= addr && addr < 0x10000) {
       addr -= 0x8000;
-      if (prgRom.length == 0x4000) {
+      if (rom.prg().length == 0x4000) {
         addr %= 0x4000;
       }
-      return prgRom[addr];
+      return rom.prg()[addr];
     }
     throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
   }
@@ -56,7 +43,7 @@ final class NromNesMapper implements NesMapper {
   public void write(short address, byte[] ppuRam, byte data) {
     int addr = Short.toUnsignedInt(address);
     if (0x0000 <= addr && addr < 0x2000) {
-      chrRam[addr] = data;
+      rom.chr()[addr] = data;
       return;
     }
     if (0x2000 <= addr && addr < 0x3000) {
@@ -76,10 +63,6 @@ final class NromNesMapper implements NesMapper {
     throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
   }
 
-  private boolean isVerticalMirroring() {
-    return (header[6] & 1) == 1;
-  }
-
   private short mirror(short address) {
     // Horizontal mirroring:
     //   [ A ] [ a ]
@@ -89,12 +72,13 @@ final class NromNesMapper implements NesMapper {
     //   [ A ] [ B ]
     //   [ a ] [ b ]
 
+    boolean isVerticalMirroring = rom.properties().nametableLayout() == NametableLayout.VERTICAL;
     int nametable = (address & 0b0000_1100_0000_0000) >>> 10;
     int offset =
         switch (nametable) {
           case 0 -> 0;
-          case 1 -> isVerticalMirroring() ? 1 : 0;
-          case 2 -> isVerticalMirroring() ? 0 : 1;
+          case 1 -> isVerticalMirroring ? 1 : 0;
+          case 2 -> isVerticalMirroring ? 0 : 1;
           case 3 -> 1;
           default -> throw new IllegalStateException();
         };

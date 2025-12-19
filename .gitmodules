@@ -4,3 +4,6 @@
 [submodule "roms/nes-test-roms"]
 	path = roms/nes-test-roms
 	url = https://github.com/christopherpow/nes-test-roms
+[submodule "inestool"]
+	path = inestool
+	url = https://github.com/dsedivec/inestool

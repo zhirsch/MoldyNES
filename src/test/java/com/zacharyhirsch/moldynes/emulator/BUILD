@@ -29,8 +29,9 @@ java_junit5_test(
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
-        "//src/main/java/com/zacharyhirsch/moldynes/emulator/mappers",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/rom",
         "@maven//:com_google_truth_truth",
         "@maven//:org_junit_jupiter_junit_jupiter_api",
     ],

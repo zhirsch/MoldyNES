@@ -2,8 +2,10 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
 import com.zacharyhirsch.moldynes.emulator.io.SdlDisplay;
-import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
+import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
+import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
+import com.zacharyhirsch.moldynes.emulator.rom.NesRomLoader;
 
 final class MoldyNES {
 
@@ -12,7 +14,8 @@ final class MoldyNES {
   }
 
   private static void run(String path) {
-    NesMapper mapper = NesMapper.load(path);
+    NesRom rom = NesRomLoader.load(path);
+    NesMapper mapper = NesMapper.load(rom);
     NesPpuPalette palette = NesPpuPalette.load("Composite_wiki.pal");
     NesJoypad joypad1 = new NesJoypad();
     NesJoypad joypad2 = new NesJoypad();

@@ -5,7 +5,7 @@ import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 import com.zacharyhirsch.moldynes.emulator.io.Display;
 import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
-import com.zacharyhirsch.moldynes.emulator.mappers.NesMapper;
+import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
 

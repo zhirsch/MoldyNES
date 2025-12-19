@@ -1,12 +1,15 @@
 java_library(
     name = "emulator",
-    srcs = glob(["*.java"]),
+    srcs = glob(
+        ["*.java"],
+        exclude = ["MoldyNES.java"],
+    ),
     visibility = ["//src/test/java/com/zacharyhirsch/moldynes/emulator:__pkg__"],
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/apu",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/cpu",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
-        "//src/main/java/com/zacharyhirsch/moldynes/emulator/mappers",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
         "@maven//:com_google_guava_guava",
     ],
@@ -24,8 +27,9 @@ java_binary(
     deps = [
         ":emulator",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
-        "//src/main/java/com/zacharyhirsch/moldynes/emulator/mappers",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/rom",
         "@maven//:com_google_guava_guava",
     ],
 )
