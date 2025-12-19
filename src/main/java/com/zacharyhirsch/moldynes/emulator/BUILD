@@ -10,6 +10,7 @@ java_library(
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/cpu",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/memory",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
         "@maven//:com_google_guava_guava",
     ],

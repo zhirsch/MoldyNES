@@ -6,6 +6,8 @@ import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 import com.zacharyhirsch.moldynes.emulator.io.Display;
 import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressReadError;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
 
@@ -98,7 +100,7 @@ public class NesBus {
       return read((short) (addr & 0b0000_0111_1111_1111));
     }
     if (addr == 0x2000) {
-      throw new IllegalArgumentException("reading PPUCTRL is not allowed");
+      throw new InvalidAddressReadError(address, "PPUCTRL");
     }
     if (addr == 0x2001) {
       return ppu.readMask();
@@ -107,16 +109,16 @@ public class NesBus {
       return ppu.readStatus();
     }
     if (addr == 0x2003) {
-      throw new IllegalArgumentException("reading OAMADDR is not allowed");
+      throw new InvalidAddressReadError(address, "OAMADDR");
     }
     if (addr == 0x2004) {
       return ppu.readOamData();
     }
     if (addr == 0x2005) {
-      throw new IllegalArgumentException("reading PPUSCROLL is not allowed");
+      throw new InvalidAddressReadError(address, "PPUSCROLL");
     }
     if (addr == 0x2006) {
-      throw new IllegalArgumentException("reading PPUADDR is not allowed");
+      throw new InvalidAddressReadError(address, "PPUADDR");
     }
     if (addr == 0x2007) {
       return ppu.readData();
@@ -150,7 +152,7 @@ public class NesBus {
       return 0;
     }
     if (addr == 0x4014) {
-      throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+      throw new InvalidAddressReadError(address);
     }
     if (addr == 0x4015) {
       return apu.readStatus();
@@ -162,12 +164,12 @@ public class NesBus {
       return joypad2.read();
     }
     if (0x4018 <= addr && addr <= 0x401f) {
-      throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+      throw new InvalidAddressReadError(address);
     }
     if (0x4020 <= addr && addr <= 0xffff) {
       return mapper.read((short) addr, null);
     }
-    throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+    throw new InvalidAddressReadError(address);
   }
 
   public void write(byte adh, byte adl, byte data) {
@@ -194,7 +196,7 @@ public class NesBus {
       return;
     }
     if (addr == 0x2002) {
-      throw new IllegalArgumentException("writing PPUSTATUS is not allowed");
+      throw new InvalidAddressWriteError(address, "PPUSTATUS");
     }
     if (addr == 0x2003) {
       ppu.writeOamAddr(data);
@@ -258,12 +260,12 @@ public class NesBus {
       return;
     }
     if (0x4018 <= addr && addr <= 0x401f) {
-      throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+      throw new InvalidAddressWriteError(address);
     }
     if (0x4020 <= addr && addr <= 0xffff) {
       mapper.write((short) addr, null, data);
       return;
     }
-    throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+    throw new InvalidAddressWriteError(address);
   }
 }

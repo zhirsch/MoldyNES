@@ -1,5 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.mapper;
 
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressReadError;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRomProperties.NametableLayout;
 
@@ -17,50 +19,50 @@ final class NromNesMapper implements NesMapper {
   @Override
   public byte read(short address, byte[] ppuRam) {
     int addr = Short.toUnsignedInt(address);
-    if (0x0000 <= addr && addr < 0x2000) {
-      return rom.chr()[addr];
+    if (0x0000 <= addr && addr <= 0x1fff) {
+      return rom.chr().read(addr, 0);
     }
-    if (0x2000 <= addr && addr < 0x3000) {
+    if (0x2000 <= addr && addr <= 0x2fff) {
       return ppuRam[mirror(address)];
     }
-    if (0x3000 <= addr && addr < 0x6000) {
+    if (0x3000 <= addr && addr <= 0x5fff) {
       return (byte) 0xff;
     }
-    if (0x6000 <= addr && addr < 0x8000) {
+    if (0x6000 <= addr && addr <= 0x7fff) {
       return ram[addr - 0x6000];
     }
-    if (0x8000 <= addr && addr < 0x10000) {
-      addr -= 0x8000;
-      if (rom.prg().length == 0x4000) {
-        addr %= 0x4000;
+    if (0x8000 <= addr && addr <= 0xffff) {
+      if (rom.prg().value().length == 0x4000) {
+        return rom.prg().read(addr - 0x8000, 0, 0);
+      } else {
+        return rom.prg().read(addr - 0x8000, 0);
       }
-      return rom.prg()[addr];
     }
-    throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
+    throw new InvalidAddressReadError(address);
   }
 
   @Override
   public void write(short address, byte[] ppuRam, byte data) {
     int addr = Short.toUnsignedInt(address);
-    if (0x0000 <= addr && addr < 0x2000) {
-      rom.chr()[addr] = data;
+    if (0x0000 <= addr && addr <= 0x1fff) {
+      rom.chr().value()[addr] = data;
       return;
     }
-    if (0x2000 <= addr && addr < 0x3000) {
+    if (0x2000 <= addr && addr <= 0x2fff) {
       ppuRam[mirror(address)] = data;
       return;
     }
-    if (0x3000 <= addr && addr < 0x6000) {
-      throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+    if (0x3000 <= addr && addr <= 0x5fff) {
+      throw new InvalidAddressWriteError(address);
     }
-    if (0x6000 <= addr && addr < 0x8000) {
+    if (0x6000 <= addr && addr <= 0x7fff) {
       ram[addr - 0x6000] = data;
       return;
     }
-    if (0x8000 <= addr && addr < 0x10000) {
-      throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+    if (0x8000 <= addr && addr <= 0xffff) {
+      throw new InvalidAddressWriteError(address);
     }
-    throw new IllegalArgumentException(String.format("unable to write address %04x", addr));
+    throw new InvalidAddressWriteError(address);
   }
 
   private short mirror(short address) {

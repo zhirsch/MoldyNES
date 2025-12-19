@@ -7,6 +7,7 @@ public interface NesMapper {
   static NesMapper load(NesRom rom) {
     return switch (rom.properties().mapper()) {
       case 0x00 -> new NromNesMapper(rom);
+      case 0x01 -> new Mmc1NesMapper(rom);
       default -> throw new UnknownMapperError(rom.properties().mapper());
     };
   }

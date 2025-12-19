@@ -67,7 +67,10 @@ public final class NesRomLoader {
 
     int mapper = getMapper(header[6], header[7], header[8]);
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
-    return new NesRom(prgRom, chrRom, new NesRomProperties(mapper, nametableLayout));
+    return new NesRom(
+        new NesRomSection(0x4000, prgRom),
+        new NesRomSection(0x1000, chrRom),
+        new NesRomProperties(mapper, nametableLayout));
   }
 
   private static NesRom load10(byte[] header, ByteBuffer buffer) {
@@ -109,7 +112,10 @@ public final class NesRomLoader {
 
     int mapper = getMapper(header[6], header[7], (byte) 0);
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
-    return new NesRom(prgRom, chrRom, new NesRomProperties(mapper, nametableLayout));
+    return new NesRom(
+        new NesRomSection(0x4000, prgRom),
+        new NesRomSection(0x1000, chrRom),
+        new NesRomProperties(mapper, nametableLayout));
   }
 
   private static byte[] read(ByteBuffer buffer, int size) {
