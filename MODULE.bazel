@@ -13,6 +13,7 @@ maven.install(
         "org.junit.platform:junit-platform-launcher:1.14.1",
         "org.junit.platform:junit-platform-reporting:1.14.1",
     ],
+    fetch_sources = True,
     repositories = [
         "https://repo1.maven.org/maven2",
     ],
