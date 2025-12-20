@@ -1701,7 +1701,7 @@ public final class NesPpu {
 
   public void writeControl(byte data) {
     ctrl = data;
-    if (bit8(ctrl, 5) != 0) {
+    if (isSpriteSize8x16()) {
       throw new IllegalStateException();
     }
     if (isNmiEnabled()) {
@@ -2008,8 +2008,8 @@ public final class NesPpu {
       return new NesPpuBgPixel(0, palette.get(getPaletteIndex(0)));
     }
     int pattern = getBgPattern();
-    NesPpuColor[] palette = getBackgroundPalette(attributeByte.value());
-    return new NesPpuBgPixel(pattern, palette[pattern]);
+    NesPpuColor color = getBgColor(pattern);
+    return new NesPpuBgPixel(pattern, color);
   }
 
   private int getBgPattern() {
@@ -2018,12 +2018,14 @@ public final class NesPpu {
     return (patternHi << 1) | patternLo;
   }
 
-  private NesPpuColor[] getBackgroundPalette(int attribute) {
-    return new NesPpuColor[] {
-      palette.get(getPaletteIndex(0)),
-      palette.get(getPaletteIndex(attribute * 4 + 1)),
-      palette.get(getPaletteIndex(attribute * 4 + 2)),
-      palette.get(getPaletteIndex(attribute * 4 + 3))
+  private NesPpuColor getBgColor(int pattern) {
+    byte attribute = attributeByte.value();
+    return switch (pattern) {
+      case 0 -> palette.get(getPaletteIndex(0));
+      case 1 -> palette.get(getPaletteIndex(attribute * 4 + 1));
+      case 2 -> palette.get(getPaletteIndex(attribute * 4 + 2));
+      case 3 -> palette.get(getPaletteIndex(attribute * 4 + 3));
+      default -> throw new IllegalArgumentException("invalid pattern: " + pattern);
     };
   }
 
@@ -2048,15 +2050,11 @@ public final class NesPpu {
   }
 
   private int getSpritePattern(int spriteIndex, int px) {
-    int bitIndex = bit8(spriteAttributes[spriteIndex], 6) == 0 ? px : 7 - px;
+    int bitIndex = isFlipSpriteHorizontal(spriteIndex) ? 7 - px : px;
     int shift = 7 - bitIndex;
     int patternLo = (spritePatternLoBytes[spriteIndex] >>> shift) & 1;
     int patternHi = (spritePatternHiBytes[spriteIndex] >>> shift) & 1;
     return (patternHi << 1) | patternLo;
-  }
-
-  private int getSpritePriority(int i) {
-    return bit8(spriteAttributes[i], 5);
   }
 
   private NesPpuColor[] getSpritePalette(int attribute) {
@@ -2069,7 +2067,7 @@ public final class NesPpu {
   }
 
   private byte getPaletteIndex(int i) {
-    boolean greyscale = bit8(mask, 0) == 1;
+    boolean greyscale = isGreyscale();
     return paletteIndexes[greyscale ? i & 0x30 : i];
   }
 
@@ -2293,7 +2291,7 @@ public final class NesPpu {
     +----------------- 0: Pattern table is at $0000-$1FFF
     */
     int fineY = (v >> 12) & 0b0111;
-    int chrBank = bit8(ctrl, 4) == 0 ? 0x0000 : 0x1000;
+    int chrBank = isBbPatternTableAddressHi() ? 0x1000 : 0x0000;
     int nametable = Byte.toUnsignedInt(nametableByte.value()) << 4;
     int address = chrBank | nametable | offset | fineY;
     return mapper.read((short) address, ram);
@@ -2304,38 +2302,62 @@ public final class NesPpu {
       return (byte) 0;
     }
     int row = scanline - sprite.y();
-    int fineY = bit8((byte) sprite.attributes(), 7) == 0 ? row : 7 - row;
-    int chrBank = bit8(ctrl, 3) == 0 ? 0x0000 : 0x1000;
+    int fineY = isFlipSpriteVertical(sprite) ? 7 - row : row;
+    int chrBank = isSpritePatternTableAddressHi() ? 0x1000 : 0x0000;
     int nametable = sprite.tileIndex() << 4;
     int address = chrBank | nametable | offset | fineY;
     return mapper.read((short) address, ram);
   }
 
+  private int getSpritePriority(int spriteIndex) {
+    return (spriteAttributes[spriteIndex] & 0b0010_0000) >>> 5;
+  }
+
+  private boolean isFlipSpriteHorizontal(int spriteIndex) {
+    return (spriteAttributes[spriteIndex] & 0b0100_0000) != 0;
+  }
+
+  private boolean isFlipSpriteVertical(NesPpuSprite sprite) {
+    return (sprite.attributes() & 0b1000_0000) != 0;
+  }
+
   private boolean isVramIncrementVertical() {
-    return bit8(ctrl, 2) == 1;
+    return (ctrl & 0b0000_0100) != 0;
+  }
+
+  private boolean isSpritePatternTableAddressHi() {
+    return (ctrl & 0b0000_1000) != 0;
+  }
+
+  private boolean isBbPatternTableAddressHi() {
+    return (ctrl & 0b0001_0000) != 0;
+  }
+
+  private boolean isSpriteSize8x16() {
+    return (ctrl & 0b0010_0000) != 0;
   }
 
   private boolean isNmiEnabled() {
-    return bit8(ctrl, 7) == 1;
+    return (ctrl & 0b1000_0000) != 0;
   }
 
   private boolean isVblEnabled() {
-    return bit8(status, 7) == 1;
+    return (status & 0b1000_0000) != 0;
+  }
+
+  private boolean isGreyscale() {
+    return (mask & 0b0000_0001) != 0;
   }
 
   private boolean isRenderingEnabled() {
-    return isBgRenderingEnabled() || isSpriteRenderingEnabled();
+    return (mask & 0b0001_1000) != 0;
   }
 
   private boolean isBgRenderingEnabled() {
-    return bit8(mask, 3) == 1;
+    return (mask & 0b0000_1000) != 0;
   }
 
   private boolean isSpriteRenderingEnabled() {
-    return bit8(mask, 4) == 1;
-  }
-
-  private static int bit8(byte value, int i) {
-    return (Byte.toUnsignedInt(value) >>> i) & 1;
+    return (mask & 0b0001_0000) != 0;
   }
 }
