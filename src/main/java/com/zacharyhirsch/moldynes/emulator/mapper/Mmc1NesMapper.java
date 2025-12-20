@@ -73,7 +73,8 @@ final class Mmc1NesMapper implements NesMapper {
     int addr = Short.toUnsignedInt(address);
     assert 0x0000 <= addr && addr <= 0xffff;
     if (0x0000 <= addr && addr <= 0x1fff) {
-      throw new InvalidAddressWriteError(addr);
+      rom.chr().value()[addr] = data;
+      return;
     }
     if (0x2000 <= addr && addr <= 0x2fff) {
       ppuRam[mirror(addr)] = data;
@@ -197,7 +198,7 @@ final class Mmc1NesMapper implements NesMapper {
       if (count < 5) {
         return Optional.empty();
       }
-      byte v = value.toByteArray()[0];
+      byte v = value.isEmpty() ? 0 : value.toByteArray()[0];
       reset();
       return Optional.of(v);
     }
