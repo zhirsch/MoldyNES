@@ -10,6 +10,7 @@ public final class NesCpu {
   private boolean nmiPending;
 
   public final NesCpuState state;
+  private boolean oldI;
 
   public NesCpu() {
     this.cycle = new NesCpuInit();
@@ -27,6 +28,7 @@ public final class NesCpu {
   }
 
   public NesCpuState tick(boolean irq) {
+    this.oldI = state.p.i();
     try {
       cycle = cycle.execute(this);
     } catch (Exception exc) {
@@ -57,7 +59,7 @@ public final class NesCpu {
     }
     if (irq) {
       irq = false;
-      if (!state.p.i()) {
+      if (!oldI) {
         return new NesCpuInterrupt((short) 0xfffe, (short) 0xffff, false).execute(this);
       }
     }

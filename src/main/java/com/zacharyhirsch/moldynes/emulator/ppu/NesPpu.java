@@ -1816,16 +1816,17 @@ public final class NesPpu {
   }
 
   public void writeData(byte data) {
-    assert 0x0000 <= v && v < 0x4000;
-    if (0x0000 <= v && v < 0x3000) {
+    assert 0x0000 <= v && v <= 0x3fff;
+    if (0x0000 <= v && v <= 0x2fff) {
       mapper.write(v, ram, data);
       incrementAddress();
       return;
     }
-    if (0x3000 <= v && v < 0x3f00) {
-      throw new IllegalArgumentException("cannot write to PPU address %04x".formatted(v));
+    if (0x3000 <= v && v <= 0x3eff) {
+      mapper.write((short) (v & 0b1110_1111_1111_1111), ram, data);
+      return;
     }
-    if (0x3f00 <= v && v < 0x4000) {
+    if (0x3f00 <= v && v <= 0x3fff) {
       paletteIndexes[getPaletteAddress(v)] = data;
       incrementAddress();
       return;
