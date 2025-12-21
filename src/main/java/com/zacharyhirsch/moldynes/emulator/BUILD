@@ -25,6 +25,7 @@ java_binary(
     ],
     resources = ["//src/main/resources:Composite_wiki.pal"],
     visibility = ["//roms:__pkg__"],
+    runtime_deps = ["@maven//:ch_qos_logback_logback_classic"],
     deps = [
         ":emulator",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
@@ -32,5 +33,6 @@ java_binary(
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/rom",
         "@maven//:com_google_guava_guava",
+        "@maven//:org_slf4j_slf4j_api",
     ],
 )

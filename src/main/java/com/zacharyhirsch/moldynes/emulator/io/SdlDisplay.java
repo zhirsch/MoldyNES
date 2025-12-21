@@ -130,7 +130,7 @@ public final class SdlDisplay implements AutoCloseable, Display {
     delay();
   }
 
-  private void pump() {
+  public void pump() {
     SDL_Event evt = new SDL_Event();
     while (SDL_PollEvent(evt) != 0) {
       if (!dispatch(evt)) {

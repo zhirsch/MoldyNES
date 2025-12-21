@@ -28,11 +28,12 @@ public final class NesCpu {
   }
 
   public NesCpuState tick(boolean irq) {
+    short oldPc = state.pc;
     this.oldI = state.p.i();
     try {
       cycle = cycle.execute(this);
     } catch (Exception exc) {
-      throw new NesCpuCrashedException(state, exc);
+      throw new NesCpuCrashedException(oldPc, exc);
     }
     if (nmi) {
       nmiPending = true;

@@ -1867,10 +1867,8 @@ public final class NesPpu {
   }
 
   private void drawFrame() {
-    if (!isRenderingEnabled()) {
-      return;
-    }
     display.draw(frame);
+    Arrays.fill(frame, (byte) 0);
   }
 
   private int getPaletteAddress(short address) {

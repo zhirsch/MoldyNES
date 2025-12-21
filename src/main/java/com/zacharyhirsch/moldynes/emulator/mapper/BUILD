@@ -9,5 +9,6 @@ java_library(
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/memory",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/rom",
+        "@maven//:org_slf4j_slf4j_api",
     ],
 )

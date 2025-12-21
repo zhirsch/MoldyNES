@@ -4,9 +4,13 @@ import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressReadError;
 import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRomProperties.NametableLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // https://www.nesdev.org/wiki/NROM
 final class NromNesMapper implements NesMapper {
+
+  private static final Logger log = LoggerFactory.getLogger(NromNesMapper.class);
 
   private final NesRom rom;
   private final byte[] ram;
@@ -60,7 +64,8 @@ final class NromNesMapper implements NesMapper {
       return;
     }
     if (0x8000 <= addr && addr <= 0xffff) {
-      throw new InvalidAddressWriteError(address);
+      log.warn("Write of read-only address {}", "%04x".formatted(addr));
+      return;
     }
     throw new InvalidAddressWriteError(address);
   }
