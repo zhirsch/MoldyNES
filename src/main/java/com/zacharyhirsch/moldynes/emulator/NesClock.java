@@ -11,6 +11,10 @@ public final class NesClock {
     this.cycle = 0;
   }
 
+  public boolean isOdd() {
+    return cycle % 2 == 1;
+  }
+
   public int tick() {
     int cycle = this.cycle;
     this.cycle++;

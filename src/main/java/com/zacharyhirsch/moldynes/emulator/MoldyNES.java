@@ -33,18 +33,9 @@ final class MoldyNES {
       } catch (Exception e) {
         log.error("Emulator crashed!", e);
         while (!display.quit) {
-          sleep();
           display.pump();
         }
       }
-    }
-  }
-
-  private static void sleep() {
-    try {
-      Thread.sleep(100);
-    } catch (InterruptedException ex) {
-      throw new RuntimeException(ex);
     }
   }
 }

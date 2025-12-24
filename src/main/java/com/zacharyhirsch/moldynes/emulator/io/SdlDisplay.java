@@ -7,7 +7,9 @@ import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYDOWN;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYUP;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_QUIT;
-import static io.github.libsdl4j.api.event.SdlEvents.SDL_PollEvent;
+import static io.github.libsdl4j.api.event.SdlEvents.SDL_HasEvent;
+import static io.github.libsdl4j.api.event.SdlEvents.SDL_PumpEvents;
+import static io.github.libsdl4j.api.event.SdlEvents.SDL_WaitEventTimeout;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_A;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_D;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_DOWN;
@@ -40,15 +42,22 @@ import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
 import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
+import com.zacharyhirsch.util.CircularCounter;
 import io.github.libsdl4j.api.event.SDL_Event;
+import io.github.libsdl4j.api.event.events.SDL_KeyboardEvent;
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.render.SDL_Texture;
 import io.github.libsdl4j.api.video.SDL_Window;
+import java.io.Closeable;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public final class SdlDisplay implements AutoCloseable, Display {
+public final class SdlDisplay implements Closeable, Display {
+
+  private static final Logger log = LoggerFactory.getLogger(SdlDisplay.class);
 
   private static final int W = 256;
   private static final int H = 240;
@@ -80,16 +89,20 @@ public final class SdlDisplay implements AutoCloseable, Display {
           .put(SDLK_SLASH, NesJoypad.Button.BUTTON_B)
           .build();
 
+  private final CircularCounter logFpsLaggingThrottle;
+
   private final NesJoypad joypad1;
   private final NesJoypad joypad2;
   private final SDL_Window window;
   private final SDL_Renderer renderer;
   private final SDL_Texture texture;
 
-  public boolean quit = false;
   private Duration nextFrameAt = Duration.ofNanos(System.nanoTime());
 
+  public boolean quit = false;
+
   public SdlDisplay(NesJoypad joypad1, NesJoypad joypad2) {
+    this.logFpsLaggingThrottle = new CircularCounter(100);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
 
@@ -127,47 +140,47 @@ public final class SdlDisplay implements AutoCloseable, Display {
     SDL_RenderPresent(renderer);
 
     pump();
-    delay();
   }
 
   public void pump() {
-    SDL_Event evt = new SDL_Event();
-    while (SDL_PollEvent(evt) != 0) {
-      if (!dispatch(evt)) {
-        quit = true;
-        return;
-      }
-    }
-  }
-
-  private void delay() {
-    try {
-      Thread.sleep(nextFrameAt.minus(System.nanoTime(), ChronoUnit.NANOS));
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
+    Duration delay = nextFrameAt.minus(System.nanoTime(), ChronoUnit.NANOS);
     nextFrameAt = nextFrameAt.plus(FRAME_NS);
+
+    //  If FPS is lagging, just pump events and hope we catch up.
+    if (!delay.isPositive()) {
+      if (logFpsLaggingThrottle.tick()) {
+        log.warn("FPS is lagging by {} ms", delay.abs().toMillis());
+      }
+      SDL_PumpEvents();
+      if (SDL_HasEvent(SDL_QUIT)) {
+        quit = true;
+      }
+      return;
+    }
+
+    SDL_Event event = new SDL_Event();
+    while (SDL_WaitEventTimeout(event, (int) delay.toMillis()) == 1) {
+      dispatch(event);
+    }
   }
 
-  private boolean dispatch(SDL_Event evt) {
-    return switch (evt.type) {
-      case SDL_QUIT -> false;
-      case SDL_KEYDOWN -> onKeyPress(evt, true);
-      case SDL_KEYUP -> onKeyPress(evt, false);
-      default -> true;
-    };
+  private void dispatch(SDL_Event event) {
+    switch (event.type) {
+      case SDL_QUIT -> quit = true;
+      case SDL_KEYDOWN -> onKeyPress(event.key, true);
+      case SDL_KEYUP -> onKeyPress(event.key, false);
+    }
   }
 
-  private boolean onKeyPress(SDL_Event evt, boolean down) {
-    NesJoypad.Button button1 = JOYPAD1_KEYS.get(evt.key.keysym.sym);
+  private void onKeyPress(SDL_KeyboardEvent key, boolean down) {
+    NesJoypad.Button button1 = JOYPAD1_KEYS.get(key.keysym.sym);
     if (button1 != null) {
       joypad1.setButton(button1, down);
     }
-    NesJoypad.Button button2 = JOYPAD2_KEYS.get(evt.key.keysym.sym);
+    NesJoypad.Button button2 = JOYPAD2_KEYS.get(key.keysym.sym);
     if (button2 != null) {
       joypad2.setButton(button2, down);
     }
-    return true;
   }
 
   @Override
