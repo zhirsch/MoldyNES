@@ -8,6 +8,7 @@ public final class NesApu {
 
   private static final Logger log = LoggerFactory.getLogger(NesApu.class);
 
+  private final NesApuIrq irq;
   private final NesApuPulseChannel pulse1;
 
   private int frameCounter;
@@ -16,21 +17,18 @@ public final class NesApu {
   private int mode;
   private int pendingMode;
 
-  private boolean irq;
-  private boolean irqInhibited;
   private boolean pendingIrqInhibited;
 
   public NesApu() {
+    this.irq = new NesApuIrq();
     this.pulse1 = new NesApuPulseChannel((short) 0x4000);
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;
     this.mode = 0;
-    this.irq = false;
-    this.irqInhibited = false;
   }
 
   public boolean irq() {
-    return irq;
+    return irq.get();
   }
 
   public void tick() {
@@ -45,17 +43,11 @@ public final class NesApu {
           clockLengthAndSweep();
         }
         case 22371 -> clockEnvelopesAndLinear();
-        case 29828 -> {
-          if (!irqInhibited) {
-            irq = true;
-          }
-        }
+        case 29828 -> irq.set(true);
         case 29829 -> {
           clockEnvelopesAndLinear();
           clockLengthAndSweep();
-          if (!irqInhibited) {
-            irq = true;
-          }
+          irq.set(true);
           frameCounter = 0;
           return;
         }
@@ -92,10 +84,7 @@ public final class NesApu {
       if (frameCounterResetDelay == 0) {
         frameCounter = 0;
         mode = pendingMode;
-        irqInhibited = pendingIrqInhibited;
-        if (irqInhibited) {
-          irq = false;
-        }
+        irq.setInhibited(pendingIrqInhibited);
         if (mode == 1) {
           pulse1.lengthCounter().tick();
         }
@@ -113,11 +102,11 @@ public final class NesApu {
     status.set(3, false); // noise
     status.set(4, false); // dmc active
     status.set(5, false); // open bus
-    status.set(6, irq);
+    status.set(6, irq.get());
     status.set(7, false); // dmc interrupt
     byte value = status.isEmpty() ? 0 : status.toByteArray()[0];
     log.info("APU 4015 -> {}", "%02x".formatted(value));
-    irq = false;
+    irq.set(false);
     return value;
   }
 
@@ -155,5 +144,8 @@ public final class NesApu {
     pendingMode = (data & 0b1000_0000) >>> 7;
     pendingIrqInhibited = (data & 0b0100_0000) != 0;
     frameCounterResetDelay = odd ? 3 : 2;
+    if (pendingIrqInhibited) {
+      irq.set(false);
+    }
   }
 }
