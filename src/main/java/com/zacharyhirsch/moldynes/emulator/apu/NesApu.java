@@ -11,18 +11,18 @@ public final class NesApu {
   private final NesApuPulseChannel pulse1;
 
   private int frameCounter;
-  private byte pendingFrameCounter;
   private int frameCounterResetDelay;
 
   private int mode;
+  private int pendingMode;
 
   private boolean irq;
   private boolean irqInhibited;
+  private boolean pendingIrqInhibited;
 
   public NesApu() {
     this.pulse1 = new NesApuPulseChannel((short) 0x4000);
     this.frameCounter = 0;
-    this.pendingFrameCounter = 0;
     this.frameCounterResetDelay = 0;
     this.mode = 0;
     this.irq = false;
@@ -33,84 +33,76 @@ public final class NesApu {
     return irq;
   }
 
-  public void tick(boolean odd) {
-    handleDelayedFrameCounterReset();
-    if (odd) {
-      if (mode == 0) {
-        switch (frameCounter) {
-          case 3728 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-          }
-          case 7456 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-            pulse1.lengthCounter().tick();
-          }
-          case 11185 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-          }
-          case 14914 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-            if (!irqInhibited) {
-              irq = true;
-            }
-            pulse1.lengthCounter().tick();
-          }
-          case 14915 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-            if (!irqInhibited) {
-              irq = true;
-            }
-            frameCounter = 0;
-            return;
-          }
-        }
-      } else if (mode == 1) {
-        switch (frameCounter) {
-          case 3728 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-          }
-          case 7456 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-            pulse1.lengthCounter().tick();
-          }
-          case 11185 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-          }
-          case 14914 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-          }
-          case 18640 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-            pulse1.lengthCounter().tick();
-          }
-          case 18641 -> {
-            log.info("APU frame counter mode {} count {}", mode, frameCounter);
-            frameCounter = 0;
-            return;
-          }
-        }
-      } else {
-        throw new IllegalStateException("mode = %d".formatted(mode));
-      }
-      frameCounter++;
+  public void tick() {
+    if (handleDelayedFrameCounterReset()) {
+      return;
     }
+    if (mode == 0) {
+      switch (frameCounter) {
+        case 7457 -> clockEnvelopesAndLinear();
+        case 14913 -> {
+          clockEnvelopesAndLinear();
+          clockLengthAndSweep();
+        }
+        case 22371 -> clockEnvelopesAndLinear();
+        case 29828 -> {
+          if (!irqInhibited) {
+            irq = true;
+          }
+        }
+        case 29829 -> {
+          clockEnvelopesAndLinear();
+          clockLengthAndSweep();
+          if (!irqInhibited) {
+            irq = true;
+          }
+          frameCounter = 0;
+          return;
+        }
+      }
+    } else {
+      switch (frameCounter) {
+        case 7457 -> clockEnvelopesAndLinear();
+        case 14913 -> {
+          clockEnvelopesAndLinear();
+          clockLengthAndSweep();
+        }
+        case 22371 -> clockEnvelopesAndLinear();
+        case 29829 -> {}
+        case 37281 -> {
+          clockEnvelopesAndLinear();
+          clockLengthAndSweep();
+          frameCounter = 0;
+          return;
+        }
+      }
+    }
+    frameCounter++;
   }
 
-  private void handleDelayedFrameCounterReset() {
+  private void clockEnvelopesAndLinear() {}
+
+  private void clockLengthAndSweep() {
+    pulse1.lengthCounter().tick();
+  }
+
+  private boolean handleDelayedFrameCounterReset() {
     if (frameCounterResetDelay > 0) {
       frameCounterResetDelay--;
       if (frameCounterResetDelay == 0) {
         frameCounter = 0;
-        mode = (pendingFrameCounter & 0b1000_0000) >>> 7;
-        irqInhibited = (pendingFrameCounter & 0b0100_0000) != 0;
+        mode = pendingMode;
+        irqInhibited = pendingIrqInhibited;
         if (irqInhibited) {
           irq = false;
         }
         if (mode == 1) {
           pulse1.lengthCounter().tick();
         }
+        return true;
       }
     }
+    return false;
   }
 
   public byte readStatus() {
@@ -160,7 +152,8 @@ public final class NesApu {
 
   public void writeFrameCounter(byte data, boolean odd) {
     log.info("APU 4017 <- {}", "%02x".formatted(data));
-    pendingFrameCounter = data;
-    frameCounterResetDelay = odd ? 4 : 3;
+    pendingMode = (data & 0b1000_0000) >>> 7;
+    pendingIrqInhibited = (data & 0b0100_0000) != 0;
+    frameCounterResetDelay = odd ? 3 : 2;
   }
 }

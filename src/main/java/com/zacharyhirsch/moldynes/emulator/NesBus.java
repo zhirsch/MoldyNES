@@ -50,7 +50,7 @@ public class NesBus {
     switch (clock.tick() % 24) {
       case 0 -> ppu.tick();
       case 1 -> cpuTick();
-      case 2 -> apu.tick(isCpuCycleOdd);
+      case 2 -> apu.tick();
       case 3 -> {}
       case 4 -> ppu.tick();
       case 5 -> {}
@@ -62,7 +62,7 @@ public class NesBus {
       case 11 -> {}
       case 12 -> ppu.tick();
       case 13 -> cpuTick();
-      case 14 -> apu.tick(isCpuCycleOdd);
+      case 14 -> apu.tick();
       case 15 -> {}
       case 16 -> ppu.tick();
       case 17 -> {}
