@@ -140,11 +140,11 @@ public final class NesApu {
     pulse1.enable((data & 0b0000_0001) != 0);
   }
 
-  public void writeFrameCounter(byte data, boolean odd) {
+  public void writeFrameCounter(byte data) {
     log.info("APU 4017 <- {}", "%02x".formatted(data));
     pendingMode = (data & 0b1000_0000) >>> 7;
     pendingIrqInhibited = (data & 0b0100_0000) != 0;
-    frameCounterResetDelay = odd ? 3 : 2;
+    frameCounterResetDelay = (frameCounter % 2) == 1 ? 3 : 2;
     if (pendingIrqInhibited) {
       irq.set(false);
     }

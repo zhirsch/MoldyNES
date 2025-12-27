@@ -22,8 +22,6 @@ public class NesBus {
   private final NesJoypad joypad2;
   private final byte[] cpuRam;
 
-  private boolean isCpuCycleOdd;
-
   public NesBus(
       NesMapper mapper,
       NesPpuPalette palette,
@@ -38,7 +36,6 @@ public class NesBus {
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
     this.cpuRam = new byte[0x0800];
-    this.isCpuCycleOdd = false;
   }
 
   public boolean isRunning() {
@@ -83,7 +80,6 @@ public class NesBus {
     } else {
       state.data = read(state.adh, state.adl);
     }
-    isCpuCycleOdd = !isCpuCycleOdd;
   }
 
   public void reset() {
@@ -260,7 +256,7 @@ public class NesBus {
       return;
     }
     if (addr == 0x4017) {
-      apu.writeFrameCounter(data, isCpuCycleOdd);
+      apu.writeFrameCounter(data);
       return;
     }
     if (0x4018 <= addr && addr <= 0x401f) {
