@@ -48,8 +48,10 @@ public final class NesApu {
           clockEnvelopesAndLinear();
           clockLengthAndSweep();
           irq.set(true);
+        }
+        case 29830 -> {
+          irq.set(true);
           frameCounter = 0;
-          return;
         }
       }
     } else {
@@ -64,9 +66,8 @@ public final class NesApu {
         case 37281 -> {
           clockEnvelopesAndLinear();
           clockLengthAndSweep();
-          frameCounter = 0;
-          return;
         }
+        case 37282 -> frameCounter = 0;
       }
     }
     frameCounter++;
