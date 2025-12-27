@@ -59,7 +59,6 @@ final class NesApuLengthCounter {
       return;
     }
     value--;
-    log.info("APU length counter decremented to {}", value);
   }
 
   int value() {
