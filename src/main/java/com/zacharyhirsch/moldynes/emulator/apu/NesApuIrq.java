@@ -1,6 +1,11 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 final class NesApuIrq {
+
+  private static final Logger log = LoggerFactory.getLogger(NesApuIrq.class);
 
   private boolean irq;
   private boolean inhibited;
@@ -14,7 +19,8 @@ final class NesApuIrq {
     return irq && !inhibited;
   }
 
-  void set(boolean irq) {
+  void set(boolean irq, int frameCounter) {
+    log.info("APU [{}] irq <- {} [inhibited? {}]", "%5d".formatted(frameCounter), irq, inhibited);
     this.irq = irq;
   }
 

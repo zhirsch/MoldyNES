@@ -4,6 +4,7 @@ java_library(
         ["*.java"],
         exclude = ["MoldyNES.java"],
     ),
+    resources = ["//src/main/resources:logback.xml"],
     visibility = ["//src/test/java/com/zacharyhirsch/moldynes/emulator:__pkg__"],
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/apu",

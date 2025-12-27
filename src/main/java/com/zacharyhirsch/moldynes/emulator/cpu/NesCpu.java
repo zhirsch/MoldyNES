@@ -1,6 +1,11 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class NesCpu {
+
+  private static final Logger log = LoggerFactory.getLogger(NesCpu.class);
 
   private NesCpuCycle cycle;
   private boolean halt;
@@ -61,6 +66,7 @@ public final class NesCpu {
     if (irq) {
       irq = false;
       if (!oldI) {
+        log.info("CPU entering IRQ handler");
         return new NesCpuInterrupt((short) 0xfffe, (short) 0xffff, false).execute(this);
       }
     }
