@@ -14,7 +14,7 @@ public final class NesApu {
   private long totalCycles;
 
   private int frameCounter;
-  private int frameCounterResetDelay;
+  private long frameCounterResetDelay;
 
   private int mode;
   private int pendingMode;
@@ -47,14 +47,14 @@ public final class NesApu {
           clockLengthAndSweep();
         }
         case 22371 -> clockEnvelopesAndLinear();
-        case 29828 -> irq.set(true, frameCounter);
+        case 29828 -> irq.set(true, totalCycles, frameCounter);
         case 29829 -> {
           clockEnvelopesAndLinear();
           clockLengthAndSweep();
-          irq.set(true, frameCounter);
+          irq.set(true, totalCycles, frameCounter);
         }
         case 29830 -> {
-          irq.set(true, frameCounter);
+          irq.set(true, totalCycles, frameCounter);
           frameCounter = 0;
         }
       }
@@ -84,19 +84,18 @@ public final class NesApu {
   }
 
   private boolean handleDelayedFrameCounterReset() {
-    if (frameCounterResetDelay > 0) {
-      log.info("APU [{}] frame counter delay decrement from {} to {}", "%5d".formatted(frameCounter), frameCounterResetDelay, frameCounterResetDelay - 1);
-      frameCounterResetDelay--;
-      if (frameCounterResetDelay == 0) {
-        log.info("APU [{}] frame counter reset", "%5d".formatted(frameCounter));
-        frameCounter = 0;
-        mode = pendingMode;
-        irq.setInhibited(pendingIrqInhibited);
-        if (mode == 1) {
-          pulse1.lengthCounter().tick();
-        }
-        return true;
+    if (totalCycles == frameCounterResetDelay) {
+      log.info(
+          "[{}] APU [{}] frame counter reset",
+          "%8d".formatted(totalCycles),
+          "%5d".formatted(frameCounter));
+      frameCounter = 0;
+      mode = pendingMode;
+      irq.setInhibited(pendingIrqInhibited);
+      if (mode == 1) {
+        pulse1.lengthCounter().tick();
       }
+      return true;
     }
     return false;
   }
@@ -112,13 +111,22 @@ public final class NesApu {
     status.set(6, irq.get());
     status.set(7, false); // dmc interrupt
     byte value = status.isEmpty() ? 0 : status.toByteArray()[0];
-    log.info("APU [{}] 4015 -> {}", "%5d".formatted(frameCounter), "%02x".formatted(value));
-    irq.set(false, frameCounter);
+    log.info(
+        "[{}] APU [{}] 4015 -> {}",
+        "%8d".formatted(totalCycles),
+        "%5d".formatted(frameCounter),
+        "%02x".formatted(value));
+    irq.set(false, totalCycles, frameCounter);
     return value;
   }
 
   public void writePulse1(short address, byte data) {
-    log.info("APU [{}] {} <- {}", "%5d".formatted(frameCounter), "%04x".formatted(address), "%02x".formatted(data));
+    log.info(
+        "[{}] APU [{}] {} <- {}",
+        "%8d".formatted(totalCycles),
+        "%5d".formatted(frameCounter),
+        "%04x".formatted(address),
+        "%02x".formatted(data));
     pulse1.write(address, data);
   }
 
@@ -142,17 +150,30 @@ public final class NesApu {
   }
 
   public void writeStatus(byte data) {
-    log.info("APU [{}] 4015 <- {}", "%5d".formatted(frameCounter), "%02x".formatted(data));
+    log.info(
+        "[{}] APU [{}] 4015 <- {}",
+        "%8d".formatted(totalCycles),
+        "%5d".formatted(frameCounter),
+        "%02x".formatted(data));
     pulse1.enable((data & 0b0000_0001) != 0);
   }
 
   public void writeFrameCounter(byte data) {
-    log.info("APU [{}] 4017 <- {}", "%5d".formatted(frameCounter), "%02x".formatted(data));
+    log.info(
+        "[{}] APU [{}] 4017 <- {}",
+        "%8d".formatted(totalCycles),
+        "%5d".formatted(frameCounter),
+        "%02x".formatted(data));
     pendingMode = (data & 0b1000_0000) >>> 7;
     pendingIrqInhibited = (data & 0b0100_0000) != 0;
-    frameCounterResetDelay = (totalCycles % 2) == 1 ? 3:2;
+    frameCounterResetDelay = totalCycles + ((totalCycles % 2) == 1 ? 3 : 2);
+    log.info(
+        "[{}] APU [{}] scheduling frame counter reset for cycle {}",
+        "%8d".formatted(totalCycles),
+        "%5d".formatted(frameCounter),
+        frameCounterResetDelay);
     if (pendingIrqInhibited) {
-      irq.set(false, frameCounter);
+      irq.set(false, totalCycles, frameCounter);
     }
   }
 }
