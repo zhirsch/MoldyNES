@@ -13,6 +13,7 @@ public final class NesApu {
   private final NesClock clock;
   private final NesApuIrq irq;
   private final NesApuPulseChannel pulse1;
+  private final NesApuPulseChannel pulse2;
 
   private int frameCounter;
   private long frameCounterResetDelay;
@@ -26,6 +27,7 @@ public final class NesApu {
     this.clock = clock;
     this.irq = new NesApuIrq();
     this.pulse1 = new NesApuPulseChannel(clock, (short) 0x4000);
+    this.pulse2 = new NesApuPulseChannel(clock, (short) 0x4004);
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;
     this.mode = 0;
@@ -47,6 +49,7 @@ public final class NesApu {
       frameCounter++;
     }
     pulse1.tick();
+    pulse2.tick();
   }
 
   private void tickMode0() {
@@ -93,7 +96,11 @@ public final class NesApu {
     if (pulse1.length().value() > 0) {
       pulse1.length().suppressNextReset();
     }
+    if (pulse2.length().value() > 0) {
+      pulse2.length().suppressNextReset();
+    }
     pulse1.length().tick();
+    pulse2.length().tick();
   }
 
   private boolean handleDelayedFrameCounterReset() {
@@ -103,6 +110,7 @@ public final class NesApu {
       irq.setInhibited(pendingIrqInhibited);
       if (mode == 1) {
         pulse1.length().tick();
+        pulse2.length().tick();
       }
       MDC.put("frameCounter", "%5d".formatted(frameCounter));
       log.info("APU frame counter reset, mode is now {}", mode);
@@ -114,7 +122,7 @@ public final class NesApu {
   public byte readStatus() {
     BitSet status = new BitSet(8);
     status.set(0, pulse1.length().value() > 0);
-    status.set(1, false); // pulse2
+    status.set(1, pulse2.length().value() > 0);
     status.set(2, false); // triangle
     status.set(3, false); // noise
     status.set(4, false); // dmc active
@@ -133,8 +141,8 @@ public final class NesApu {
   }
 
   public void writePulse2(short address, byte data) {
-    throw new UnsupportedOperationException(
-        "APU write pulse2 %04x <- %02x".formatted(address, data));
+    log.info("APU {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    pulse2.write(address, data);
   }
 
   public void writeTriangle(short address, byte data) {
@@ -154,6 +162,7 @@ public final class NesApu {
   public void writeStatus(byte data) {
     log.info("APU 4015 <- {}", "%02x".formatted(data));
     pulse1.enable((data & 0b0000_0001) != 0);
+    pulse2.enable((data & 0b0000_0010) != 0);
   }
 
   public void writeFrameCounter(byte data) {
