@@ -23,14 +23,15 @@ public class NesBus {
   private final byte[] cpuRam;
 
   public NesBus(
+      NesClock clock,
       NesMapper mapper,
       NesPpuPalette palette,
       Display display,
       NesJoypad joypad1,
       NesJoypad joypad2) {
-    this.clock = new NesClock();
+    this.clock = clock;
     this.mapper = mapper;
-    this.apu = new NesApu();
+    this.apu = new NesApu(clock);
     this.cpu = new NesCpu();
     this.ppu = new NesPpu(mapper, display, palette, cpu::nmi);
     this.joypad1 = joypad1;
@@ -42,43 +43,21 @@ public class NesBus {
     return cpu.isRunning();
   }
 
-  @SuppressWarnings("DuplicateBranchesInSwitch")
   public void tick() {
-    switch (clock.tick() % 24) {
-      case 0 -> ppu.tick();
-      case 1 -> cpuTick();
-      case 2 -> apu.tick();
-      case 3 -> {}
-      case 4 -> ppu.tick();
-      case 5 -> {}
-      case 6 -> {}
-      case 7 -> {}
-      case 8 -> ppu.tick();
-      case 9 -> {}
-      case 10 -> {}
-      case 11 -> {}
-      case 12 -> ppu.tick();
-      case 13 -> cpuTick();
-      case 14 -> apu.tick();
-      case 15 -> {}
-      case 16 -> ppu.tick();
-      case 17 -> {}
-      case 18 -> {}
-      case 19 -> {}
-      case 20 -> ppu.tick();
-      case 21 -> {}
-      case 22 -> {}
-      case 23 -> {}
-      default -> throw new IllegalStateException();
-    }
-  }
+    clock.tick();
+    ppu.tick();
+    ppu.tick();
+    ppu.tick();
+    apu.tick();
+    cpu.tick();
 
-  private void cpuTick() {
-    NesCpuState state = cpu.tick(apu.irq());
-    if (state.write) {
-      write(state.adh, state.adl, state.data);
+    if (cpu.state.write) {
+      write(cpu.state.adh, cpu.state.adl, cpu.state.data);
     } else {
-      state.data = read(state.adh, state.adl);
+      cpu.state.data = read(cpu.state.adh, cpu.state.adl);
+    }
+    if (apu.irq()) {
+      cpu.irq();
     }
   }
 

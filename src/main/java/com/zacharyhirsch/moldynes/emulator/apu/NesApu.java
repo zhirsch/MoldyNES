@@ -1,17 +1,18 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
+import com.zacharyhirsch.moldynes.emulator.NesClock;
 import java.util.BitSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 public final class NesApu {
 
   private static final Logger log = LoggerFactory.getLogger(NesApu.class);
 
+  private final NesClock clock;
   private final NesApuIrq irq;
   private final NesApuPulseChannel pulse1;
-
-  private long totalCycles;
 
   private int frameCounter;
   private long frameCounterResetDelay;
@@ -21,13 +22,14 @@ public final class NesApu {
 
   private boolean pendingIrqInhibited;
 
-  public NesApu() {
+  public NesApu(NesClock clock) {
+    this.clock = clock;
     this.irq = new NesApuIrq();
     this.pulse1 = new NesApuPulseChannel((short) 0x4000);
-    this.totalCycles = 0;
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;
     this.mode = 0;
+    MDC.put("frameCounter", "%5d".formatted(0));
   }
 
   public boolean irq() {
@@ -35,7 +37,7 @@ public final class NesApu {
   }
 
   public void tick() {
-    totalCycles++;
+    MDC.put("frameCounter", "%5d".formatted(frameCounter));
     if (handleDelayedFrameCounterReset()) {
       return;
     }
@@ -47,14 +49,14 @@ public final class NesApu {
           clockLengthAndSweep();
         }
         case 22371 -> clockEnvelopesAndLinear();
-        case 29828 -> irq.set(true, totalCycles, frameCounter);
+        case 29828 -> irq.set(true);
         case 29829 -> {
           clockEnvelopesAndLinear();
           clockLengthAndSweep();
-          irq.set(true, totalCycles, frameCounter);
+          irq.set(true);
         }
         case 29830 -> {
-          irq.set(true, totalCycles, frameCounter);
+          irq.set(true);
           frameCounter = 0;
         }
       }
@@ -84,17 +86,15 @@ public final class NesApu {
   }
 
   private boolean handleDelayedFrameCounterReset() {
-    if (totalCycles == frameCounterResetDelay) {
-      log.info(
-          "[{}] APU [{}] frame counter reset",
-          "%8d".formatted(totalCycles),
-          "%5d".formatted(frameCounter));
+    if (clock.getCycle() == frameCounterResetDelay) {
       frameCounter = 0;
       mode = pendingMode;
       irq.setInhibited(pendingIrqInhibited);
       if (mode == 1) {
         pulse1.lengthCounter().tick();
       }
+      MDC.put("frameCounter", "%5d".formatted(frameCounter));
+      log.info("APU frame counter reset, mode is now {}", mode);
       return true;
     }
     return false;
@@ -111,22 +111,13 @@ public final class NesApu {
     status.set(6, irq.get());
     status.set(7, false); // dmc interrupt
     byte value = status.isEmpty() ? 0 : status.toByteArray()[0];
-    log.info(
-        "[{}] APU [{}] 4015 -> {}",
-        "%8d".formatted(totalCycles),
-        "%5d".formatted(frameCounter),
-        "%02x".formatted(value));
-    irq.set(false, totalCycles, frameCounter);
+    log.info("APU 4015 -> {}", "%02x".formatted(value));
+    irq.set(false);
     return value;
   }
 
   public void writePulse1(short address, byte data) {
-    log.info(
-        "[{}] APU [{}] {} <- {}",
-        "%8d".formatted(totalCycles),
-        "%5d".formatted(frameCounter),
-        "%04x".formatted(address),
-        "%02x".formatted(data));
+    log.info("APU {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
     pulse1.write(address, data);
   }
 
@@ -150,30 +141,18 @@ public final class NesApu {
   }
 
   public void writeStatus(byte data) {
-    log.info(
-        "[{}] APU [{}] 4015 <- {}",
-        "%8d".formatted(totalCycles),
-        "%5d".formatted(frameCounter),
-        "%02x".formatted(data));
+    log.info("APU 4015 <- {}", "%02x".formatted(data));
     pulse1.enable((data & 0b0000_0001) != 0);
   }
 
   public void writeFrameCounter(byte data) {
-    log.info(
-        "[{}] APU [{}] 4017 <- {}",
-        "%8d".formatted(totalCycles),
-        "%5d".formatted(frameCounter),
-        "%02x".formatted(data));
+    log.info("APU 4017 <- {}", "%02x".formatted(data));
     pendingMode = (data & 0b1000_0000) >>> 7;
     pendingIrqInhibited = (data & 0b0100_0000) != 0;
-    frameCounterResetDelay = totalCycles + ((totalCycles % 2) == 1 ? 3 : 2);
-    log.info(
-        "[{}] APU [{}] scheduling frame counter reset for cycle {}",
-        "%8d".formatted(totalCycles),
-        "%5d".formatted(frameCounter),
-        frameCounterResetDelay);
+    frameCounterResetDelay = clock.getCycle() + ((clock.getCycle() % 2) == 1 ? 2 : 3);
+    log.info("APU scheduling frame counter reset for cycle {}", frameCounterResetDelay);
     if (pendingIrqInhibited) {
-      irq.set(false, totalCycles, frameCounter);
+      irq.set(false);
     }
   }
 }

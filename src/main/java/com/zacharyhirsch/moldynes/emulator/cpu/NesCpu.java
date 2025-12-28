@@ -10,9 +10,10 @@ public final class NesCpu {
   private NesCpuCycle cycle;
   private boolean halt;
   private boolean reset;
-  private boolean irq;
   private boolean nmi;
   private boolean nmiPending;
+  private boolean irq;
+  private boolean irqPending;
 
   public final NesCpuState state;
   private boolean oldI;
@@ -21,9 +22,10 @@ public final class NesCpu {
     this.cycle = new NesCpuInit();
     this.halt = false;
     this.reset = false;
-    this.irq = false;
     this.nmi = false;
     this.nmiPending = false;
+    this.irq = false;
+    this.irqPending = false;
 
     this.state = new NesCpuState();
   }
@@ -32,7 +34,11 @@ public final class NesCpu {
     this.nmi = true;
   }
 
-  public NesCpuState tick(boolean irq) {
+  public void irq() {
+    this.irq = true;
+  }
+
+  public void tick() {
     short oldPc = state.pc;
     this.oldI = state.p.i();
     try {
@@ -44,9 +50,11 @@ public final class NesCpu {
       nmiPending = true;
       nmi = false;
     }
-    this.irq = irq;
+    if (irq) {
+      irqPending = true;
+      irq = false;
+    }
     state.cycleType = state.cycleType.next();
-    return state;
   }
 
   public void reset() {
@@ -63,8 +71,8 @@ public final class NesCpu {
       nmiPending = false;
       return new NesCpuInterrupt((short) 0xfffa, (short) 0xfffb, false).execute(this);
     }
-    if (irq) {
-      irq = false;
+    if (irqPending) {
+      irqPending = false;
       if (!oldI) {
         log.info("CPU entering IRQ handler");
         return new NesCpuInterrupt((short) 0xfffe, (short) 0xffff, false).execute(this);

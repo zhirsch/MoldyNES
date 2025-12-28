@@ -18,6 +18,7 @@ final class MoldyNES {
   }
 
   private static void run(String path) {
+    NesClock clock = new NesClock();
     NesRom rom = NesRomLoader.load(path);
     NesMapper mapper = NesMapper.load(rom);
     NesPpuPalette palette = NesPpuPalette.load("Composite_wiki.pal");
@@ -25,7 +26,7 @@ final class MoldyNES {
     NesJoypad joypad2 = new NesJoypad();
 
     try (SdlDisplay display = new SdlDisplay(joypad1, joypad2)) {
-      NesBus bus = new NesBus(mapper, palette, display, joypad1, joypad2);
+      NesBus bus = new NesBus(clock, mapper, palette, display, joypad1, joypad2);
       try {
         while (!display.quit) {
           bus.tick();

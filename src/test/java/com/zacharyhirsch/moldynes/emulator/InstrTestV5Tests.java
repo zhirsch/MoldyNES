@@ -23,6 +23,7 @@ public class InstrTestV5Tests {
     NesRom rom = NesRomLoader.load("roms/nes-test-roms/instr_test-v5/%s".formatted(path));
     NesBus bus =
         new NesBus(
+            new NesClock(),
             NesMapper.load(rom),
             NesPpuPalette.load("Composite_wiki.pal"),
             new FakeDisplay(),

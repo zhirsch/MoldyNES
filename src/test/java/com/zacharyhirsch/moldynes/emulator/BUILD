@@ -28,6 +28,7 @@ java_junit5_test(
     runtime_deps = junit5_deps(),
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/clock",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",

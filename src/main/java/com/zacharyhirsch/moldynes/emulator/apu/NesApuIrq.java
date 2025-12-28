@@ -19,13 +19,8 @@ final class NesApuIrq {
     return irq && !inhibited;
   }
 
-  void set(boolean irq, long totalCycles, int frameCounter) {
-    log.info(
-        "[{}] APU [{}] irq <- {} [inhibited? {}]",
-        "%8d".formatted(totalCycles),
-        "%5d".formatted(frameCounter),
-        irq,
-        inhibited);
+  void set(boolean irq) {
+    log.info("APU irq <- {} [inhibited? {}]", irq, inhibited);
     this.irq = irq;
   }
 

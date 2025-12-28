@@ -8,12 +8,14 @@ java_library(
     visibility = ["//src/test/java/com/zacharyhirsch/moldynes/emulator:__pkg__"],
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/apu",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/clock",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/cpu",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/memory",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
         "@maven//:com_google_guava_guava",
+        "@maven//:org_slf4j_slf4j_api",
     ],
 )
 
@@ -29,6 +31,7 @@ java_binary(
     runtime_deps = ["@maven//:ch_qos_logback_logback_classic"],
     deps = [
         ":emulator",
+        "//src/main/java/com/zacharyhirsch/moldynes/emulator/clock",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
