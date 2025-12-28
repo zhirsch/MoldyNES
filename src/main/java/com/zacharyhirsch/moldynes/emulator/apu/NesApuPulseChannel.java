@@ -1,9 +1,12 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
+import com.zacharyhirsch.moldynes.emulator.NesClock;
+
 final class NesApuPulseChannel {
-  
+
+  private final NesClock clock;
   private final short baseAddress;
-  private final NesApuLengthCounter lengthCounter;
+  private final NesApuLengthCounter length;
 
   private boolean enabled;
   private byte d;
@@ -16,23 +19,40 @@ final class NesApuPulseChannel {
   private int timer;
   private int timerCounter;
 
-  NesApuPulseChannel(short baseAddress) {
+  private long lengthCounterHaltDelay;
+  private boolean pendingLengthCounterHalt;
+
+  private long lengthCounterValueDelay;
+  private byte pendingLengthCounterValue;
+
+  NesApuPulseChannel(NesClock clock, short baseAddress) {
+    this.clock = clock;
     this.baseAddress = baseAddress;
-    this.lengthCounter = new NesApuLengthCounter();
+    this.length = new NesApuLengthCounter();
+    this.lengthCounterHaltDelay = 0;
+    this.pendingLengthCounterHalt = false;
+    this.lengthCounterValueDelay = 0;
+    this.pendingLengthCounterValue = 0;
   }
 
   void enable(boolean enabled) {
     this.enabled = enabled;
     if (!enabled) {
-      this.lengthCounter.clear();
+      this.length.clear();
     }
   }
 
-  NesApuLengthCounter lengthCounter() {
-    return lengthCounter;
+  NesApuLengthCounter length() {
+    return length;
   }
 
   void tick() {
+    if (clock.getCycle() == lengthCounterHaltDelay) {
+      length.setHalted(pendingLengthCounterHalt);
+    }
+    if (clock.getCycle() == lengthCounterValueDelay) {
+      length.reset(pendingLengthCounterValue);
+    }
     assert 0 <= timerCounter && timerCounter <= timer;
     if (timerCounter == 0) {
       timerCounter = timer;
@@ -45,9 +65,10 @@ final class NesApuPulseChannel {
     switch (address - baseAddress) {
       case 0 -> {
         this.d = (byte) ((data & 0b1100_0000) >>> 6);
-        lengthCounter.setHalted((data & 0b0010_0000) != 0);
         this.c = (byte) ((data & 0b0001_0000) >>> 4);
         this.v = (byte) ((data & 0b0000_1111) >>> 0);
+        lengthCounterHaltDelay = clock.getCycle() + 1;
+        pendingLengthCounterHalt = (data & 0b0010_0000) != 0;
       }
       case 1 -> {
         this.e = (byte) ((data & 0b1000_0000) >>> 7);
@@ -62,7 +83,8 @@ final class NesApuPulseChannel {
       }
       case 3 -> {
         if (enabled) {
-          lengthCounter.setValue((byte) ((data & 0b1111_1000) >>> 3));
+          lengthCounterValueDelay = clock.getCycle() + 1;
+          pendingLengthCounterValue = (byte) ((data & 0b1111_1000) >>> 3);
         }
         this.timer = (timer & 0b0000_1111_1111) | ((Byte.toUnsignedInt(data) & 0b0000_0111) << 8);
         this.timerCounter = timer;

@@ -25,7 +25,7 @@ public final class NesApu {
   public NesApu(NesClock clock) {
     this.clock = clock;
     this.irq = new NesApuIrq();
-    this.pulse1 = new NesApuPulseChannel((short) 0x4000);
+    this.pulse1 = new NesApuPulseChannel(clock, (short) 0x4000);
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;
     this.mode = 0;
@@ -38,51 +38,62 @@ public final class NesApu {
 
   public void tick() {
     MDC.put("frameCounter", "%5d".formatted(frameCounter));
-    if (handleDelayedFrameCounterReset()) {
-      return;
-    }
-    if (mode == 0) {
-      switch (frameCounter) {
-        case 7457 -> clockEnvelopesAndLinear();
-        case 14913 -> {
-          clockEnvelopesAndLinear();
-          clockLengthAndSweep();
-        }
-        case 22371 -> clockEnvelopesAndLinear();
-        case 29828 -> irq.set(true);
-        case 29829 -> {
-          clockEnvelopesAndLinear();
-          clockLengthAndSweep();
-          irq.set(true);
-        }
-        case 29830 -> {
-          irq.set(true);
-          frameCounter = 0;
-        }
+    if (!handleDelayedFrameCounterReset()) {
+      if (mode == 0) {
+        tickMode0();
+      } else {
+        tickMode1();
       }
-    } else {
-      switch (frameCounter) {
-        case 7457 -> clockEnvelopesAndLinear();
-        case 14913 -> {
-          clockEnvelopesAndLinear();
-          clockLengthAndSweep();
-        }
-        case 22371 -> clockEnvelopesAndLinear();
-        case 29829 -> {}
-        case 37281 -> {
-          clockEnvelopesAndLinear();
-          clockLengthAndSweep();
-        }
-        case 37282 -> frameCounter = 0;
+      frameCounter++;
+    }
+    pulse1.tick();
+  }
+
+  private void tickMode0() {
+    switch (frameCounter) {
+      case 7457 -> clockEnvelopesAndLinear();
+      case 14913 -> {
+        clockEnvelopesAndLinear();
+        clockLengthAndSweep();
+      }
+      case 22371 -> clockEnvelopesAndLinear();
+      case 29828 -> irq.set(true);
+      case 29829 -> {
+        clockEnvelopesAndLinear();
+        clockLengthAndSweep();
+        irq.set(true);
+      }
+      case 29830 -> {
+        irq.set(true);
+        frameCounter = 0;
       }
     }
-    frameCounter++;
+  }
+
+  private void tickMode1() {
+    switch (frameCounter) {
+      case 7457 -> clockEnvelopesAndLinear();
+      case 14913 -> {
+        clockEnvelopesAndLinear();
+        clockLengthAndSweep();
+      }
+      case 22371 -> clockEnvelopesAndLinear();
+      case 29829 -> {}
+      case 37281 -> {
+        clockEnvelopesAndLinear();
+        clockLengthAndSweep();
+      }
+      case 37282 -> frameCounter = 0;
+    }
   }
 
   private void clockEnvelopesAndLinear() {}
 
   private void clockLengthAndSweep() {
-    pulse1.lengthCounter().tick();
+    if (pulse1.length().value() > 0) {
+      pulse1.length().suppressNextReset();
+    }
+    pulse1.length().tick();
   }
 
   private boolean handleDelayedFrameCounterReset() {
@@ -91,7 +102,7 @@ public final class NesApu {
       mode = pendingMode;
       irq.setInhibited(pendingIrqInhibited);
       if (mode == 1) {
-        pulse1.lengthCounter().tick();
+        pulse1.length().tick();
       }
       MDC.put("frameCounter", "%5d".formatted(frameCounter));
       log.info("APU frame counter reset, mode is now {}", mode);
@@ -102,7 +113,7 @@ public final class NesApu {
 
   public byte readStatus() {
     BitSet status = new BitSet(8);
-    status.set(0, pulse1.lengthCounter().value() > 0);
+    status.set(0, pulse1.length().value() > 0);
     status.set(1, false); // pulse2
     status.set(2, false); // triangle
     status.set(3, false); // noise

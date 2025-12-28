@@ -45,10 +45,12 @@ final class NesApuLengthCounter {
 
   private int value;
   private boolean halted;
+  private boolean suppressNextReset;
 
   NesApuLengthCounter() {
     this.value = 0;
     this.halted = false;
+    this.suppressNextReset = false;
   }
 
   void tick() {
@@ -70,10 +72,17 @@ final class NesApuLengthCounter {
     value = 0;
   }
 
-  void setValue(int value) {
-    assert 0x00 <= value && value <= 0x1f;
-    this.value = LENGTH_TABLE.get(value);
-    log.info("APU length counter set to {}", this.value);
+  void suppressNextReset() {
+    suppressNextReset = true;
+  }
+
+  void reset(int value) {
+    if (!suppressNextReset) {
+      assert 0x00 <= value && value <= 0x1f;
+      this.value = LENGTH_TABLE.get(value);
+      log.info("APU length counter set to {}", this.value);
+    }
+    suppressNextReset = false;
   }
 
   void setHalted(boolean halted) {
