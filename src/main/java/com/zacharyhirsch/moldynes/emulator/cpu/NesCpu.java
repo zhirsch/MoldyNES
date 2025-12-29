@@ -10,6 +10,7 @@ public final class NesCpu {
   private NesCpuCycle cycle;
   private boolean halt;
   private boolean reset;
+  private boolean resetPending;
   private boolean nmi;
   private boolean nmiPending;
   private boolean irq;
@@ -22,12 +23,17 @@ public final class NesCpu {
     this.cycle = new NesCpuInit();
     this.halt = false;
     this.reset = false;
+    this.resetPending = false;
     this.nmi = false;
     this.nmiPending = false;
     this.irq = false;
     this.irqPending = false;
 
     this.state = new NesCpuState();
+  }
+
+  public void reset() {
+    this.reset = true;
   }
 
   public void nmi() {
@@ -46,6 +52,10 @@ public final class NesCpu {
     } catch (Exception exc) {
       throw new NesCpuCrashedException(oldPc, exc);
     }
+    if (reset) {
+      resetPending = true;
+      reset = false;
+    }
     if (nmi) {
       nmiPending = true;
       nmi = false;
@@ -57,13 +67,9 @@ public final class NesCpu {
     state.cycleType = state.cycleType.next();
   }
 
-  public void reset() {
-    reset = true;
-  }
-
   public NesCpuCycle next() {
-    if (reset) {
-      reset = false;
+    if (resetPending) {
+      resetPending = false;
       state.p.i(true);
       return new NesCpuInit().execute(this);
     }
