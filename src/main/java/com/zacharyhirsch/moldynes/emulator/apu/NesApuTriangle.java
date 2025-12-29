@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 
 final class NesApuTriangle {
 
@@ -14,7 +15,7 @@ final class NesApuTriangle {
 
   NesApuTriangle(NesClock clock) {
     this.clock = clock;
-    this.length = new NesApuLengthCounter();
+    this.length = new NesApuLengthCounter("triangle");
     this.enabled = true;
     this.lengthCounterValueDelay = 0;
     this.pendingLengthCounterValue = 0;
@@ -26,7 +27,6 @@ final class NesApuTriangle {
       this.length.clear();
     }
   }
-
 
   NesApuLengthCounter length() {
     return length;
@@ -49,9 +49,7 @@ final class NesApuTriangle {
           pendingLengthCounterValue = (byte) ((data & 0b1111_1000) >>> 3);
         }
       }
-      default ->
-          throw new UnsupportedOperationException(
-              "APU %04x [triangle] <- %02x".formatted(address, data));
+      default -> throw new InvalidAddressWriteError(address);
     }
   }
 }

@@ -43,11 +43,14 @@ final class NesApuLengthCounter {
           Map.entry(0x1e, 32),
           Map.entry(0x1f, 30));
 
+  private final String name;
+
   private int value;
   private boolean halted;
   private boolean suppressNextReset;
 
-  NesApuLengthCounter() {
+  NesApuLengthCounter(String name) {
+    this.name = name;
     this.value = 0;
     this.halted = false;
     this.suppressNextReset = false;
@@ -68,7 +71,7 @@ final class NesApuLengthCounter {
   }
 
   void clear() {
-    log.info("APU length counter cleared");
+    log.info("APU [{}] length counter cleared", name);
     value = 0;
   }
 
@@ -80,7 +83,7 @@ final class NesApuLengthCounter {
     if (!suppressNextReset) {
       assert 0x00 <= value && value <= 0x1f;
       this.value = LENGTH_TABLE.get(value);
-      log.info("APU length counter set to {}", this.value);
+      log.info("APU [{}] length counter set to {}", name, this.value);
     }
     suppressNextReset = false;
   }

@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 
 final class NesApuNoise {
 
@@ -14,7 +15,7 @@ final class NesApuNoise {
 
   NesApuNoise(NesClock clock) {
     this.clock = clock;
-    this.length = new NesApuLengthCounter();
+    this.length = new NesApuLengthCounter("noise");
     this.enabled = true;
     this.lengthCounterValueDelay = 0;
     this.pendingLengthCounterValue = 0;
@@ -48,9 +49,7 @@ final class NesApuNoise {
           pendingLengthCounterValue = (byte) ((data & 0b1111_1000) >>> 3);
         }
       }
-      default ->
-          throw new UnsupportedOperationException(
-              "APU %04x [noise] <- %02x".formatted(address, data));
+      default -> throw new InvalidAddressWriteError(address);
     }
   }
 }

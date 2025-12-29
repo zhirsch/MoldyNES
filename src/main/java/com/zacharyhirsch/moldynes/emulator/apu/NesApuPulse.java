@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 
 final class NesApuPulse {
 
@@ -28,7 +29,7 @@ final class NesApuPulse {
   NesApuPulse(NesClock clock, int index) {
     this.clock = clock;
     this.index = index;
-    this.length = new NesApuLengthCounter();
+    this.length = new NesApuLengthCounter(getName());
     this.enabled = true;
     this.lengthCounterHaltDelay = 0;
     this.pendingLengthCounterHalt = false;
@@ -88,9 +89,11 @@ final class NesApuPulse {
         this.timer = (timer & 0b0000_1111_1111) | ((Byte.toUnsignedInt(data) & 0b0000_0111) << 8);
         this.timerCounter = timer;
       }
-      default ->
-          throw new UnsupportedOperationException(
-              "APU %04x [pulse%d] <- %02x".formatted(address, index, data));
+      default -> throw new InvalidAddressWriteError(address);
     }
+  }
+
+  private String getName() {
+    return "pulse%d".formatted(index);
   }
 }

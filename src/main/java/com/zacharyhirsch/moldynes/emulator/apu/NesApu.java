@@ -128,6 +128,8 @@ public final class NesApu {
       if (mode == 1) {
         pulse1.length().tick();
         pulse2.length().tick();
+        triangle.length().tick();
+        noise.length().tick();
       }
       MDC.put("frameCounter", "%5d".formatted(frameCounter));
       log.info("APU frame counter reset, mode is now {}", mode);
@@ -153,27 +155,27 @@ public final class NesApu {
   }
 
   public void writePulse1(short address, byte data) {
-    log.info("APU {} [pulse1] <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    log.info("APU [pulse1] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
     pulse1.write(address, data);
   }
 
   public void writePulse2(short address, byte data) {
-    log.info("APU {} [pulse2] <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    log.info("APU [pulse2] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
     pulse2.write(address, data);
   }
 
   public void writeTriangle(short address, byte data) {
-    log.info("APU {} [triangle] <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    log.info("APU [triangle] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
     triangle.write(address, data);
   }
 
   public void writeNoise(short address, byte data) {
-    log.info("APU {} [noise] <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    log.info("APU [noise] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
     noise.write(address, data);
   }
 
   public void writeDmc(short address, byte data) {
-    log.info("APU {} [dmc] <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    log.info("APU [dmc] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
     dmc.write(address, data);
   }
 

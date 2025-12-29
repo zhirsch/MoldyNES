@@ -1,5 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 
 final class NesApuDmc {
 
@@ -13,8 +14,7 @@ final class NesApuDmc {
       case 0x4011 -> {}
       case 0x4012 -> {}
       case 0x4013 -> {}
-      default ->
-          throw new UnsupportedOperationException("APU %04x [dmc] <- %02x".formatted(address, data));
+      default -> throw new InvalidAddressWriteError(address);
     }
   }
 }
