@@ -5,7 +5,7 @@ import com.zacharyhirsch.moldynes.emulator.NesClock;
 final class NesApuPulse {
 
   private final NesClock clock;
-  private final short baseAddress;
+  private final int index;
   private final NesApuLengthCounter length;
 
   private boolean enabled;
@@ -25,10 +25,11 @@ final class NesApuPulse {
   private long lengthCounterValueDelay;
   private byte pendingLengthCounterValue;
 
-  NesApuPulse(NesClock clock, short baseAddress) {
+  NesApuPulse(NesClock clock, int index) {
     this.clock = clock;
-    this.baseAddress = baseAddress;
+    this.index = index;
     this.length = new NesApuLengthCounter();
+    this.enabled = true;
     this.lengthCounterHaltDelay = 0;
     this.pendingLengthCounterHalt = false;
     this.lengthCounterValueDelay = 0;
@@ -62,26 +63,24 @@ final class NesApuPulse {
   }
 
   void write(int address, byte data) {
-    switch (address - baseAddress) {
-      case 0 -> {
+    switch (address) {
+      case 0x4000, 0x4004 -> {
         this.d = (byte) ((data & 0b1100_0000) >>> 6);
         this.c = (byte) ((data & 0b0001_0000) >>> 4);
         this.v = (byte) ((data & 0b0000_1111) >>> 0);
         lengthCounterHaltDelay = clock.getCycle() + 1;
         pendingLengthCounterHalt = (data & 0b0010_0000) != 0;
       }
-      case 1 -> {
+      case 0x4001, 0x4005 -> {
         this.e = (byte) ((data & 0b1000_0000) >>> 7);
         this.p = (byte) ((data & 0b0111_0000) >>> 4);
         this.n = (byte) ((data & 0b0000_1000) >>> 3);
         this.s = (byte) ((data & 0b0000_0111) >>> 0);
       }
-      case 2 -> {
-        if (address == baseAddress + 2) {
-          this.timer = (timer & 0b0111_0000_0000) | ((Byte.toUnsignedInt(data) & 0b1111_1111) << 0);
-        }
+      case 0x4002, 0x4006 -> {
+        this.timer = (timer & 0b0111_0000_0000) | ((Byte.toUnsignedInt(data) & 0b1111_1111) << 0);
       }
-      case 3 -> {
+      case 0x4003, 0x4007 -> {
         if (enabled) {
           lengthCounterValueDelay = clock.getCycle() + 1;
           pendingLengthCounterValue = (byte) ((data & 0b1111_1000) >>> 3);
@@ -91,7 +90,7 @@ final class NesApuPulse {
       }
       default ->
           throw new UnsupportedOperationException(
-              "APU pulse@%04x: %04x <- %02x".formatted(baseAddress, address, data));
+              "APU %04x [pulse%d] <- %02x".formatted(address, index, data));
     }
   }
 }

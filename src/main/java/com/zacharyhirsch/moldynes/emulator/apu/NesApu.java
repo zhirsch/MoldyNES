@@ -14,6 +14,9 @@ public final class NesApu {
   private final NesApuIrq irq;
   private final NesApuPulse pulse1;
   private final NesApuPulse pulse2;
+  private final NesApuTriangle triangle;
+  private final NesApuNoise noise;
+  private final NesApuDmc dmc;
 
   private int frameCounter;
   private long frameCounterResetDelay;
@@ -26,8 +29,11 @@ public final class NesApu {
   public NesApu(NesClock clock) {
     this.clock = clock;
     this.irq = new NesApuIrq();
-    this.pulse1 = new NesApuPulse(clock, (short) 0x4000);
-    this.pulse2 = new NesApuPulse(clock, (short) 0x4004);
+    this.pulse1 = new NesApuPulse(clock, 1);
+    this.pulse2 = new NesApuPulse(clock, 2);
+    this.triangle = new NesApuTriangle(clock);
+    this.noise = new NesApuNoise(clock);
+    this.dmc = new NesApuDmc();
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;
     this.mode = 0;
@@ -50,6 +56,9 @@ public final class NesApu {
     }
     pulse1.tick();
     pulse2.tick();
+    triangle.tick();
+    noise.tick();
+    dmc.tick();
   }
 
   private void tickMode0() {
@@ -99,8 +108,16 @@ public final class NesApu {
     if (pulse2.length().value() > 0) {
       pulse2.length().suppressNextReset();
     }
+    if (triangle.length().value() > 0) {
+      triangle.length().suppressNextReset();
+    }
+    if (noise.length().value() > 0) {
+      noise.length().suppressNextReset();
+    }
     pulse1.length().tick();
     pulse2.length().tick();
+    triangle.length().tick();
+    noise.length().tick();
   }
 
   private boolean handleDelayedFrameCounterReset() {
@@ -123,8 +140,8 @@ public final class NesApu {
     BitSet status = new BitSet(8);
     status.set(0, pulse1.length().value() > 0);
     status.set(1, pulse2.length().value() > 0);
-    status.set(2, false); // triangle
-    status.set(3, false); // noise
+    status.set(2, triangle.length().value() > 0);
+    status.set(3, noise.length().value() > 0);
     status.set(4, false); // dmc active
     status.set(5, false); // open bus
     status.set(6, irq.get());
@@ -136,33 +153,36 @@ public final class NesApu {
   }
 
   public void writePulse1(short address, byte data) {
-    log.info("APU {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    log.info("APU {} [pulse1] <- {}", "%04x".formatted(address), "%02x".formatted(data));
     pulse1.write(address, data);
   }
 
   public void writePulse2(short address, byte data) {
-    log.info("APU {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    log.info("APU {} [pulse2] <- {}", "%04x".formatted(address), "%02x".formatted(data));
     pulse2.write(address, data);
   }
 
   public void writeTriangle(short address, byte data) {
-    throw new UnsupportedOperationException(
-        "APU write triangle %04x <- %02x".formatted(address, data));
+    log.info("APU {} [triangle] <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    triangle.write(address, data);
   }
 
   public void writeNoise(short address, byte data) {
-    throw new UnsupportedOperationException(
-        "APU write noise %04x <- %02x".formatted(address, data));
+    log.info("APU {} [noise] <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    noise.write(address, data);
   }
 
   public void writeDmc(short address, byte data) {
-    throw new UnsupportedOperationException("APU write DMC %04x <- %02x".formatted(address, data));
+    log.info("APU {} [dmc] <- {}", "%04x".formatted(address), "%02x".formatted(data));
+    dmc.write(address, data);
   }
 
   public void writeStatus(byte data) {
     log.info("APU 4015 <- {}", "%02x".formatted(data));
     pulse1.enable((data & 0b0000_0001) != 0);
     pulse2.enable((data & 0b0000_0010) != 0);
+    triangle.enable((data & 0b0000_0100) != 0);
+    noise.enable((data & 0b0000_1000) != 0);
   }
 
   public void writeFrameCounter(byte data) {
