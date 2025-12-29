@@ -12,8 +12,8 @@ public final class NesApu {
 
   private final NesClock clock;
   private final NesApuIrq irq;
-  private final NesApuPulseChannel pulse1;
-  private final NesApuPulseChannel pulse2;
+  private final NesApuPulse pulse1;
+  private final NesApuPulse pulse2;
 
   private int frameCounter;
   private long frameCounterResetDelay;
@@ -26,8 +26,8 @@ public final class NesApu {
   public NesApu(NesClock clock) {
     this.clock = clock;
     this.irq = new NesApuIrq();
-    this.pulse1 = new NesApuPulseChannel(clock, (short) 0x4000);
-    this.pulse2 = new NesApuPulseChannel(clock, (short) 0x4004);
+    this.pulse1 = new NesApuPulse(clock, (short) 0x4000);
+    this.pulse2 = new NesApuPulse(clock, (short) 0x4004);
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;
     this.mode = 0;

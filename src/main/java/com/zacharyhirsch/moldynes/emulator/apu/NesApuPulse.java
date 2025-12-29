@@ -2,7 +2,7 @@ package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
 
-final class NesApuPulseChannel {
+final class NesApuPulse {
 
   private final NesClock clock;
   private final short baseAddress;
@@ -25,7 +25,7 @@ final class NesApuPulseChannel {
   private long lengthCounterValueDelay;
   private byte pendingLengthCounterValue;
 
-  NesApuPulseChannel(NesClock clock, short baseAddress) {
+  NesApuPulse(NesClock clock, short baseAddress) {
     this.clock = clock;
     this.baseAddress = baseAddress;
     this.length = new NesApuLengthCounter();
