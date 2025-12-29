@@ -32,6 +32,8 @@ import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateWindowAndRendere
 import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyRenderer;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderCopy;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderDrawLine;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderDrawRect;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderSetLogicalSize;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderSetVSync;
@@ -140,6 +142,12 @@ public final class SdlDisplay implements Closeable, Display {
     SDL_RenderPresent(renderer);
 
     pump();
+  }
+
+  public void setError() {
+    SDL_SetRenderDrawColor(renderer, (byte) 0xff, (byte) 0x00, (byte) 0x00, (byte) 0xff);
+    SDL_RenderDrawRect(renderer, null);
+    SDL_RenderPresent(renderer);
   }
 
   public void pump() {

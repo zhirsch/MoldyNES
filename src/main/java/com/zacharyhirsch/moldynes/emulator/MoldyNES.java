@@ -33,6 +33,7 @@ final class MoldyNES {
         }
       } catch (Exception e) {
         log.error("Emulator crashed!", e);
+        display.setError();
         while (!display.quit) {
           display.pump();
         }
