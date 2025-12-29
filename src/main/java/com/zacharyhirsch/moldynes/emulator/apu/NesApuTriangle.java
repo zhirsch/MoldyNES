@@ -10,6 +10,9 @@ final class NesApuTriangle {
 
   private boolean enabled;
 
+  private long lengthCounterHaltDelay;
+  private boolean pendingLengthCounterHalt;
+
   private long lengthCounterValueDelay;
   private byte pendingLengthCounterValue;
 
@@ -17,6 +20,8 @@ final class NesApuTriangle {
     this.clock = clock;
     this.length = new NesApuLengthCounter("triangle");
     this.enabled = true;
+    this.lengthCounterHaltDelay = 0;
+    this.pendingLengthCounterHalt = false;
     this.lengthCounterValueDelay = 0;
     this.pendingLengthCounterValue = 0;
   }
@@ -33,6 +38,9 @@ final class NesApuTriangle {
   }
 
   void tick() {
+    if (clock.getCycle() == lengthCounterHaltDelay) {
+      length.setHalted(pendingLengthCounterHalt);
+    }
     if (clock.getCycle() == lengthCounterValueDelay) {
       length.reset(pendingLengthCounterValue);
     }
@@ -40,7 +48,10 @@ final class NesApuTriangle {
 
   void write(int address, byte data) {
     switch (address) {
-      case 0x4008 -> {}
+      case 0x4008 -> {
+        lengthCounterHaltDelay = clock.getCycle() + 1;
+        pendingLengthCounterHalt = (data & 0b1000_0000) != 0;
+      }
       case 0x4009 -> {}
       case 0x400a -> {}
       case 0x400b -> {

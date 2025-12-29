@@ -10,6 +10,9 @@ final class NesApuNoise {
 
   private boolean enabled;
 
+  private long lengthCounterHaltDelay;
+  private boolean pendingLengthCounterHalt;
+
   private long lengthCounterValueDelay;
   private byte pendingLengthCounterValue;
 
@@ -17,6 +20,8 @@ final class NesApuNoise {
     this.clock = clock;
     this.length = new NesApuLengthCounter("noise");
     this.enabled = true;
+    this.lengthCounterHaltDelay = 0;
+    this.pendingLengthCounterHalt = false;
     this.lengthCounterValueDelay = 0;
     this.pendingLengthCounterValue = 0;
   }
@@ -33,6 +38,9 @@ final class NesApuNoise {
   }
 
   void tick() {
+    if (clock.getCycle() == lengthCounterHaltDelay) {
+      length.setHalted(pendingLengthCounterHalt);
+    }
     if (clock.getCycle() == lengthCounterValueDelay) {
       length.reset(pendingLengthCounterValue);
     }
@@ -40,7 +48,10 @@ final class NesApuNoise {
 
   void write(int address, byte data) {
     switch (address) {
-      case 0x400c -> {}
+      case 0x400c -> {
+        lengthCounterHaltDelay = clock.getCycle() + 1;
+        pendingLengthCounterHalt = (data & 0b0010_0000) != 0;
+      }
       case 0x400d -> {}
       case 0x400e -> {}
       case 0x400f -> {
