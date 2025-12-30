@@ -71,7 +71,7 @@ final class NesApuLengthCounter {
   }
 
   void clear() {
-    log.info("APU [{}] length counter cleared", name);
+    log.trace("APU [{}] length counter cleared", name);
     value = 0;
   }
 
@@ -83,7 +83,7 @@ final class NesApuLengthCounter {
     if (!suppressNextReset) {
       assert 0x00 <= value && value <= 0x1f;
       this.value = LENGTH_TABLE.get(value);
-      log.info("APU [{}] length counter set to {}", name, this.value);
+      log.trace("APU [{}] length counter set to {}", name, this.value);
     }
     suppressNextReset = false;
   }

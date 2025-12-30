@@ -3,6 +3,10 @@ package com.zacharyhirsch.moldynes.emulator.io;
 import static io.github.libsdl4j.api.Sdl.SDL_Init;
 import static io.github.libsdl4j.api.Sdl.SDL_Quit;
 import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_EVERYTHING;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_CloseAudioDevice;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_OpenAudioDevice;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_PauseAudioDevice;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_QueueAudio;
 import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYDOWN;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYUP;
@@ -39,8 +43,13 @@ import static io.github.libsdl4j.api.render.SdlRender.SDL_UpdateTexture;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Floats;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
+import io.github.libsdl4j.api.audio.SDL_AudioDeviceID;
+import io.github.libsdl4j.api.audio.SDL_AudioFormat;
+import io.github.libsdl4j.api.audio.SDL_AudioSpec;
+import io.github.libsdl4j.api.audio.SdlAudioConst;
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.event.events.SDL_KeyboardEvent;
 import io.github.libsdl4j.api.render.SDL_Renderer;
@@ -49,6 +58,7 @@ import io.github.libsdl4j.api.video.SDL_Window;
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,6 +103,9 @@ public final class SdlDisplay implements Closeable, Display {
   private final SDL_Renderer renderer;
   private final SDL_Texture texture;
 
+  private final ArrayList<Float> audioBuffer;
+  private final SDL_AudioDeviceID audioDeviceId;
+
   private Instant nextFrameAt = Instant.now();
 
   public boolean quit = false;
@@ -122,19 +135,55 @@ public final class SdlDisplay implements Closeable, Display {
     if (texture == null) {
       throw new IllegalStateException("Unable to create SDL texture: " + SDL_GetError());
     }
+
+    this.audioBuffer = new ArrayList<>();
+
+    SDL_AudioSpec desired = new SDL_AudioSpec();
+    desired.freq = 44100;
+    desired.format = new SDL_AudioFormat(SdlAudioConst.AUDIO_F32SYS);
+    desired.channels = 1;
+    desired.samples = 512;
+    desired.callback = null;
+    desired.userdata = null;
+    SDL_AudioSpec obtained = new SDL_AudioSpec();
+    this.audioDeviceId = SDL_OpenAudioDevice(null, 0, desired, obtained, 1);
+    if (audioDeviceId == null || audioDeviceId.intValue() == 0) {
+      throw new IllegalStateException("Unable to open audio device: " + SDL_GetError());
+    }
+    SDL_PauseAudioDevice(audioDeviceId, 0);
   }
 
   @Override
   public void draw(byte[] frame) {
-    Pointer pixelsPtr = new Memory(frame.length);
-    pixelsPtr.write(0, frame, 0, frame.length);
+    outputFrame(frame);
 
-    SDL_UpdateTexture(texture, null, pixelsPtr, 3 * W);
+    outputAudio(Floats.toArray(audioBuffer));
+    audioBuffer.clear();
+
+    pump();
+  }
+
+  @Override
+  public void play(double sample) {
+    audioBuffer.add((float) sample);
+  }
+
+  private void outputFrame(byte[] frame) {
+    Pointer ptr = new Memory(frame.length);
+    ptr.write(0, frame, 0, frame.length);
+
+    SDL_UpdateTexture(texture, null, ptr, 3 * W);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, null, null);
     SDL_RenderPresent(renderer);
+  }
 
-    pump();
+  private void outputAudio(float[] samples) {
+    Pointer ptr = new Memory((long) Float.BYTES * samples.length);
+    for (int i = 0; i < samples.length; i++) {
+      ptr.setFloat((long) i * Float.BYTES, samples[i]);
+    }
+    SDL_QueueAudio(audioDeviceId, ptr, samples.length * Float.BYTES);
   }
 
   public void setError() {
@@ -177,6 +226,9 @@ public final class SdlDisplay implements Closeable, Display {
     }
     if (window != null) {
       SDL_DestroyWindow(window);
+    }
+    if (audioDeviceId != null) {
+      SDL_CloseAudioDevice(audioDeviceId);
     }
     SDL_Quit();
   }

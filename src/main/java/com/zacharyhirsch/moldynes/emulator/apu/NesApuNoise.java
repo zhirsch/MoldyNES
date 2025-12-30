@@ -37,6 +37,10 @@ final class NesApuNoise {
     return length;
   }
 
+  int getCurrentVolume() {
+    return 0;
+  }
+
   void tick() {
     if (clock.getCycle() == lengthCounterHaltDelay) {
       length.setHalted(pendingLengthCounterHalt);

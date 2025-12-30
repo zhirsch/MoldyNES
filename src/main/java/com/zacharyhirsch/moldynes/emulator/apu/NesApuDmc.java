@@ -9,24 +9,30 @@ final class NesApuDmc {
 
   private static final Logger log = LoggerFactory.getLogger(NesApuDmc.class);
 
-  private static final Map<Integer, Integer> RATES =
+  private record Rate(int lo, int hi) {
+    Rate(int rate) {
+      this((rate & 0x00ff) >>> 0, (rate & 0xff00) >>> 8);
+    }
+  }
+
+  private static final Map<Integer, Rate> RATES =
       Map.ofEntries(
-          Map.entry(0x0, 428),
-          Map.entry(0x1, 380),
-          Map.entry(0x2, 340),
-          Map.entry(0x3, 320),
-          Map.entry(0x4, 286),
-          Map.entry(0x5, 254),
-          Map.entry(0x6, 226),
-          Map.entry(0x7, 214),
-          Map.entry(0x8, 190),
-          Map.entry(0x9, 160),
-          Map.entry(0xa, 142),
-          Map.entry(0xb, 128),
-          Map.entry(0xc, 106),
-          Map.entry(0xd, 84),
-          Map.entry(0xe, 72),
-          Map.entry(0xf, 54));
+          Map.entry(0x0, new Rate(428)),
+          Map.entry(0x1, new Rate(380)),
+          Map.entry(0x2, new Rate(340)),
+          Map.entry(0x3, new Rate(320)),
+          Map.entry(0x4, new Rate(286)),
+          Map.entry(0x5, new Rate(254)),
+          Map.entry(0x6, new Rate(226)),
+          Map.entry(0x7, new Rate(214)),
+          Map.entry(0x8, new Rate(190)),
+          Map.entry(0x9, new Rate(160)),
+          Map.entry(0xa, new Rate(142)),
+          Map.entry(0xb, new Rate(128)),
+          Map.entry(0xc, new Rate(106)),
+          Map.entry(0xd, new Rate(84)),
+          Map.entry(0xe, new Rate(72)),
+          Map.entry(0xf, new Rate(54)));
 
   private final NesApuTimer timer;
   private final NesApuIrq irq;
@@ -66,12 +72,16 @@ final class NesApuDmc {
     return bytesRemaining;
   }
 
+  int getCurrentVolume() {
+    return 0;
+  }
+
   void tick() {
     if (timer.tick()) {
       if (!silence) {
         int delta = (shift & 0b0000_0001) == 0 ? -2 : 2;
         outputLevel = Math.clamp(outputLevel + delta, 0, 127);
-        log.info("APU [dmc] sample output level set to {}", outputLevel);
+        log.trace("APU [dmc] sample output level set to {}", outputLevel);
       }
       shift = (byte) (shift >>> 1);
       bitsRemaining--;
@@ -100,33 +110,35 @@ final class NesApuDmc {
       case 0x4010 -> {
         irq.setInhibited((data & 0b1000_0000) == 0);
         loop = (data & 0b0100_0000) != 0;
-        timer.setRate(RATES.get(data & 0b0000_1111));
-        log.info("APU [dmc] rate set to {} cycles", timer.getRate());
+        Rate rate = RATES.get(data & 0b0000_1111);
+        timer.setRateLo(rate.lo());
+        timer.setRateHi(rate.hi());
+        log.trace("APU [dmc] rate set to {} cycles", rate);
       }
       case 0x4011 -> {
         outputLevel = data & 0b0111_1111;
-        log.info("APU [dmc] output level directly set to {}", outputLevel);
+        log.trace("APU [dmc] output level directly set to {}", outputLevel);
       }
       case 0x4012 -> {
         sampleAddress = 0xc000 + (Byte.toUnsignedInt(data) << 6);
-        log.info("APU [dmc] address set to {}", "%04x".formatted(address));
+        log.trace("APU [dmc] address set to {}", "%04x".formatted(address));
       }
       case 0x4013 -> {
         sampleLength = (Byte.toUnsignedInt(data) << 4) + 1;
-        log.info("APU [dmc] length set to {}", sampleLength);
+        log.trace("APU [dmc] length set to {}", sampleLength);
       }
       default -> throw new InvalidAddressWriteError(address);
     }
   }
 
   void restart() {
-    log.info("APU [dmc] restart");
+    log.trace("APU [dmc] restart");
     currentAddress = sampleAddress;
     bytesRemaining = sampleLength;
   }
 
   void stop() {
-    log.info("APU [dmc] stop");
+    log.trace("APU [dmc] stop");
     bytesRemaining = 0;
   }
 
@@ -135,20 +147,20 @@ final class NesApuDmc {
     if (currentAddress > 0xffff) {
       currentAddress = 0x8000;
     }
-    log.info("APU [dmc] current address incremented to {}", "%04x".formatted(currentAddress));
+    log.trace("APU [dmc] current address incremented to {}", "%04x".formatted(currentAddress));
   }
 
   private void decrementBytesRemaining() {
     bytesRemaining--;
     if (bytesRemaining != 0) {
-      log.info("APU [dmc] bytes remaining decremented to {}", bytesRemaining);
+      log.trace("APU [dmc] bytes remaining decremented to {}", bytesRemaining);
       return;
     }
     if (loop) {
-      log.info("APU [dmc] sample playback looping");
+      log.trace("APU [dmc] sample playback looping");
       restart();
     } else {
-      log.info("APU [dmc] sample playback complete");
+      log.trace("APU [dmc] sample playback complete");
       irq.set(true);
     }
   }

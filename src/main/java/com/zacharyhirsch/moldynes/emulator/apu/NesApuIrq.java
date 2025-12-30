@@ -20,7 +20,7 @@ final class NesApuIrq {
   }
 
   void set(boolean irq) {
-    log.info("APU irq <- {} [inhibited? {}]", irq, inhibited);
+    log.trace("APU irq <- {} [inhibited? {}]", irq, inhibited);
     this.irq = irq;
   }
 

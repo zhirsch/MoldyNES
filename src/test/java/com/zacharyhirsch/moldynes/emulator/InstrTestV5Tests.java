@@ -17,6 +17,9 @@ public class InstrTestV5Tests {
 
     @Override
     public void draw(byte[] frame) {}
+
+    @Override
+    public void play(double sample) {}
   }
 
   private static void runTest(String path) {
