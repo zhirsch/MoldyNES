@@ -26,5 +26,8 @@ final class NesApuIrq {
 
   void setInhibited(boolean inhibited) {
     this.inhibited = inhibited;
+    if (inhibited) {
+      irq = false;
+    }
   }
 }

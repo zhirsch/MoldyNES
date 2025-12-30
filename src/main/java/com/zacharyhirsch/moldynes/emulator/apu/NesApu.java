@@ -144,10 +144,10 @@ public final class NesApu {
     status.set(1, pulse2.length().value() > 0);
     status.set(2, triangle.length().value() > 0);
     status.set(3, noise.length().value() > 0);
-    status.set(4, false); // dmc active
+    status.set(4, dmc.getBytesRemaining() > 0);
     status.set(5, false); // open bus
     status.set(6, irq.get());
-    status.set(7, false); // dmc interrupt
+    status.set(7, dmc.irq().get());
     byte value = status.isEmpty() ? 0 : status.toByteArray()[0];
     log.info("APU 4015 -> {}", "%02x".formatted(value));
     irq.set(false);
@@ -185,6 +185,8 @@ public final class NesApu {
     pulse2.enable((data & 0b0000_0010) != 0);
     triangle.enable((data & 0b0000_0100) != 0);
     noise.enable((data & 0b0000_1000) != 0);
+    dmc.enable((data & 0b0001_0000) != 0);
+    dmc.irq().set(false);
   }
 
   public void writeFrameCounter(byte data) {
@@ -193,8 +195,5 @@ public final class NesApu {
     pendingIrqInhibited = (data & 0b0100_0000) != 0;
     frameCounterResetDelay = clock.getCycle() + ((clock.getCycle() % 2) == 1 ? 2 : 3);
     log.info("APU scheduling frame counter reset for cycle {}", frameCounterResetDelay);
-    if (pendingIrqInhibited) {
-      irq.set(false);
-    }
   }
 }
