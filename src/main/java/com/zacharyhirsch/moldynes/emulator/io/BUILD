@@ -7,7 +7,6 @@ java_library(
         "//src/test/java/com/zacharyhirsch/moldynes/emulator:__pkg__",
     ],
     deps = [
-        "//src/main/java/com/zacharyhirsch/util",
         "@maven//:com_google_guava_guava",
         "@maven//:io_github_libsdl4j_libsdl4j",
         "@maven//:net_java_dev_jna_jna",

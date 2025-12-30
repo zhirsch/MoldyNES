@@ -7,9 +7,7 @@ import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYDOWN;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYUP;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_QUIT;
-import static io.github.libsdl4j.api.event.SdlEvents.SDL_HasEvent;
-import static io.github.libsdl4j.api.event.SdlEvents.SDL_PumpEvents;
-import static io.github.libsdl4j.api.event.SdlEvents.SDL_WaitEventTimeout;
+import static io.github.libsdl4j.api.event.SdlEvents.SDL_PollEvent;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_A;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_D;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_DOWN;
@@ -32,7 +30,6 @@ import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateWindowAndRendere
 import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyRenderer;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderCopy;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderDrawLine;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderDrawRect;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderSetLogicalSize;
@@ -44,7 +41,6 @@ import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
 import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
-import com.zacharyhirsch.util.CircularCounter;
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.event.events.SDL_KeyboardEvent;
 import io.github.libsdl4j.api.render.SDL_Renderer;
@@ -52,7 +48,7 @@ import io.github.libsdl4j.api.render.SDL_Texture;
 import io.github.libsdl4j.api.video.SDL_Window;
 import java.io.Closeable;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
+import java.time.Instant;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,20 +87,17 @@ public final class SdlDisplay implements Closeable, Display {
           .put(SDLK_SLASH, NesJoypad.Button.BUTTON_B)
           .build();
 
-  private final CircularCounter logFpsLaggingThrottle;
-
   private final NesJoypad joypad1;
   private final NesJoypad joypad2;
   private final SDL_Window window;
   private final SDL_Renderer renderer;
   private final SDL_Texture texture;
 
-  private Duration nextFrameAt = Duration.ofNanos(System.nanoTime());
+  private Instant nextFrameAt = Instant.now();
 
   public boolean quit = false;
 
   public SdlDisplay(NesJoypad joypad1, NesJoypad joypad2) {
-    this.logFpsLaggingThrottle = new CircularCounter(100);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
 
@@ -151,23 +144,9 @@ public final class SdlDisplay implements Closeable, Display {
   }
 
   public void pump() {
-    Duration delay = nextFrameAt.minus(System.nanoTime(), ChronoUnit.NANOS);
     nextFrameAt = nextFrameAt.plus(FRAME_NS);
-
-    //  If FPS is lagging, just pump events and hope we catch up.
-    if (!delay.isPositive()) {
-      if (logFpsLaggingThrottle.tick()) {
-        log.warn("FPS is lagging by {} ms", delay.abs().toMillis());
-      }
-      SDL_PumpEvents();
-      if (SDL_HasEvent(SDL_QUIT)) {
-        quit = true;
-      }
-      return;
-    }
-
     SDL_Event event = new SDL_Event();
-    while (SDL_WaitEventTimeout(event, (int) delay.toMillis()) == 1) {
+    while (SDL_PollEvent(event) == 1 || nextFrameAt.isAfter(Instant.now())) {
       dispatch(event);
     }
   }
