@@ -1989,12 +1989,15 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
+    renderPixel(dot - 1);
+  }
 
-    NesPpuBgPixel bgPixel = getBgPixel();
-    NesPpuSpritePixel spritePixel = getSpritePixel(dot - 1);
+  private void renderPixel(int pixel) {
+    NesPpuBgPixel bgPixel = getBgPixel(pixel);
+    NesPpuSpritePixel spritePixel = getSpritePixel(pixel);
     NesPpuColor color = getPixelColor(bgPixel, spritePixel);
 
-    int pos = 3 * (scanline * 256 + dot - 1);
+    int pos = 3 * (scanline * 256 + pixel);
     frame[pos + 0] = color.r();
     frame[pos + 1] = color.g();
     frame[pos + 2] = color.b();
@@ -2002,8 +2005,11 @@ public final class NesPpu {
 
   private record NesPpuBgPixel(int pattern, NesPpuColor color) {}
 
-  private NesPpuBgPixel getBgPixel() {
+  private NesPpuBgPixel getBgPixel(int pixel) {
     if (!isBgRenderingEnabled()) {
+      return new NesPpuBgPixel(0, palette.get(getPaletteIndex(0)));
+    }
+    if (!isBgShowInLeftMost8Pixels() && 0 <= pixel && pixel <= 7) {
       return new NesPpuBgPixel(0, palette.get(getPaletteIndex(0)));
     }
     int pattern = getBgPattern();
@@ -2032,6 +2038,9 @@ public final class NesPpu {
 
   private NesPpuSpritePixel getSpritePixel(int pixel) {
     if (!isSpriteRenderingEnabled()) {
+      return new NesPpuSpritePixel(false, 0, 0, palette.get(getPaletteIndex(0)));
+    }
+    if (!isSpriteShowInLeftMost8Pixels() && 0 <= pixel && pixel <= 7) {
       return new NesPpuSpritePixel(false, 0, 0, palette.get(getPaletteIndex(0)));
     }
     for (int i = 0; i < 8; i++) {
@@ -2346,6 +2355,14 @@ public final class NesPpu {
 
   private boolean isGreyscale() {
     return (mask & 0b0000_0001) != 0;
+  }
+
+  private boolean isBgShowInLeftMost8Pixels() {
+    return (mask & 0b0000_0010) != 0;
+  }
+
+  private boolean isSpriteShowInLeftMost8Pixels() {
+    return (mask & 0b0000_0100) != 0;
   }
 
   private boolean isRenderingEnabled() {
