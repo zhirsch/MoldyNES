@@ -104,32 +104,7 @@ public class NesBus {
     if (0x2008 <= addr && addr <= 0x3fff) {
       return read((short) (addr & 0b0010_0000_0000_0111));
     }
-    if (0x4000 <= addr && addr <= 0x4003) {
-      // APU Pulse 1
-      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
-      return 0;
-    }
-    if (0x4004 <= addr && addr <= 0x4007) {
-      // APU Pulse 2
-      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
-      return 0;
-    }
-    if (0x4008 <= addr && addr <= 0x400b) {
-      // APU Triangle
-      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
-      return 0;
-    }
-    if (0x400c <= addr && addr <= 0x400f) {
-      // APU Noise
-      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
-      return 0;
-    }
-    if (0x4010 <= addr && addr <= 0x4013) {
-      // APU DMC
-      // throw new IllegalArgumentException(String.format("unable to read address %04x", addr));
-      return 0;
-    }
-    if (addr == 0x4014) {
+    if (0x4000 <= addr && addr <= 0x4014) {
       throw new InvalidAddressReadError(address);
     }
     if (addr == 0x4015) {
