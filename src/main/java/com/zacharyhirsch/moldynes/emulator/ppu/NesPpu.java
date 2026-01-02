@@ -2048,7 +2048,7 @@ public final class NesPpu {
       if (x <= pixel && pixel < x + 8) {
         int pattern = getSpritePattern(i, pixel - x);
         if (pattern != 0) {
-          boolean sprite0 = spriteOamIndex[i] == 0;
+          boolean sprite0 = spriteOamIndex[i] == 0 && pixel != 255;
           NesPpuColor[] palette = getSpritePalette(spriteAttributes[i] & 0b0000_0011);
           return new NesPpuSpritePixel(sprite0, pattern, getSpritePriority(i), palette[pattern]);
         }
