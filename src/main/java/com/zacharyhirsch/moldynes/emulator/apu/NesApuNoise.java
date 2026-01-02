@@ -1,9 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 
-final class NesApuNoise {
+public final class NesApuNoise {
 
   private final NesClock clock;
   private final NesApuLengthCounter length;
@@ -50,21 +49,17 @@ final class NesApuNoise {
     }
   }
 
-  void write(int address, byte data) {
-    switch (address) {
-      case 0x400c -> {
-        lengthCounterHaltDelay = clock.getCycle() + 1;
-        pendingLengthCounterHalt = (data & 0b0010_0000) != 0;
-      }
-      case 0x400d -> {}
-      case 0x400e -> {}
-      case 0x400f -> {
-        if (enabled) {
-          lengthCounterValueDelay = clock.getCycle() + 1;
-          pendingLengthCounterValue = (byte) ((data & 0b1111_1000) >>> 3);
-        }
-      }
-      default -> throw new InvalidAddressWriteError(address);
+  public void writeControl(byte data) {
+    lengthCounterHaltDelay = clock.getCycle() + 1;
+    pendingLengthCounterHalt = (data & 0b0010_0000) != 0;
+  }
+
+  public void writeMode(byte data) {}
+
+  public void writeLength(byte data) {
+    if (enabled) {
+      lengthCounterValueDelay = clock.getCycle() + 1;
+      pendingLengthCounterValue = (byte) ((data & 0b1111_1000) >>> 3);
     }
   }
 }

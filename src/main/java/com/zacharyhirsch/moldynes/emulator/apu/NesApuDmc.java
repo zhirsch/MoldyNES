@@ -1,11 +1,10 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class NesApuDmc {
+public final class NesApuDmc {
 
   private static final Logger log = LoggerFactory.getLogger(NesApuDmc.class);
 
@@ -105,30 +104,28 @@ final class NesApuDmc {
     }
   }
 
-  void write(int address, byte data) {
-    switch (address) {
-      case 0x4010 -> {
-        irq.setInhibited((data & 0b1000_0000) == 0);
-        loop = (data & 0b0100_0000) != 0;
-        Rate rate = RATES.get(data & 0b0000_1111);
-        timer.setRateLo(rate.lo());
-        timer.setRateHi(rate.hi());
-        log.trace("APU [dmc] rate set to {} cycles", rate);
-      }
-      case 0x4011 -> {
-        outputLevel = data & 0b0111_1111;
-        log.trace("APU [dmc] output level directly set to {}", outputLevel);
-      }
-      case 0x4012 -> {
-        sampleAddress = 0xc000 + (Byte.toUnsignedInt(data) << 6);
-        log.trace("APU [dmc] address set to {}", "%04x".formatted(address));
-      }
-      case 0x4013 -> {
-        sampleLength = (Byte.toUnsignedInt(data) << 4) + 1;
-        log.trace("APU [dmc] length set to {}", sampleLength);
-      }
-      default -> throw new InvalidAddressWriteError(address);
-    }
+  public void writeControl(byte data) {
+    irq.setInhibited((data & 0b1000_0000) == 0);
+    loop = (data & 0b0100_0000) != 0;
+    Rate rate = RATES.get(data & 0b0000_1111);
+    timer.setRateLo(rate.lo());
+    timer.setRateHi(rate.hi());
+    log.trace("APU [dmc] rate set to {} cycles", rate);
+  }
+
+  public void writeDac(byte data) {
+    outputLevel = data & 0b0111_1111;
+    log.trace("APU [dmc] output level directly set to {}", outputLevel);
+  }
+
+  public void writeAddress(byte data) {
+    sampleAddress = 0xc000 + (Byte.toUnsignedInt(data) << 6);
+    log.trace("APU [dmc] address set to {}", "%04x".formatted(sampleAddress));
+  }
+
+  public void writeLength(byte data) {
+    sampleLength = (Byte.toUnsignedInt(data) << 4) + 1;
+    log.trace("APU [dmc] length set to {}", sampleLength);
   }
 
   void restart() {

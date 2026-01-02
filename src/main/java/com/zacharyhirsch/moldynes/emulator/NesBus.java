@@ -2,7 +2,6 @@ package com.zacharyhirsch.moldynes.emulator;
 
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpuState;
 import com.zacharyhirsch.moldynes.emulator.io.Display;
 import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
@@ -201,24 +200,82 @@ public class NesBus {
       write((short) (addr & 0b0010_0000_0000_0111), data);
       return;
     }
-    if (0x4000 <= addr && addr <= 0x4003) {
-      apu.writePulse1((short) addr, data);
+    if (addr == 0x4000) {
+      apu.pulse1().writeControl(data);
       return;
     }
-    if (0x4004 <= addr && addr <= 0x4007) {
-      apu.writePulse2((short) addr, data);
+    if (addr == 0x4001) {
+      apu.pulse1().writeSweep(data);
       return;
     }
-    if (0x4008 <= addr && addr <= 0x400b) {
-      apu.writeTriangle((short) addr, data);
+    if (addr == 0x4002) {
+      apu.pulse1().writeTimerLo(data);
       return;
     }
-    if (0x400c <= addr && addr <= 0x400f) {
-      apu.writeNoise((short) addr, data);
+    if (addr == 0x4003) {
+      apu.pulse1().writeTimerHi(data);
       return;
     }
-    if (0x4010 <= addr && addr <= 0x4013) {
-      apu.writeDmc((short) addr, data);
+    if (addr == 0x4004) {
+      apu.pulse2().writeControl(data);
+      return;
+    }
+    if (addr == 0x4005) {
+      apu.pulse2().writeSweep(data);
+      return;
+    }
+    if (addr == 0x4006) {
+      apu.pulse2().writeTimerLo(data);
+      return;
+    }
+    if (addr == 0x4007) {
+      apu.pulse2().writeTimerHi(data);
+      return;
+    }
+    if (addr == 0x4008) {
+      apu.triangle().writeControl(data);
+      return;
+    }
+    if (addr == 0x4009) {
+      throw new InvalidAddressWriteError(address);
+    }
+    if (addr == 0x400a) {
+      apu.triangle().writeTimerLo(data);
+      return;
+    }
+    if (addr == 0x400b) {
+      apu.triangle().writeTimerHi(data);
+      return;
+    }
+    if (addr == 0x400c) {
+      apu.noise().writeControl(data);
+      return;
+    }
+    if (addr == 0x400d) {
+      throw new InvalidAddressWriteError(address);
+    }
+    if (addr == 0x400e) {
+      apu.noise().writeMode(data);
+      return;
+    }
+    if (addr == 0x400f) {
+      apu.noise().writeLength(data);
+      return;
+    }
+    if (addr == 0x4010) {
+      apu.dmc().writeControl(data);
+      return;
+    }
+    if (addr == 0x4011) {
+      apu.dmc().writeDac(data);
+      return;
+    }
+    if (addr == 0x4012) {
+      apu.dmc().writeAddress(data);
+      return;
+    }
+    if (addr == 0x4013) {
+      apu.dmc().writeLength(data);
       return;
     }
     if (addr == 0x4014) {

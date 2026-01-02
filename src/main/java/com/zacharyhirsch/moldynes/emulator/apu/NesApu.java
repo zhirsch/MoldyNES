@@ -29,7 +29,6 @@ public final class NesApu {
 
   private boolean pendingIrqInhibited;
 
-  private double mixBuffer;
   private long nextSampleAt;
   private long nextSampleIncrement;
 
@@ -48,10 +47,29 @@ public final class NesApu {
     this.mode = 0;
     this.pendingMode = 0;
     this.pendingIrqInhibited = false;
-    this.mixBuffer = 0;
     this.nextSampleAt = clock.getCycle() + 40;
     this.nextSampleIncrement = 40;
     MDC.put("frameCounter", "%5d".formatted(0));
+  }
+
+  public NesApuPulse pulse1() {
+    return pulse1;
+  }
+
+  public NesApuPulse pulse2() {
+    return pulse2;
+  }
+
+  public NesApuTriangle triangle() {
+    return triangle;
+  }
+
+  public NesApuNoise noise() {
+    return noise;
+  }
+
+  public NesApuDmc dmc() {
+    return dmc;
   }
 
   public boolean irq() {
@@ -74,10 +92,8 @@ public final class NesApu {
     noise.tick();
     dmc.tick();
 
-    mixBuffer += mixer.mix();
     if (nextSampleAt == clock.getCycle()) {
-      display.play(mixBuffer / nextSampleIncrement);
-      mixBuffer = 0;
+      display.play(mixer.mix());
       nextSampleIncrement = nextSampleIncrement == 41 ? 40 : 41;
       nextSampleAt = clock.getCycle() + nextSampleIncrement;
     }
@@ -177,31 +193,6 @@ public final class NesApu {
     log.trace("APU 4015 -> {}", "%02x".formatted(value));
     irq.set(false);
     return value;
-  }
-
-  public void writePulse1(short address, byte data) {
-    log.trace("APU [pulse1] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
-    pulse1.write(address, data);
-  }
-
-  public void writePulse2(short address, byte data) {
-    log.trace("APU [pulse2] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
-    pulse2.write(address, data);
-  }
-
-  public void writeTriangle(short address, byte data) {
-    log.trace("APU [triangle] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
-    triangle.write(address, data);
-  }
-
-  public void writeNoise(short address, byte data) {
-    log.trace("APU [noise] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
-    noise.write(address, data);
-  }
-
-  public void writeDmc(short address, byte data) {
-    log.trace("APU [dmc] {} <- {}", "%04x".formatted(address), "%02x".formatted(data));
-    dmc.write(address, data);
   }
 
   public void writeStatus(byte data) {

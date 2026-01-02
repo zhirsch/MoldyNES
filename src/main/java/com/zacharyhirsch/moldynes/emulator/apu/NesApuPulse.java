@@ -1,9 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 
-final class NesApuPulse {
+public final class NesApuPulse {
 
   private static final int[][] SEQUENCES = {
     {0, 0, 0, 0, 0, 0, 0, 1},
@@ -87,31 +86,31 @@ final class NesApuPulse {
     }
   }
 
-  void write(int address, byte data) {
-    switch (address) {
-      case 0x4000, 0x4004 -> {
-        duty = (data & 0b1100_0000) >>> 6;
-        lengthCounterHalt.setValue((data & 0b0010_0000) != 0, 1);
-        envelope.setLoop((data & 0b0010_0000) != 0);
-        envelope.setConstant((data & 0b0001_0000) != 0);
-        envelope.setEnvelope(data & 0b0000_1111);
-      }
-      case 0x4001, 0x4005 -> {
-        if ((data & 0b1000_0000) != 0) {
-          throw new UnsupportedOperationException("pulse%d sweep".formatted(index));
-        }
-      }
-      case 0x4002, 0x4006 -> timer.setRateLo(Byte.toUnsignedInt(data));
-      case 0x4003, 0x4007 -> {
-        if (enabled) {
-          lengthCounterValue.setValue((byte) ((data & 0b1111_1000) >>> 3), 1);
-        }
-        timer.setRateHi(data & 0b0000_0111);
-        sequenceIndex = 0;
-        envelope.start();
-      }
-      default -> throw new InvalidAddressWriteError(address);
+  public void writeControl(byte data) {
+    duty = (data & 0b1100_0000) >>> 6;
+    lengthCounterHalt.setValue((data & 0b0010_0000) != 0, 1);
+    envelope.setLoop((data & 0b0010_0000) != 0);
+    envelope.setConstant((data & 0b0001_0000) != 0);
+    envelope.setEnvelope(data & 0b0000_1111);
+  }
+
+  public void writeSweep(byte data) {
+    if ((data & 0b1000_0000) != 0) {
+      throw new UnsupportedOperationException("pulse%d sweep".formatted(index));
     }
+  }
+
+  public void writeTimerLo(byte data) {
+    timer.setRateLo(Byte.toUnsignedInt(data));
+  }
+
+  public void writeTimerHi(byte data) {
+    if (enabled) {
+      lengthCounterValue.setValue((byte) ((data & 0b1111_1000) >>> 3), 1);
+    }
+    timer.setRateHi(data & 0b0000_0111);
+    sequenceIndex = 0;
+    envelope.start();
   }
 
   private String getName() {
