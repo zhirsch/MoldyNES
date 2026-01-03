@@ -2003,6 +2003,15 @@ public final class NesPpu {
     frame[pos + 2] = color.b();
   }
 
+  private NesPpuColor[] getPixelColors(int base, int attribute) {
+    return new NesPpuColor[] {
+      palette.get(getPaletteIndex(0)),
+      palette.get(getPaletteIndex(base + attribute * 4 + 1)),
+      palette.get(getPaletteIndex(base + attribute * 4 + 2)),
+      palette.get(getPaletteIndex(base + attribute * 4 + 3)),
+    };
+  }
+
   private record NesPpuBgPixel(int pattern, NesPpuColor color) {}
 
   private NesPpuBgPixel getBgPixel(int pixel) {
@@ -2025,13 +2034,8 @@ public final class NesPpu {
 
   private NesPpuColor getBgColor(int pattern) {
     byte attribute = attributeByte.value();
-    return switch (pattern) {
-      case 0 -> palette.get(getPaletteIndex(0));
-      case 1 -> palette.get(getPaletteIndex(attribute * 4 + 1));
-      case 2 -> palette.get(getPaletteIndex(attribute * 4 + 2));
-      case 3 -> palette.get(getPaletteIndex(attribute * 4 + 3));
-      default -> throw new IllegalArgumentException("invalid pattern: " + pattern);
-    };
+    NesPpuColor[] colors = getPixelColors(0x0, attribute);
+    return colors[pattern];
   }
 
   private record NesPpuSpritePixel(boolean sprite0, int pattern, int priority, NesPpuColor color) {}
@@ -2049,8 +2053,8 @@ public final class NesPpu {
         int pattern = getSpritePattern(i, pixel - x);
         if (pattern != 0) {
           boolean sprite0 = spriteOamIndex[i] == 0 && pixel != 255;
-          NesPpuColor[] palette = getSpritePalette(spriteAttributes[i] & 0b0000_0011);
-          return new NesPpuSpritePixel(sprite0, pattern, getSpritePriority(i), palette[pattern]);
+          NesPpuColor[] colors = getPixelColors(0x10, spriteAttributes[i] & 0b0000_0011);
+          return new NesPpuSpritePixel(sprite0, pattern, getSpritePriority(i), colors[pattern]);
         }
       }
     }
@@ -2063,15 +2067,6 @@ public final class NesPpu {
     int patternLo = (spritePatternLoBytes[spriteIndex] >>> shift) & 1;
     int patternHi = (spritePatternHiBytes[spriteIndex] >>> shift) & 1;
     return (patternHi << 1) | patternLo;
-  }
-
-  private NesPpuColor[] getSpritePalette(int attribute) {
-    return new NesPpuColor[] {
-      palette.get(getPaletteIndex(0)),
-      palette.get(getPaletteIndex(0x10 + attribute * 4 + 1)),
-      palette.get(getPaletteIndex(0x10 + attribute * 4 + 2)),
-      palette.get(getPaletteIndex(0x10 + attribute * 4 + 3)),
-    };
   }
 
   private byte getPaletteIndex(int i) {
