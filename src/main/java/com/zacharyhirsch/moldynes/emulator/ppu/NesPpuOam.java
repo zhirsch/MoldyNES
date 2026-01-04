@@ -53,31 +53,7 @@ final class NesPpuOam {
         Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 3]));
   }
 
-  void tick(int scanline, int dot) {
-    assert 0 <= scanline && scanline <= 261;
-    assert 0 <= dot && dot <= 340;
-    if (0 <= scanline && scanline <= 239) {
-      if (1 <= dot && dot <= 64) {
-        resetSecondaryOam(dot);
-        return;
-      }
-      if (65 <= dot && dot <= 256) {
-        evaluateSprite(scanline, dot);
-        return;
-      }
-      if (257 <= dot && dot <= 320) {
-        // TODO: sprite fetch
-        return;
-      }
-      if (321 <= dot && dot <= 340) {
-        oamN = 0;
-        secondaryOamN = 0;
-        return;
-      }
-    }
-  }
-
-  private void resetSecondaryOam(int dot) {
+  void resetSecondaryOam(int dot) {
     if (dot == 1) {
       oamN = 0;
       secondaryOamN = 0;
@@ -100,7 +76,7 @@ final class NesPpuOam {
     }
   }
 
-  private void evaluateSprite(int scanline, int dot) {
+  void evaluateSprite(int scanline, int dot) {
     // TODO: overflow
     if (dot == 65) {
       oamN = 0;
