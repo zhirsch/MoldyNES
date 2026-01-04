@@ -1995,7 +1995,7 @@ public final class NesPpu {
   private void renderPixel(int pixel) {
     NesPpuBgPixel bgPixel = getBgPixel(pixel);
     NesPpuSpritePixel spritePixel = getSpritePixel(pixel);
-    NesPpuColor color = getPixelColor(bgPixel, spritePixel);
+    NesPpuColor color = getPixelColor(pixel, bgPixel, spritePixel);
 
     int pos = 3 * (scanline * 256 + pixel);
     frame[pos + 0] = color.r();
@@ -2052,7 +2052,7 @@ public final class NesPpu {
       if (x <= pixel && pixel < x + 8) {
         int pattern = getSpritePattern(i, pixel - x);
         if (pattern != 0) {
-          boolean sprite0 = spriteOamIndex[i] == 0 && pixel != 255;
+          boolean sprite0 = spriteOamIndex[i] == 0;
           NesPpuColor[] colors = getPixelColors(0x10, spriteAttributes[i] & 0b0000_0011);
           return new NesPpuSpritePixel(sprite0, pattern, getSpritePriority(i), colors[pattern]);
         }
@@ -2074,7 +2074,7 @@ public final class NesPpu {
     return paletteIndexes[greyscale ? i & 0x30 : i];
   }
 
-  private NesPpuColor getPixelColor(NesPpuBgPixel bgPixel, NesPpuSpritePixel spritePixel) {
+  private NesPpuColor getPixelColor(int pixel, NesPpuBgPixel bgPixel, NesPpuSpritePixel spritePixel) {
     if (bgPixel.pattern() == 0 && spritePixel.pattern() == 0) {
       return bgPixel.color();
     }
@@ -2084,7 +2084,7 @@ public final class NesPpu {
     if (spritePixel.pattern() == 0) {
       return bgPixel.color();
     }
-    if (spritePixel.sprite0()) {
+    if (pixel != 0xff && spritePixel.sprite0()) {
       status |= 0b0100_0000;
     }
     return spritePixel.priority() == 0 ? spritePixel.color() : bgPixel.color();
