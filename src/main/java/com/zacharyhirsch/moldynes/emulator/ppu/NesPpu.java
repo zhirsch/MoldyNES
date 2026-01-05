@@ -1701,9 +1701,6 @@ public final class NesPpu {
 
   public void writeControl(byte data) {
     ctrl = data;
-    if (isSpriteSize8x16()) {
-      throw new IllegalStateException();
-    }
     if (isNmiEnabled()) {
       if (isVblEnabled()) {
         nmi.run();
@@ -2149,7 +2146,7 @@ public final class NesPpu {
     if (!isRenderingEnabled()) {
       return;
     }
-    oam.evaluateSprite(scanline, dot);
+    oam.evaluateSprite(scanline, dot, isSpriteSize8x16() ? 16 : 8);
   }
 
   private void resetSecondaryOam() {
@@ -2309,10 +2306,22 @@ public final class NesPpu {
       return (byte) 0;
     }
     int row = scanline - sprite.y();
-    int fineY = isFlipSpriteVertical(sprite) ? 7 - row : row;
-    int chrBank = isSpritePatternTableAddressHi() ? 0x1000 : 0x0000;
-    int nametable = sprite.tileIndex() << 4;
-    int address = chrBank | nametable | offset | fineY;
+    int chrBank;
+    int nametable;
+    int fineY;
+    if (isSpriteSize8x16()) {
+      chrBank = sprite.tileIndex() & 0b0000_0001;
+      nametable = sprite.tileIndex() & 0b1111_1110;
+      fineY = isFlipSpriteVertical(sprite) ? 15 - row : row;
+    } else {
+      chrBank = isSpritePatternTableAddressHi() ? 1 : 0;
+      nametable = sprite.tileIndex();
+      fineY = isFlipSpriteVertical(sprite) ? 7 - row : row;
+    }
+    if (8 <= fineY && fineY <= 15) {
+      nametable = nametable + 1;
+    }
+    int address = (chrBank << 12) | (nametable << 4) | (offset & 0b1000) | (fineY & 0b0111);
     return mapper.read((short) address, ram);
   }
 
