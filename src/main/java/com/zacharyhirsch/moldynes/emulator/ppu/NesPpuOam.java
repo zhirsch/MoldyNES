@@ -3,8 +3,8 @@ package com.zacharyhirsch.moldynes.emulator.ppu;
 final class NesPpuOam {
 
   private final byte[] oamBuffer;
-  final byte[] secondaryOamBuffer;
-  private final byte[] indices;
+  private final byte[] secondaryOamBuffer;
+  private final int[] indices;
 
   private int oamN;
   private int secondaryOamN;
@@ -17,7 +17,7 @@ final class NesPpuOam {
   NesPpuOam() {
     this.oamBuffer = new byte[4 * 64];
     this.secondaryOamBuffer = new byte[4 * 8];
-    this.indices = new byte[8];
+    this.indices = new int[8];
     this.oamN = 0;
     this.secondaryOamN = 0;
     this.m = 0;
@@ -44,7 +44,7 @@ final class NesPpuOam {
 
   NesPpuSprite sprite(int index) {
     return new NesPpuSprite(
-        Byte.toUnsignedInt(indices[index]),
+        indices[index],
         Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 0]),
         Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 1]),
         Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 2]),
@@ -83,6 +83,7 @@ final class NesPpuOam {
       case 0 -> {
         if (isSpriteOnScanline(scanline, Byte.toUnsignedInt(buffer), height)) {
           secondaryOamBuffer[secondaryOamN * 4 + m] = buffer;
+          indices[secondaryOamN] = oamN;
           m++;
           copying = true;
         } else {
