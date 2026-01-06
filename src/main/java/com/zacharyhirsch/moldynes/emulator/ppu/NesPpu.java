@@ -2182,69 +2182,45 @@ public final class NesPpu {
     advanceDot();
   }
 
-//  private void advanceDot() {
-//    assert 0 <= dot && dot <= 340;
-//    assert 0 <= scanline && scanline <= 261;
-//    if (0 <= scanline && scanline <= 260) {
-//      if (0 <= dot && dot <= 339) {
-//        dot++;
-//        return;
-//      }
-//      if (dot == 340) {
-//        dot = 0;
-//        scanline++;
-//        return;
-//      }
-//    }
-//    if (scanline == 261) {
-//      if (0 <= dot && dot <= 338) {
-//        dot++;
-//        return;
-//      }
-//      if (dot == 339) {
-//        if (isRenderingEnabled() && odd) {
-//          dot = 0;
-//          scanline = 0;
-//          lastDotSkipped = true;
-//          odd = !odd;
-//          return;
-//        }
-//        dot++;
-//        return;
-//      }
-//      if (dot == 340) {
-//        dot = 0;
-//        scanline = 0;
-//        lastDotSkipped = false;
-//        odd = !odd;
-//        return;
-//      }
-//    }
-//    throw new IllegalStateException();
-//  }
-
   private void advanceDot() {
-    dot++;
-
-    // Normal end of scanline
-    if (dot > 340) {
-      dot = 0;
-      scanline++;
+    assert 0 <= dot && dot <= 340;
+    assert 0 <= scanline && scanline <= 261;
+    if (0 <= scanline && scanline <= 260) {
+      if (0 <= dot && dot <= 339) {
+        dot++;
+        return;
+      }
+      if (dot == 340) {
+        dot = 0;
+        scanline++;
+        return;
+      }
     }
-
-    // End of the VBlank/Pre-render period
-    if (scanline > 261) {
-      scanline = 0;
-      // The 'odd' flag usually toggles every frame,
-      // regardless of whether the skip actually happened.
-      odd = !odd;
+    if (scanline == 261) {
+      if (0 <= dot && dot <= 337) {
+        dot++;
+        return;
+      }
+      if (dot == 338) {
+        if (isRenderingEnabled() && odd) {
+          dot = 340;
+          return;
+        }
+        dot++;
+        return;
+      }
+      if (dot == 339) {
+        dot++;
+        return;
+      }
+      if (dot == 340) {
+        dot = 0;
+        scanline = 0;
+        odd = !odd;
+        return;
+      }
     }
-
-    // The "Odd Frame Skip" Logic
-    // Occurs ONLY on Scanline 261, at Dot 339, on Odd Frames, if rendering is on.
-    if (scanline == 261 && dot == 339 && odd && isRenderingEnabled()) {
-      dot = 340; // Skip directly to the end so the next tick resets to (0,0)
-    }
+    throw new IllegalStateException();
   }
 
   private void drawFrame() {
