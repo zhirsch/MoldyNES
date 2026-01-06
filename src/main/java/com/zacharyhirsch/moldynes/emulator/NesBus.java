@@ -9,8 +9,12 @@ import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressReadError;
 import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NesBus {
+
+  private static final Logger log = LoggerFactory.getLogger(NesBus.class);
 
   private final NesClock clock;
   private final NesMapper mapper;
@@ -105,7 +109,8 @@ public class NesBus {
       return read((short) (addr & 0b0010_0000_0000_0111));
     }
     if (0x4000 <= addr && addr <= 0x4014) {
-      throw new InvalidAddressReadError(address);
+      log.info("Invalid read at address {}", "%04x".formatted(address));
+      return 0;
     }
     if (addr == 0x4015) {
       return apu.readStatus();
@@ -212,7 +217,8 @@ public class NesBus {
       return;
     }
     if (addr == 0x4009) {
-      throw new InvalidAddressWriteError(address);
+      log.info("Invalid write at address {}", "%04x".formatted(address));
+      return;
     }
     if (addr == 0x400a) {
       apu.triangle().writeTimerLo(data);
@@ -227,7 +233,8 @@ public class NesBus {
       return;
     }
     if (addr == 0x400d) {
-      throw new InvalidAddressWriteError(address);
+      log.info("Invalid write at address {}", "%04x".formatted(address));
+      return;
     }
     if (addr == 0x400e) {
       apu.noise().writeMode(data);
