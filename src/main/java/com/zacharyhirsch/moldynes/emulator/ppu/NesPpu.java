@@ -2045,8 +2045,9 @@ public final class NesPpu {
   }
 
   public void writeControl(byte data) {
+    boolean wasNmiEnabled = isNmiEnabled();
     ctrl = data;
-    if (isNmiEnabled()) {
+    if (!wasNmiEnabled && isNmiEnabled()) {
       if (isVblEnabled()) {
         nmi.run();
       }
@@ -2181,31 +2182,69 @@ public final class NesPpu {
     advanceDot();
   }
 
+//  private void advanceDot() {
+//    assert 0 <= dot && dot <= 340;
+//    assert 0 <= scanline && scanline <= 261;
+//    if (0 <= scanline && scanline <= 260) {
+//      if (0 <= dot && dot <= 339) {
+//        dot++;
+//        return;
+//      }
+//      if (dot == 340) {
+//        dot = 0;
+//        scanline++;
+//        return;
+//      }
+//    }
+//    if (scanline == 261) {
+//      if (0 <= dot && dot <= 338) {
+//        dot++;
+//        return;
+//      }
+//      if (dot == 339) {
+//        if (isRenderingEnabled() && odd) {
+//          dot = 0;
+//          scanline = 0;
+//          lastDotSkipped = true;
+//          odd = !odd;
+//          return;
+//        }
+//        dot++;
+//        return;
+//      }
+//      if (dot == 340) {
+//        dot = 0;
+//        scanline = 0;
+//        lastDotSkipped = false;
+//        odd = !odd;
+//        return;
+//      }
+//    }
+//    throw new IllegalStateException();
+//  }
+
   private void advanceDot() {
-    assert dot >= 0 && dot <= 340;
-    if (dot == 340) {
-      dot = 0;
-      advanceScanline();
-      return;
-    }
     dot++;
-  }
 
-  private void advanceScanline() {
-    assert scanline >= 0 && scanline <= 261;
-    if (scanline == 261) {
+    // Normal end of scanline
+    if (dot > 340) {
+      dot = 0;
+      scanline++;
+    }
+
+    // End of the VBlank/Pre-render period
+    if (scanline > 261) {
       scanline = 0;
-      advanceFrame();
-      return;
+      // The 'odd' flag usually toggles every frame,
+      // regardless of whether the skip actually happened.
+      odd = !odd;
     }
-    scanline++;
-  }
 
-  private void advanceFrame() {
-    if (odd) {
-      dot = 1;
+    // The "Odd Frame Skip" Logic
+    // Occurs ONLY on Scanline 261, at Dot 339, on Odd Frames, if rendering is on.
+    if (scanline == 261 && dot == 339 && odd && isRenderingEnabled()) {
+      dot = 340; // Skip directly to the end so the next tick resets to (0,0)
     }
-    odd = !odd;
   }
 
   private void drawFrame() {
@@ -2219,13 +2258,8 @@ public final class NesPpu {
   }
 
   private void incrementAddress() {
-    boolean rendering = isRenderingEnabled() && ((scanline == 261) || (0 <= scanline && scanline < 240));
-    assert !rendering;
-    if (isVramIncrementVertical()) {
-      v = (short) (v + 32);
-    } else {
-      v = (short) (v + 1);
-    }
+    int increment = isVramIncrementVertical() ? 32 : 1;
+    v = (short) (v + increment);
   }
 
   // https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
@@ -2718,15 +2752,15 @@ public final class NesPpu {
     return (mask & 0b0000_0100) != 0;
   }
 
-  private boolean isRenderingEnabled() {
-    return (mask & 0b0001_1000) != 0;
-  }
-
   private boolean isBgRenderingEnabled() {
     return (mask & 0b0000_1000) != 0;
   }
 
   private boolean isSpriteRenderingEnabled() {
     return (mask & 0b0001_0000) != 0;
+  }
+
+  private boolean isRenderingEnabled() {
+    return isBgRenderingEnabled() || isSpriteRenderingEnabled();
   }
 }

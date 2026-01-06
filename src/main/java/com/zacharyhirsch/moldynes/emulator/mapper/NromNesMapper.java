@@ -29,7 +29,13 @@ final class NromNesMapper implements NesMapper {
     if (0x2000 <= addr && addr <= 0x2fff) {
       return ppuRam[mirror(address)];
     }
-    if (0x3000 <= addr && addr <= 0x5fff) {
+    if (0x3000 <= addr && addr <= 0x3eff) {
+      return (byte) 0xff;
+    }
+    if (0x3f00 <= addr && addr <= 0x3fff) {
+      return ppuRam[mirror(address)];
+    }
+    if (0x4000 <= addr && addr <= 0x5fff) {
       return (byte) 0xff;
     }
     if (0x6000 <= addr && addr <= 0x7fff) {
