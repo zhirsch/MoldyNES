@@ -2032,6 +2032,7 @@ public final class NesPpu {
 
   private boolean vblPending = false;
   private boolean nmiPending = false;
+  private boolean nmiRaise = false;
 
   public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette, Runnable nmi) {
     this.mapper = mapper;
@@ -2048,9 +2049,7 @@ public final class NesPpu {
     boolean wasNmiEnabled = isNmiEnabled();
     ctrl = data;
     if (!wasNmiEnabled && isNmiEnabled()) {
-      if (isVblEnabled()) {
-        nmi.run();
-      }
+      nmiRaise = true;
     } else {
       nmiPending = false;
     }
@@ -2179,6 +2178,10 @@ public final class NesPpu {
 
   public void tick() {
     Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this));
+    if (isVblEnabled() && nmiRaise) {
+      nmi.run();
+    }
+    nmiRaise = false;
     advanceDot();
   }
 
@@ -2303,9 +2306,7 @@ public final class NesPpu {
   }
 
   private void setVBlank3() {
-    if (nmiPending) {
-      nmi.run();
-    }
+    nmiRaise = nmiPending;
     nmiPending = false;
   }
 

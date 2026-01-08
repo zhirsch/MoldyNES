@@ -154,7 +154,8 @@ public class NesBus {
       return;
     }
     if (addr == 0x2002) {
-      throw new InvalidAddressWriteError(address, "PPUSTATUS");
+      log.info("Invalid write at address {}", "%04x".formatted(address));
+      return;
     }
     if (addr == 0x2003) {
       ppu.writeOamAddr(data);
