@@ -156,7 +156,9 @@ public final class NesApu {
       noise.length().suppressNextReset();
     }
     pulse1.length().tick();
+    pulse1.sweep().tick();
     pulse2.length().tick();
+    pulse2.sweep().tick();
     triangle.length().tick();
     noise.length().tick();
   }

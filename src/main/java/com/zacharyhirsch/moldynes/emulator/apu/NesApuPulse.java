@@ -18,6 +18,7 @@ public final class NesApuPulse {
   private final NesApuDelayedValue<Boolean> lengthCounterHalt;
   private final NesApuDelayedValue<Byte> lengthCounterValue;
   private final NesApuEnvelope envelope;
+  private final NesApuSweep sweep;
 
   private boolean enabled;
 
@@ -32,9 +33,14 @@ public final class NesApuPulse {
     this.lengthCounterHalt = new NesApuDelayedValue<>(clock, false);
     this.lengthCounterValue = new NesApuDelayedValue<>(clock, (byte) 0);
     this.envelope = new NesApuEnvelope();
+    this.sweep = new NesApuSweep(this);
     this.enabled = true;
     this.duty = 0;
     this.sequenceIndex = 0;
+  }
+
+  int getIndex() {
+    return index;
   }
 
   void enable(boolean enabled) {
@@ -48,8 +54,16 @@ public final class NesApuPulse {
     return length;
   }
 
+  NesApuTimer timer() {
+    return timer;
+  }
+
   NesApuEnvelope envelope() {
     return envelope;
+  }
+
+  NesApuSweep sweep() {
+    return sweep;
   }
 
   int getCurrentVolume() {
@@ -59,11 +73,13 @@ public final class NesApuPulse {
     if (SEQUENCES[duty][sequenceIndex] == 0) {
       return 0;
     }
-    // TODO: overflow from the sweep unit's adder is silencing the channel
     if (length.value() == 0) {
       return 0;
     }
-    if (timer.getRate() < 8) {
+    if (sweep.isMuting()) {
+      return 0;
+    }
+    if (timer.getPeriod() < 8) {
       return 0;
     }
     return envelope.getVolume();
@@ -95,20 +111,21 @@ public final class NesApuPulse {
   }
 
   public void writeSweep(byte data) {
-    if ((data & 0b1000_0000) != 0) {
-      throw new UnsupportedOperationException("pulse%d sweep".formatted(index));
-    }
+    sweep.setEnabled((data & 0b1000_0000) != 0);
+    sweep.setPeriod(((data & 0b0111_0000) >>> 4) + 1);
+    sweep.setNegate((data & 0b0000_1000) != 0);
+    sweep.setShift(data & 0b0000_0111);
   }
 
   public void writeTimerLo(byte data) {
-    timer.setRateLo(Byte.toUnsignedInt(data));
+    timer.setPeriodLo(Byte.toUnsignedInt(data));
   }
 
   public void writeTimerHi(byte data) {
     if (enabled) {
       lengthCounterValue.setValue((byte) ((data & 0b1111_1000) >>> 3), 1);
     }
-    timer.setRateHi(data & 0b0000_0111);
+    timer.setPeriodHi(data & 0b0000_0111);
     sequenceIndex = 0;
     envelope.start();
   }

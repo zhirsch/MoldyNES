@@ -2,38 +2,42 @@ package com.zacharyhirsch.moldynes.emulator.apu;
 
 final class NesApuTimer {
 
-  private int rate;
-  private int pendingRate;
+  private int period;
+  private int pendingPeriod;
   private int value;
 
   NesApuTimer() {
-    this.rate = 0;
+    this.period = 0;
     this.value = 0;
   }
 
   boolean tick() {
-    if (rate == 0) {
-      rate = pendingRate;
+    if (period == 0) {
+      period = pendingPeriod;
       return false;
     }
     value--;
     if (value <= 0) {
-      rate = pendingRate;
-      value = rate;
+      period = pendingPeriod;
+      value = period;
       return true;
     }
     return false;
   }
 
-  public int getRate() {
-    return rate;
+  public int getPeriod() {
+    return period;
   }
 
-  public void setRateLo(int lo) {
-    this.pendingRate = (pendingRate & 0b1111_1111_0000_0000) | (lo << 0);
+  public void setPeriodLo(int lo) {
+    this.pendingPeriod = (pendingPeriod & 0b1111_1111_0000_0000) | (lo << 0);
   }
 
-  public void setRateHi(int hi) {
-    this.pendingRate = (pendingRate & 0b0000_0000_1111_1111) | (hi << 8);
+  public void setPeriodHi(int hi) {
+    this.pendingPeriod = (pendingPeriod & 0b0000_0000_1111_1111) | (hi << 8);
+  }
+
+  public void setPeriod(int period) {
+    this.pendingPeriod = period;
   }
 }
