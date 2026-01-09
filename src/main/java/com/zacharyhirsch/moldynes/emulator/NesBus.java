@@ -35,7 +35,7 @@ public class NesBus {
     this.clock = clock;
     this.mapper = mapper;
     this.cpu = new NesCpu();
-    this.apu = new NesApu(clock, display, cpu);
+    this.apu = new NesApu(clock, display, this::read);
     this.ppu = new NesPpu(mapper, display, palette, cpu::nmi);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;

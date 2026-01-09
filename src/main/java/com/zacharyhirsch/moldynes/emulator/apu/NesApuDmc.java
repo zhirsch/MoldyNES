@@ -1,6 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
+import java.util.function.Function;
 
 public final class NesApuDmc {
 
@@ -8,7 +8,7 @@ public final class NesApuDmc {
     428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54,
   };
 
-  private final NesCpu cpu;
+  private final Function<Short, Byte> reader;
   private final NesApuTimer timer;
   private final NesApuIrq irq;
 
@@ -26,8 +26,8 @@ public final class NesApuDmc {
 
   private int outputLevel;
 
-  NesApuDmc(NesCpu cpu) {
-    this.cpu = cpu;
+  NesApuDmc(Function<Short, Byte> reader) {
+    this.reader = reader;
     this.timer = new NesApuTimer();
     this.irq = new NesApuIrq();
     this.loop = false;
@@ -66,35 +66,42 @@ public final class NesApuDmc {
     assert 0 <= outputLevel && outputLevel <= 127;
     if (timer.tick()) {
       if (!silence) {
-        if ((shift & 0b0000_0001) != 0) {
-          if (outputLevel <= 125) {
-            outputLevel += 2;
-          }
-        } else {
-          if (outputLevel >= 2) {
-            outputLevel -= 2;
-          }
-        }
+        updateOutputLevel();
       }
       shift = (byte) (shift >>> 1);
       bitsRemaining--;
       if (bitsRemaining == 0) {
-        bitsRemaining = 8;
-        if (buffer == null) {
-          silence = true;
-        } else {
-          silence = false;
-          shift = buffer;
-          buffer = null;
-        }
+        startNewOutputCycle();
       }
     }
     if (buffer == null && bytesRemaining > 0) {
-      cpu.startDmcDma((short) sampleAddress, buffer -> this.buffer = buffer);
-      buffer = 0;
-      incrementCurrentAddress();
-      decrementBytesRemaining();
+      fillBuffer();
     }
+  }
+
+  private void updateOutputLevel() {
+    int delta = (shift & 0b0000_0001) != 0 ? 2 : -2;
+    if (0 <= outputLevel + delta && outputLevel + delta <= 127) {
+      outputLevel += delta;
+    }
+  }
+
+  private void startNewOutputCycle() {
+    bitsRemaining = 8;
+    if (buffer == null) {
+      silence = true;
+    } else {
+      silence = false;
+      shift = buffer;
+      buffer = null;
+    }
+  }
+
+  private void fillBuffer() {
+    // TODO: stall the CPU
+    buffer = reader.apply((short) currentAddress);
+    incrementCurrentAddress();
+    decrementBytesRemaining();
   }
 
   public void writeControl(byte data) {
@@ -133,7 +140,7 @@ public final class NesApuDmc {
 
   private void decrementBytesRemaining() {
     bytesRemaining--;
-    if (bytesRemaining != 0) {
+    if (bytesRemaining > 0) {
       return;
     }
     if (loop) {

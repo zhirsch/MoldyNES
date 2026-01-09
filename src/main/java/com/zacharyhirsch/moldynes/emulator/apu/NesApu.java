@@ -1,9 +1,9 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
-import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.io.Display;
 import java.util.BitSet;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ public final class NesApu {
 
   private boolean pendingIrqInhibited;
 
-  public NesApu(NesClock clock, Display display, NesCpu cpu) {
+  public NesApu(NesClock clock, Display display, Function<Short, Byte> reader) {
     this.clock = clock;
     this.display = display;
     this.irq = new NesApuIrq();
@@ -37,7 +37,7 @@ public final class NesApu {
     this.pulse2 = new NesApuPulse(clock, 2);
     this.triangle = new NesApuTriangle(clock);
     this.noise = new NesApuNoise(clock);
-    this.dmc = new NesApuDmc(cpu);
+    this.dmc = new NesApuDmc(reader);
     this.mixer = new NesApuMixer(pulse1, pulse2, triangle, noise, dmc);
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;
@@ -101,6 +101,18 @@ public final class NesApu {
     if (29828 <= frameCounter && frameCounter <= 29830) {
       irq.set(true);
     }
+    if (frameCounter == 14913 || frameCounter == 29829) {
+      pulse1.length().suppressNextReset(true);
+      pulse2.length().suppressNextReset(true);
+      triangle.length().suppressNextReset(true);
+      noise.length().suppressNextReset(true);
+    }
+    if (frameCounter == 14914 || frameCounter == 29830) {
+      pulse1.length().suppressNextReset(false);
+      pulse2.length().suppressNextReset(false);
+      triangle.length().suppressNextReset(false);
+      noise.length().suppressNextReset(false);
+    }
     if (frameCounter == 29830) {
       frameCounter = 0;
     }
@@ -114,6 +126,18 @@ public final class NesApu {
       case 22371 -> tickQuarterFrame();
       case 29829 -> {}
       case 37281 -> tickHalfFrame();
+    }
+    if (frameCounter == 14913 || frameCounter == 37281) {
+      pulse1.length().suppressNextReset(true);
+      pulse2.length().suppressNextReset(true);
+      triangle.length().suppressNextReset(true);
+      noise.length().suppressNextReset(true);
+    }
+    if (frameCounter == 14914 || frameCounter == 37282) {
+      pulse1.length().suppressNextReset(false);
+      pulse2.length().suppressNextReset(false);
+      triangle.length().suppressNextReset(false);
+      noise.length().suppressNextReset(false);
     }
     if (frameCounter == 37282) {
       frameCounter = 0;
@@ -143,18 +167,6 @@ public final class NesApu {
   }
 
   private void clockLength() {
-    if (pulse1.length().value() > 0) {
-      pulse1.length().suppressNextReset();
-    }
-    if (pulse2.length().value() > 0) {
-      pulse2.length().suppressNextReset();
-    }
-    if (triangle.length().value() > 0) {
-      triangle.length().suppressNextReset();
-    }
-    if (noise.length().value() > 0) {
-      noise.length().suppressNextReset();
-    }
     pulse1.length().tick();
     pulse2.length().tick();
     triangle.length().tick();

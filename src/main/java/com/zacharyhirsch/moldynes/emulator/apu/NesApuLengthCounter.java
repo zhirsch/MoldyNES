@@ -75,8 +75,8 @@ final class NesApuLengthCounter {
     value = 0;
   }
 
-  void suppressNextReset() {
-    suppressNextReset = true;
+  void suppressNextReset(boolean suppressNextReset) {
+    this.suppressNextReset = value() > 0 && suppressNextReset;
   }
 
   void reset(int value) {
