@@ -2394,6 +2394,9 @@ public final class NesPpu {
     if (!isSpriteRenderingEnabled()) {
       return new NesPpuSpritePixel(false, 0, 0, palette.get(getPaletteIndex(0)));
     }
+    if (scanline == 0) {
+      return new NesPpuSpritePixel(false, 0, 0, palette.get(getPaletteIndex(0)));
+    }
     if (!isSpriteShowInLeftMost8Pixels() && 0 <= pixel && pixel <= 7) {
       return new NesPpuSpritePixel(false, 0, 0, palette.get(getPaletteIndex(0)));
     }
