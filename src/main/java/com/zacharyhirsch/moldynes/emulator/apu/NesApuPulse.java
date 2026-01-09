@@ -125,7 +125,7 @@ public final class NesApuPulse {
     if (enabled) {
       lengthCounterValue.setValue((byte) ((data & 0b1111_1000) >>> 3), 1);
     }
-    timer.setPeriodHi(data & 0b0000_0111);
+    timer.setPeriodHi(data & 0b0000_0111, 0);
     sequenceIndex = 0;
     envelope.start();
   }

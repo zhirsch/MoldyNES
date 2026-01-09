@@ -131,6 +131,7 @@ public final class NesApu {
   private void clockEnvelopesAndLinear() {
     pulse1.envelope().tick();
     pulse2.envelope().tick();
+    triangle.linear().tick();
   }
 
   private void clockLengthAndSweep() {

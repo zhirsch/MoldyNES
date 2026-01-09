@@ -33,8 +33,8 @@ final class NesApuTimer {
     this.pendingPeriod = (pendingPeriod & 0b1111_1111_0000_0000) | (lo << 0);
   }
 
-  public void setPeriodHi(int hi) {
-    this.pendingPeriod = (pendingPeriod & 0b0000_0000_1111_1111) | (hi << 8);
+  public void setPeriodHi(int hi, int offset) {
+    this.pendingPeriod = ((pendingPeriod & 0b0000_0000_1111_1111) | (hi << 8)) + offset;
   }
 
   public void setPeriod(int period) {

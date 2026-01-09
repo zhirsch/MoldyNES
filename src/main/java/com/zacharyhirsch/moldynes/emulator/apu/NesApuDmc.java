@@ -109,7 +109,7 @@ public final class NesApuDmc {
     loop = (data & 0b0100_0000) != 0;
     Rate rate = RATES.get(data & 0b0000_1111);
     timer.setPeriodLo(rate.lo());
-    timer.setPeriodHi(rate.hi());
+    timer.setPeriodHi(rate.hi(), 0);
     log.trace("APU [dmc] rate set to {} cycles", rate);
   }
 

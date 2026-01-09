@@ -3,11 +3,15 @@ package com.zacharyhirsch.moldynes.emulator.apu;
 // https://www.nesdev.org/wiki/APU_Mixer
 final class NesApuMixer {
 
+  private static final double FPS = 60.0988;
+  private static final int SAMPLE_RATE = (int) (341 * 262 * FPS / 3);
+
   private final NesApuPulse pulse1;
   private final NesApuPulse pulse2;
   private final NesApuTriangle triangle;
   private final NesApuNoise noise;
   private final NesApuDmc dmc;
+  private final NesApuFilter filter;
 
   NesApuMixer(
       NesApuPulse pulse1,
@@ -20,10 +24,11 @@ final class NesApuMixer {
     this.triangle = triangle;
     this.noise = noise;
     this.dmc = dmc;
+    this.filter = new NesApuFilter(SAMPLE_RATE);
   }
 
   float mix() {
-    return Math.clamp(mixPulseChannels() + mixTndChannels(), 0.0f, 1.0f);
+    return (float) filter.process(Math.clamp(mixPulseChannels() + mixTndChannels(), 0.0, 1.0));
   }
 
   private float mixPulseChannels() {
