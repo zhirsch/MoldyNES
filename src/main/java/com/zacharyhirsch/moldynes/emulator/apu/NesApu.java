@@ -120,21 +120,28 @@ public final class NesApu {
   }
 
   private void tickQuarterFrame() {
-    clockEnvelopesAndLinear();
+    clockEnvelope();
+    clockLinear();
   }
 
   private void tickHalfFrame() {
-    clockEnvelopesAndLinear();
-    clockLengthAndSweep();
+    clockEnvelope();
+    clockLinear();
+    clockLength();
+    clockSweep();
   }
 
-  private void clockEnvelopesAndLinear() {
+  private void clockEnvelope() {
     pulse1.envelope().tick();
     pulse2.envelope().tick();
+    noise.envelope().tick();
+  }
+
+  private void clockLinear() {
     triangle.linear().tick();
   }
 
-  private void clockLengthAndSweep() {
+  private void clockLength() {
     if (pulse1.length().value() > 0) {
       pulse1.length().suppressNextReset();
     }
@@ -148,11 +155,14 @@ public final class NesApu {
       noise.length().suppressNextReset();
     }
     pulse1.length().tick();
-    pulse1.sweep().tick();
     pulse2.length().tick();
-    pulse2.sweep().tick();
     triangle.length().tick();
     noise.length().tick();
+  }
+
+  private void clockSweep() {
+    pulse1.sweep().tick();
+    pulse2.sweep().tick();
   }
 
   private boolean handleDelayedFrameCounterReset() {

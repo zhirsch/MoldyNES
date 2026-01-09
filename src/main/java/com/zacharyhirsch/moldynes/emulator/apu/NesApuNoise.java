@@ -1,28 +1,33 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
+import java.util.BitSet;
 
 public final class NesApuNoise {
 
-  private final NesClock clock;
+  private static final int[] PERIODS = {
+    4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068,
+  };
+
   private final NesApuLengthCounter length;
+  private final NesApuDelayedValue<Boolean> lengthCounterHalt;
+  private final NesApuDelayedValue<Byte> lengthCounterValue;
+  private final NesApuEnvelope envelope;
+  private final NesApuTimer timer;
 
   private boolean enabled;
-
-  private long lengthCounterHaltDelay;
-  private boolean pendingLengthCounterHalt;
-
-  private long lengthCounterValueDelay;
-  private byte pendingLengthCounterValue;
+  private boolean mode;
+  private int shift;
 
   NesApuNoise(NesClock clock) {
-    this.clock = clock;
     this.length = new NesApuLengthCounter("noise");
+    this.lengthCounterHalt = new NesApuDelayedValue<>(clock, false);
+    this.lengthCounterValue = new NesApuDelayedValue<>(clock, (byte) 0);
+    this.envelope = new NesApuEnvelope();
+    this.timer = new NesApuTimer();
     this.enabled = true;
-    this.lengthCounterHaltDelay = 0;
-    this.pendingLengthCounterHalt = false;
-    this.lengthCounterValueDelay = 0;
-    this.pendingLengthCounterValue = 0;
+    this.mode = false;
+    this.shift = 1;
   }
 
   void enable(boolean enabled) {
@@ -36,30 +41,54 @@ public final class NesApuNoise {
     return length;
   }
 
+  NesApuEnvelope envelope() {
+    return envelope;
+  }
+
   int getCurrentVolume() {
-    return 0;
+    if ((shift & 0b0000_0001) != 0) {
+      return 0;
+    }
+    if (length.value() == 0) {
+      return 0;
+    }
+    return envelope.getVolume();
   }
 
   void tick() {
-    if (clock.getCycle() == lengthCounterHaltDelay) {
-      length.setHalted(pendingLengthCounterHalt);
+    if (lengthCounterHalt.tick()) {
+      length.setHalted(lengthCounterHalt.getValue());
     }
-    if (clock.getCycle() == lengthCounterValueDelay) {
-      length.reset(pendingLengthCounterValue);
+    if (lengthCounterValue.tick()) {
+      length.reset(lengthCounterValue.getValue());
+    }
+    if (timer.tick()) {
+      int feedback = bit(shift, 0) ^ bit(shift, mode ? 6 : 1);
+      shift >>>= 1;
+      shift = (shift & 0b0011_1111_1111_1111) | (feedback << 14);
     }
   }
 
   public void writeControl(byte data) {
-    lengthCounterHaltDelay = clock.getCycle() + 1;
-    pendingLengthCounterHalt = (data & 0b0010_0000) != 0;
+    lengthCounterHalt.setValue((data & 0b0010_0000) != 0, 1);
+    envelope.setLoop((data & 0b0010_0000) != 0);
+    envelope.setConstant((data & 0b0001_0000) != 0);
+    envelope.setEnvelope(data & 0b0000_1111);
   }
 
-  public void writeMode(byte data) {}
+  public void writeMode(byte data) {
+    mode = (data & 0b1000_0000) != 0;
+    timer.setPeriod(PERIODS[(data & 0b0000_1111)]);
+  }
 
   public void writeLength(byte data) {
     if (enabled) {
-      lengthCounterValueDelay = clock.getCycle() + 1;
-      pendingLengthCounterValue = (byte) ((data & 0b1111_1000) >>> 3);
+      lengthCounterValue.setValue((byte) ((data & 0b1111_1000) >>> 3), 1);
     }
+    envelope.start();
+  }
+
+  private static int bit(int value, int bit) {
+    return (short) ((value & (1 << bit)) >>> bit);
   }
 }
