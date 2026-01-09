@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
+import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.io.Display;
 import java.util.BitSet;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ public final class NesApu {
 
   private boolean pendingIrqInhibited;
 
-  public NesApu(NesClock clock, Display display) {
+  public NesApu(NesClock clock, Display display, NesCpu cpu) {
     this.clock = clock;
     this.display = display;
     this.irq = new NesApuIrq();
@@ -36,7 +37,7 @@ public final class NesApu {
     this.pulse2 = new NesApuPulse(clock, 2);
     this.triangle = new NesApuTriangle(clock);
     this.noise = new NesApuNoise(clock);
-    this.dmc = new NesApuDmc();
+    this.dmc = new NesApuDmc(cpu);
     this.mixer = new NesApuMixer(pulse1, pulse2, triangle, noise, dmc);
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;

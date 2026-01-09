@@ -1,5 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
+import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,5 +125,9 @@ public final class NesCpu {
 
   public void startOamDma(byte address) {
     cycle = new NesCpuOamDma(address, cycle);
+  }
+
+  public void startDmcDma(short address, Consumer<Byte> callback) {
+    cycle = new NesCpuDmcDma(address, callback, cycle);
   }
 }

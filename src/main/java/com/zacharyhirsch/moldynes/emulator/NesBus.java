@@ -18,8 +18,8 @@ public class NesBus {
 
   private final NesClock clock;
   private final NesMapper mapper;
-  private final NesApu apu;
   private final NesCpu cpu;
+  private final NesApu apu;
   private final NesPpu ppu;
   private final NesJoypad joypad1;
   private final NesJoypad joypad2;
@@ -34,8 +34,8 @@ public class NesBus {
       NesJoypad joypad2) {
     this.clock = clock;
     this.mapper = mapper;
-    this.apu = new NesApu(clock, display);
     this.cpu = new NesCpu();
+    this.apu = new NesApu(clock, display, cpu);
     this.ppu = new NesPpu(mapper, display, palette, cpu::nmi);
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
@@ -82,7 +82,8 @@ public class NesBus {
       return read((short) (addr & 0b0000_0111_1111_1111));
     }
     if (addr == 0x2000) {
-      throw new InvalidAddressReadError(address, "PPUCTRL");
+      log.info("Invalid read at address {}", "%04x".formatted(address));
+      return 0;
     }
     if (addr == 0x2001) {
       return ppu.readMask();
@@ -91,16 +92,19 @@ public class NesBus {
       return ppu.readStatus();
     }
     if (addr == 0x2003) {
-      throw new InvalidAddressReadError(address, "OAMADDR");
+      log.info("Invalid read at address {}", "%04x".formatted(address));
+      return 0;
     }
     if (addr == 0x2004) {
       return ppu.readOamData();
     }
     if (addr == 0x2005) {
-      throw new InvalidAddressReadError(address, "PPUSCROLL");
+      log.info("Invalid read at address {}", "%04x".formatted(address));
+      return 0;
     }
     if (addr == 0x2006) {
-      throw new InvalidAddressReadError(address, "PPUADDR");
+      log.info("Invalid read at address {}", "%04x".formatted(address));
+      return 0;
     }
     if (addr == 0x2007) {
       return ppu.readData();
@@ -122,7 +126,8 @@ public class NesBus {
       return joypad2.read();
     }
     if (0x4018 <= addr && addr <= 0x401f) {
-      throw new InvalidAddressReadError(address);
+      log.info("Invalid read at address {}", "%04x".formatted(address));
+      return 0;
     }
     if (0x4020 <= addr && addr <= 0xffff) {
       return mapper.read((short) addr, null);
