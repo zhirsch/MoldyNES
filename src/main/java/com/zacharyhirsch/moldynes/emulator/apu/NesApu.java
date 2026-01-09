@@ -5,7 +5,6 @@ import com.zacharyhirsch.moldynes.emulator.io.Display;
 import java.util.BitSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 public final class NesApu {
 
@@ -29,9 +28,6 @@ public final class NesApu {
 
   private boolean pendingIrqInhibited;
 
-  private long nextSampleAt;
-  private long nextSampleIncrement;
-
   public NesApu(NesClock clock, Display display) {
     this.clock = clock;
     this.display = display;
@@ -47,9 +43,7 @@ public final class NesApu {
     this.mode = 0;
     this.pendingMode = 0;
     this.pendingIrqInhibited = false;
-    this.nextSampleAt = clock.getCycle() + 40;
-    this.nextSampleIncrement = 40;
-    MDC.put("frameCounter", "%5d".formatted(0));
+    //    MDC.put("frameCounter", "%5d".formatted(0));
   }
 
   public NesApuPulse pulse1() {
@@ -77,7 +71,7 @@ public final class NesApu {
   }
 
   public void tick() {
-    MDC.put("frameCounter", "%5d".formatted(frameCounter));
+    //    MDC.put("frameCounter", "%5d".formatted(frameCounter));
     if (!handleDelayedFrameCounterReset()) {
       if (mode == 0) {
         tickMode0();
@@ -92,49 +86,46 @@ public final class NesApu {
     noise.tick();
     dmc.tick();
 
-    if (nextSampleAt == clock.getCycle()) {
-      display.play(mixer.mix());
-      nextSampleIncrement = nextSampleIncrement == 41 ? 40 : 41;
-      nextSampleAt = clock.getCycle() + nextSampleIncrement;
-    }
+    display.play(mixer.mix());
   }
 
+  @SuppressWarnings("DuplicateBranchesInSwitch")
   private void tickMode0() {
     switch (frameCounter) {
-      case 7457 -> clockEnvelopesAndLinear();
-      case 14913 -> {
-        clockEnvelopesAndLinear();
-        clockLengthAndSweep();
-      }
-      case 22371 -> clockEnvelopesAndLinear();
-      case 29828 -> irq.set(true);
-      case 29829 -> {
-        clockEnvelopesAndLinear();
-        clockLengthAndSweep();
-        irq.set(true);
-      }
-      case 29830 -> {
-        irq.set(true);
-        frameCounter = 0;
-      }
+      case 7457 -> tickQuarterFrame();
+      case 14913 -> tickHalfFrame();
+      case 22371 -> tickQuarterFrame();
+      case 29829 -> tickHalfFrame();
+    }
+    if (29828 <= frameCounter && frameCounter <= 29830) {
+      irq.set(true);
+    }
+    if (frameCounter == 29830) {
+      frameCounter = 0;
     }
   }
 
+  @SuppressWarnings("DuplicateBranchesInSwitch")
   private void tickMode1() {
     switch (frameCounter) {
-      case 7457 -> clockEnvelopesAndLinear();
-      case 14913 -> {
-        clockEnvelopesAndLinear();
-        clockLengthAndSweep();
-      }
-      case 22371 -> clockEnvelopesAndLinear();
+      case 7457 -> tickQuarterFrame();
+      case 14913 -> tickHalfFrame();
+      case 22371 -> tickQuarterFrame();
       case 29829 -> {}
-      case 37281 -> {
-        clockEnvelopesAndLinear();
-        clockLengthAndSweep();
-      }
-      case 37282 -> frameCounter = 0;
+      case 37281 -> tickHalfFrame();
     }
+    if (frameCounter == 37282) {
+      frameCounter = 0;
+    }
+  }
+
+  private void tickQuarterFrame() {
+    clockEnvelopesAndLinear();
+  }
+
+  private void tickHalfFrame() {
+    clockEnvelopesAndLinear();
+    clockLengthAndSweep();
   }
 
   private void clockEnvelopesAndLinear() {
@@ -174,8 +165,8 @@ public final class NesApu {
         triangle.length().tick();
         noise.length().tick();
       }
-      MDC.put("frameCounter", "%5d".formatted(frameCounter));
-      log.trace("APU frame counter reset, mode is now {}", mode);
+      //      MDC.put("frameCounter", "%5d".formatted(frameCounter));
+      //      log.trace("APU frame counter reset, mode is now {}", mode);
       return true;
     }
     return false;

@@ -2024,11 +2024,9 @@ public final class NesPpu {
   private final NesPpuPatternByte patternLoByte = new NesPpuPatternByte();
   private final NesPpuPatternByte patternHiByte = new NesPpuPatternByte();
 
-  private final byte[] spriteOamIndex = new byte[8];
-  private final byte[] spriteAttributes = new byte[8];
+  private final NesPpuSprite[] sprites = new NesPpuSprite[8];
   private final byte[] spritePatternLoBytes = new byte[8];
   private final byte[] spritePatternHiBytes = new byte[8];
-  private final byte[] spriteXOffsets = new byte[8];
 
   private boolean vblPending = false;
   private boolean nmiPending = false;
@@ -2228,7 +2226,6 @@ public final class NesPpu {
 
   private void drawFrame() {
     display.draw(frame);
-    Arrays.fill(frame, (byte) 0);
   }
 
   private int getPaletteAddress(short address) {
@@ -2401,21 +2398,23 @@ public final class NesPpu {
       return new NesPpuSpritePixel(false, 0, 0, palette.get(getPaletteIndex(0)));
     }
     for (int i = 0; i < 8; i++) {
-      int x = Byte.toUnsignedInt(spriteXOffsets[i]);
+      NesPpuSprite sprite = sprites[i];
+      int x = sprite.x();
       if (x <= pixel && pixel < x + 8) {
-        int pattern = getSpritePattern(i, pixel - x);
+        int pattern = getSpritePattern(sprite, i, pixel - x);
         if (pattern != 0) {
-          boolean sprite0 = spriteOamIndex[i] == 0;
-          NesPpuColor[] colors = getPixelColors(0x10, spriteAttributes[i] & 0b0000_0011);
-          return new NesPpuSpritePixel(sprite0, pattern, getSpritePriority(i), colors[pattern]);
+          boolean sprite0 = sprite.index() == 0;
+          NesPpuColor[] colors = getPixelColors(0x10, sprite.attributes() & 0b0000_0011);
+          return new NesPpuSpritePixel(
+              sprite0, pattern, getSpritePriority(sprite), colors[pattern]);
         }
       }
     }
     return new NesPpuSpritePixel(false, 0, 0, palette.get(getPaletteIndex(0)));
   }
 
-  private int getSpritePattern(int spriteIndex, int px) {
-    int bitIndex = isFlipSpriteHorizontal(spriteIndex) ? 7 - px : px;
+  private int getSpritePattern(NesPpuSprite sprite, int spriteIndex, int px) {
+    int bitIndex = isFlipSpriteHorizontal(sprite) ? 7 - px : px;
     int shift = 7 - bitIndex;
     int patternLo = (spritePatternLoBytes[spriteIndex] >>> shift) & 1;
     int patternHi = (spritePatternHiBytes[spriteIndex] >>> shift) & 1;
@@ -2634,9 +2633,7 @@ public final class NesPpu {
     NesPpuSprite sprite = oam.sprite(index);
     spritePatternHiBytes[index] = fetchSpritePatternByte(sprite, 8);
 
-    spriteOamIndex[index] = (byte) sprite.index();
-    spriteAttributes[index] = (byte) sprite.attributes();
-    spriteXOffsets[index] = (byte) sprite.x();
+    sprites[index] = sprite;
   }
 
   private byte fetchPatternByte(int offset) {
@@ -2681,12 +2678,12 @@ public final class NesPpu {
     return mapper.read((short) address, ram);
   }
 
-  private int getSpritePriority(int spriteIndex) {
-    return (spriteAttributes[spriteIndex] & 0b0010_0000) >>> 5;
+  private int getSpritePriority(NesPpuSprite sprite) {
+    return (sprite.attributes() & 0b0010_0000) >>> 5;
   }
 
-  private boolean isFlipSpriteHorizontal(int spriteIndex) {
-    return (spriteAttributes[spriteIndex] & 0b0100_0000) != 0;
+  private boolean isFlipSpriteHorizontal(NesPpuSprite sprite) {
+    return (sprite.attributes() & 0b0100_0000) != 0;
   }
 
   private boolean isFlipSpriteVertical(NesPpuSprite sprite) {

@@ -4,5 +4,5 @@ public interface Display {
 
   void draw(byte[] frame);
 
-  void play(double sample);
+  void play(float sample);
 }

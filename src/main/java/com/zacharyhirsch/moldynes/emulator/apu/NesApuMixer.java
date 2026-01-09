@@ -22,26 +22,26 @@ final class NesApuMixer {
     this.dmc = dmc;
   }
 
-  double mix() {
-    return Math.clamp(mixPulseChannels() + mixTndChannels(), 0.0, 1.0);
+  float mix() {
+    return Math.clamp(mixPulseChannels() + mixTndChannels(), 0.0f, 1.0f);
   }
 
-  private double mixPulseChannels() {
+  private float mixPulseChannels() {
     int p1 = pulse1.getCurrentVolume();
     int p2 = pulse2.getCurrentVolume();
     if (p1 + p2 == 0) {
       return 0;
     }
-    return 95.88 / (100 + (8128. / (p1 + p2)));
+    return 95.88f / (100 + (8128.0f / (p1 + p2)));
   }
 
-  private double mixTndChannels() {
+  private float mixTndChannels() {
     int t = triangle.getCurrentVolume();
     int n = noise.getCurrentVolume();
     int d = dmc.getCurrentVolume();
     if (t + n + d == 0) {
       return 0;
     }
-    return 159.79 / (100 + 1 / ((t / 8227.) + (n / 12241.) + (d / 22638.)));
+    return 159.79f / (100 + 1 / ((t / 8227.0f) + (n / 12241.0f) + (d / 22638.0f)));
   }
 }

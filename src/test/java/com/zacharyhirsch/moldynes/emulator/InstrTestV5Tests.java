@@ -19,7 +19,7 @@ public class InstrTestV5Tests {
     public void draw(byte[] frame) {}
 
     @Override
-    public void play(double sample) {}
+    public void play(float sample) {}
   }
 
   private static void runTest(String path) {

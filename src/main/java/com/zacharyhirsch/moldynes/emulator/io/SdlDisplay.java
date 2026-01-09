@@ -7,6 +7,8 @@ import static io.github.libsdl4j.api.audio.SdlAudio.SDL_CloseAudioDevice;
 import static io.github.libsdl4j.api.audio.SdlAudio.SDL_OpenAudioDevice;
 import static io.github.libsdl4j.api.audio.SdlAudio.SDL_PauseAudioDevice;
 import static io.github.libsdl4j.api.audio.SdlAudio.SDL_QueueAudio;
+import static io.github.libsdl4j.api.audio.SdlAudioConst.AUDIO_F32SYS;
+import static io.github.libsdl4j.api.audio.SdlAudioConst.SDL_AUDIO_ALLOW_ANY_CHANGE;
 import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYDOWN;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYUP;
@@ -28,28 +30,32 @@ import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_W;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_X;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_Z;
 import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.SDL_PIXELFORMAT_RGB24;
-import static io.github.libsdl4j.api.render.SDL_TextureAccess.SDL_TEXTUREACCESS_STATIC;
+import static io.github.libsdl4j.api.render.SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
+import static io.github.libsdl4j.api.render.SDL_TextureAccess.SDL_TEXTUREACCESS_STREAMING;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateRenderer;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateTexture;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateWindowAndRenderer;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyRenderer;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_LockTexture;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderCopy;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderDrawRect;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderSetLogicalSize;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderSetVSync;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_SetRenderDrawColor;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_UpdateTexture;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_UnlockTexture;
+import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
+import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Floats;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
+import com.zacharyhirsch.moldynes.emulator.NesClock;
 import io.github.libsdl4j.api.audio.SDL_AudioDeviceID;
 import io.github.libsdl4j.api.audio.SDL_AudioFormat;
 import io.github.libsdl4j.api.audio.SDL_AudioSpec;
-import io.github.libsdl4j.api.audio.SdlAudioConst;
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.event.events.SDL_KeyboardEvent;
 import io.github.libsdl4j.api.render.SDL_Renderer;
@@ -60,18 +66,15 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class SdlDisplay implements Closeable, Display {
-
-  private static final Logger log = LoggerFactory.getLogger(SdlDisplay.class);
 
   private static final int W = 256;
   private static final int H = 240;
   private static final int SCALE = 3;
   private static final double FPS = 60.0988;
-  private static final Duration FRAME_NS = Duration.ofNanos((long) (1_000_000_000.0 / FPS));
+  private static final Duration FRAME_DURATION = Duration.ofNanos((long) (1_000_000_000 / FPS));
+  private static final int CPU_CYCLES_PER_SECOND = (int) (341 * 262 * FPS / 3);
 
   private static final Map<Integer, NesJoypad.Button> JOYPAD1_KEYS =
       ImmutableMap.<Integer, NesJoypad.Button>builder()
@@ -97,6 +100,7 @@ public final class SdlDisplay implements Closeable, Display {
           .put(SDLK_SLASH, NesJoypad.Button.BUTTON_B)
           .build();
 
+  private final NesClock clock;
   private final NesJoypad joypad1;
   private final NesJoypad joypad2;
   private final SDL_Window window;
@@ -105,12 +109,13 @@ public final class SdlDisplay implements Closeable, Display {
 
   private final ArrayList<Float> audioBuffer;
   private final SDL_AudioDeviceID audioDeviceId;
-
-  private Instant nextFrameAt = Instant.now();
-
+  
+  private long lastFrameCycle = 0;
+  private Instant lastFrameTime = null;
   public boolean quit = false;
 
-  public SdlDisplay(NesJoypad joypad1, NesJoypad joypad2) {
+  public SdlDisplay(NesClock clock, NesJoypad joypad1, NesJoypad joypad2) {
+    this.clock = clock;
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
 
@@ -118,20 +123,21 @@ public final class SdlDisplay implements Closeable, Display {
       throw new IllegalStateException("Unable to initialize SDL library: " + SDL_GetError());
     }
 
-    SDL_Window.Ref windowRef = new SDL_Window.Ref();
-    SDL_Renderer.Ref rendererRef = new SDL_Renderer.Ref();
-    int result = SDL_CreateWindowAndRenderer(W * SCALE, H * SCALE, 0, windowRef, rendererRef);
-    if (result != 0) {
-      throw new IllegalStateException("Unable to create window and renderer: " + SDL_GetError());
+    window = SDL_CreateWindow("MoldyNES", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, W * SCALE, H * SCALE, 0);
+    if (window == null) {
+      throw new IllegalStateException("Unable to create window: " + SDL_GetError());
     }
-    window = windowRef.getWindow();
-    renderer = rendererRef.getRenderer();
-
-    SDL_RenderSetVSync(renderer, 1);
-    SDL_RenderSetLogicalSize(renderer, W, H);
-    SDL_SetRenderDrawColor(renderer, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff);
-
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STATIC, W, H);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == null) {
+      throw new IllegalStateException("Unable to create renderer: " + SDL_GetError());
+    }
+    if (SDL_RenderSetLogicalSize(renderer, W, H) != 0) {
+      throw new IllegalStateException("Unable to set logical size: " + SDL_GetError());
+    }
+    if (SDL_SetRenderDrawColor(renderer, (byte) 0x00, (byte) 0xff, (byte) 0x00, (byte) 0xff) != 0) {
+      throw new IllegalStateException("Unable to set draw color: " + SDL_GetError());
+    }
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING, W, H);
     if (texture == null) {
       throw new IllegalStateException("Unable to create SDL texture: " + SDL_GetError());
     }
@@ -139,14 +145,13 @@ public final class SdlDisplay implements Closeable, Display {
     this.audioBuffer = new ArrayList<>();
 
     SDL_AudioSpec desired = new SDL_AudioSpec();
-    desired.freq = 44100;
-    desired.format = new SDL_AudioFormat(SdlAudioConst.AUDIO_F32SYS);
+    desired.freq = CPU_CYCLES_PER_SECOND;
+    desired.format = new SDL_AudioFormat(AUDIO_F32SYS);
     desired.channels = 1;
-    desired.samples = 512;
+    desired.samples = 1024;
     desired.callback = null;
     desired.userdata = null;
-    SDL_AudioSpec obtained = new SDL_AudioSpec();
-    this.audioDeviceId = SDL_OpenAudioDevice(null, 0, desired, obtained, 1);
+    this.audioDeviceId = SDL_OpenAudioDevice(null, 0, desired, null, SDL_AUDIO_ALLOW_ANY_CHANGE);
     if (audioDeviceId == null || audioDeviceId.intValue() == 0) {
       throw new IllegalStateException("Unable to open audio device: " + SDL_GetError());
     }
@@ -155,48 +160,72 @@ public final class SdlDisplay implements Closeable, Display {
 
   @Override
   public void draw(byte[] frame) {
-    outputFrame(frame);
-
-    outputAudio(Floats.toArray(audioBuffer));
-    audioBuffer.clear();
-
+    delay();
     pump();
+    outputGraphics(frame);
+    outputAudio();
   }
 
   @Override
-  public void play(double sample) {
-    audioBuffer.add((float) sample);
+  public void play(float sample) {
+    audioBuffer.add(sample);
   }
 
-  private void outputFrame(byte[] frame) {
-    Pointer ptr = new Memory(frame.length);
-    ptr.write(0, frame, 0, frame.length);
-
-    SDL_UpdateTexture(texture, null, ptr, 3 * W);
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, texture, null, null);
+  public void setError() {
+    if (SDL_SetRenderDrawColor(renderer, (byte) 0xff, (byte) 0x00, (byte) 0x00, (byte) 0xff) != 0) {
+      throw new IllegalStateException("Unable to set draw color: " + SDL_GetError());
+    }
+    if (SDL_RenderDrawRect(renderer, null) != 0) {
+      throw new IllegalStateException("Unable to draw rectangle: " + SDL_GetError());
+    }
     SDL_RenderPresent(renderer);
   }
 
-  private void outputAudio(float[] samples) {
+  private void delay() {
+    if (lastFrameTime != null && lastFrameCycle != 0) {
+      Duration elapsed = Duration.between(lastFrameTime, Instant.now());
+      try {
+        Thread.sleep(FRAME_DURATION.minus(elapsed));
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    lastFrameTime = Instant.now();
+    lastFrameCycle = clock.getCycle();
+  }
+
+  public void pump() {
+    SDL_Event event = new SDL_Event();
+    while (SDL_PollEvent(event) == 1) {
+      dispatch(event);
+    }
+  }
+
+  private void outputGraphics(byte[] frame) {
+    var pixels = new PointerByReference();
+    if (SDL_LockTexture(texture, null, pixels, new IntByReference()) != 0) {
+      throw new IllegalStateException("Unable to lock texture: " + SDL_GetError());
+    }
+    pixels.getValue().write(0, frame, 0, frame.length);
+    SDL_UnlockTexture(texture);
+    if (SDL_RenderCopy(renderer, texture, null, null) != 0) {
+      throw new IllegalStateException("Unable to render texture: " + SDL_GetError());
+    }
+    SDL_RenderPresent(renderer);
+  }
+
+  private void outputAudio() {
+    float[] samples = Floats.toArray(audioBuffer);
+    audioBuffer.clear();
+    if (samples.length == 0) {
+      return;
+    }
     Pointer ptr = new Memory((long) Float.BYTES * samples.length);
     for (int i = 0; i < samples.length; i++) {
       ptr.setFloat((long) i * Float.BYTES, samples[i]);
     }
-    SDL_QueueAudio(audioDeviceId, ptr, samples.length * Float.BYTES);
-  }
-
-  public void setError() {
-    SDL_SetRenderDrawColor(renderer, (byte) 0xff, (byte) 0x00, (byte) 0x00, (byte) 0xff);
-    SDL_RenderDrawRect(renderer, null);
-    SDL_RenderPresent(renderer);
-  }
-
-  public void pump() {
-    nextFrameAt = nextFrameAt.plus(FRAME_NS);
-    SDL_Event event = new SDL_Event();
-    while (SDL_PollEvent(event) == 1 || nextFrameAt.isAfter(Instant.now())) {
-      dispatch(event);
+    if (SDL_QueueAudio(audioDeviceId, ptr, samples.length * Float.BYTES) != 0) {
+      throw new IllegalStateException("Unable to queue audio: " + SDL_GetError());
     }
   }
 
