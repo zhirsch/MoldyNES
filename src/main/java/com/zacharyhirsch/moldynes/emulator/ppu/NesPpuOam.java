@@ -47,7 +47,7 @@ final class NesPpuOam {
         indices[index],
         Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 0]),
         Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 1]),
-        Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 2]),
+        secondaryOamBuffer[4 * index + 2],
         Byte.toUnsignedInt(secondaryOamBuffer[4 * index + 3]));
   }
 
