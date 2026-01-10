@@ -21,7 +21,7 @@ final class NromNesMapper implements NesMapper {
   }
 
   @Override
-  public byte read(short address, byte[] ppuRam) {
+  public byte readCpu(short address, byte[] ppuRam) {
     int addr = Short.toUnsignedInt(address);
     if (0x0000 <= addr && addr <= 0x1fff) {
       return rom.chr().read(addr, 0);
@@ -52,7 +52,12 @@ final class NromNesMapper implements NesMapper {
   }
 
   @Override
-  public void write(short address, byte[] ppuRam, byte data) {
+  public byte readPpu(short address, byte[] ppuRam) {
+    return readCpu(address, ppuRam);
+  }
+
+  @Override
+  public void writeCpu(short address, byte[] ppuRam, byte data) {
     int addr = Short.toUnsignedInt(address);
     if (0x0000 <= addr && addr <= 0x1fff) {
       rom.chr().value()[addr] = data;
@@ -74,6 +79,11 @@ final class NromNesMapper implements NesMapper {
       return;
     }
     throw new InvalidAddressWriteError(address);
+  }
+
+  @Override
+  public void writePpu(short address, byte[] ppuRam, byte data) {
+    writeCpu(address, ppuRam, data);
   }
 
   private short mirror(short address) {

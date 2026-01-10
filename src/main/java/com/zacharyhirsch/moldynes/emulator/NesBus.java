@@ -130,7 +130,7 @@ public class NesBus {
       return 0;
     }
     if (0x4020 <= addr && addr <= 0xffff) {
-      return mapper.read((short) addr, null);
+      return mapper.readCpu((short) addr, null);
     }
     throw new InvalidAddressReadError(address);
   }
@@ -287,7 +287,7 @@ public class NesBus {
       throw new InvalidAddressWriteError(address);
     }
     if (0x4020 <= addr && addr <= 0xffff) {
-      mapper.write((short) addr, null, data);
+      mapper.writeCpu((short) addr, null, data);
       return;
     }
     throw new InvalidAddressWriteError(address);

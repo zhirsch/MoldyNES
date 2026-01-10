@@ -12,9 +12,13 @@ public interface NesMapper {
     };
   }
 
-  byte read(short address, byte[] ppuRam);
+  byte readCpu(short address, byte[] ppuRam);
 
-  void write(short address, byte[] ppuRam, byte data);
+  byte readPpu(short address, byte[] ppuRam);
+
+  void writeCpu(short address, byte[] ppuRam, byte data);
+
+  void writePpu(short address, byte[] ppuRam, byte data);
 
   final class UnknownMapperError extends RuntimeException {
 

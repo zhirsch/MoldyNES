@@ -35,7 +35,7 @@ final class Mmc1NesMapper implements NesMapper {
   }
 
   @Override
-  public byte read(short address, byte[] ppuRam) {
+  public byte readCpu(short address, byte[] ppuRam) {
     int addr = Short.toUnsignedInt(address);
     assert 0x0000 <= addr && addr <= 0xffff;
     if (0x0000 <= addr && addr <= 0x1fff) {
@@ -69,7 +69,12 @@ final class Mmc1NesMapper implements NesMapper {
   }
 
   @Override
-  public void write(short address, byte[] ppuRam, byte data) {
+  public byte readPpu(short address, byte[] ppuRam) {
+    return readCpu(address, ppuRam);
+  }
+
+  @Override
+  public void writeCpu(short address, byte[] ppuRam, byte data) {
     int addr = Short.toUnsignedInt(address);
     assert 0x0000 <= addr && addr <= 0xffff;
     if (0x0000 <= addr && addr <= 0x1fff) {
@@ -107,6 +112,11 @@ final class Mmc1NesMapper implements NesMapper {
       return;
     }
     throw new InvalidAddressWriteError(addr);
+  }
+
+  @Override
+  public void writePpu(short address, byte[] ppuRam, byte data) {
+    writeCpu(address, ppuRam, data);
   }
 
   private void writeControlRegister(byte data) {

@@ -2137,7 +2137,7 @@ public final class NesPpu {
     assert 0x0000 <= v && v < 0x4000;
     if (0x0000 <= v && v < 0x3000) {
       byte result = buffer;
-      buffer = mapper.read(v, ram);
+      buffer = mapper.readPpu(v, ram);
       incrementAddress();
       return result;
     }
@@ -2146,7 +2146,7 @@ public final class NesPpu {
     }
     if (0x3f00 <= v && v < 0x4000) {
       byte result = paletteIndexes[getPaletteAddress(v)];
-      buffer = mapper.read(v, ram);
+      buffer = mapper.readPpu(v, ram);
       incrementAddress();
       return result;
     }
@@ -2156,12 +2156,12 @@ public final class NesPpu {
   public void writeData(byte data) {
     assert 0x0000 <= v && v <= 0x3fff;
     if (0x0000 <= v && v <= 0x2fff) {
-      mapper.write(v, ram, data);
+      mapper.writePpu(v, ram, data);
       incrementAddress();
       return;
     }
     if (0x3000 <= v && v <= 0x3eff) {
-      mapper.write((short) (v & 0b1110_1111_1111_1111), ram, data);
+      mapper.writePpu((short) (v & 0b1110_1111_1111_1111), ram, data);
       return;
     }
     if (0x3f00 <= v && v <= 0x3fff) {
@@ -2431,7 +2431,7 @@ public final class NesPpu {
       return;
     }
     int address = 0x2000 | (v & 0x0fff);
-    tileIndex = mapper.read((short) address, ram);
+    tileIndex = mapper.readPpu((short) address, ram);
   }
 
   private void fetchAttributeByte1() {}
@@ -2463,7 +2463,7 @@ public final class NesPpu {
             | (((nametab & 0b0000_0011) >> 0) << 10)
             | (((coarseY & 0b0001_1100) >> 2) << 3)
             | (((coarseX & 0b0001_1100) >> 2) << 0);
-    byte value = mapper.read((short) address, ram);
+    byte value = mapper.readPpu((short) address, ram);
     byte shift = (byte) (((coarseY & 0b0000_0010) << 1) | (coarseX & 0b0000_0010));
     attribute.set((byte) (value >>> shift));
   }
@@ -2664,7 +2664,7 @@ public final class NesPpu {
       tileIndex = tileIndex + 1;
     }
     int address = (chrBank << 12) | (tileIndex << 4) | (offset & 0b1000) | (fineY & 0b0111);
-    return mapper.read((short) address, ram);
+    return mapper.readPpu((short) address, ram);
   }
 
   private BitPlane<Byte> getSpriteAttributes(NesPpuSprite sprite) {
