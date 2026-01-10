@@ -24,19 +24,7 @@ final class NromNesMapper implements NesMapper {
   public byte readCpu(short address) {
     int addr = Short.toUnsignedInt(address);
     assert 0x0000 <= addr && addr <= 0xffff;
-    if (0x0000 <= addr && addr <= 0x1fff) {
-      throw new InvalidAddressReadError(address);
-    }
-    if (0x2000 <= addr && addr <= 0x2fff) {
-      throw new InvalidAddressReadError(address);
-    }
-    if (0x3000 <= addr && addr <= 0x3eff) {
-      throw new InvalidAddressReadError(address);
-    }
-    if (0x3f00 <= addr && addr <= 0x3fff) {
-      throw new InvalidAddressReadError(address);
-    }
-    if (0x4000 <= addr && addr <= 0x5fff) {
+    if (0x0000 <= addr && addr <= 0x5fff) {
       throw new InvalidAddressReadError(address);
     }
     if (0x6000 <= addr && addr <= 0x7fff) {
@@ -69,13 +57,7 @@ final class NromNesMapper implements NesMapper {
   public void writeCpu(short address, byte data) {
     int addr = Short.toUnsignedInt(address);
     assert 0x0000 <= addr && addr <= 0xffff;
-    if (0x0000 <= addr && addr <= 0x1fff) {
-      throw new InvalidAddressWriteError(address);
-    }
-    if (0x2000 <= addr && addr <= 0x2fff) {
-      throw new InvalidAddressWriteError(address);
-    }
-    if (0x3000 <= addr && addr <= 0x5fff) {
+    if (0x0000 <= addr && addr <= 0x5fff) {
       throw new InvalidAddressWriteError(address);
     }
     if (0x6000 <= addr && addr <= 0x7fff) {
