@@ -5,7 +5,6 @@ java_library(
         "//src/main/java/com/zacharyhirsch/moldynes/emulator:__pkg__",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/apu:__pkg__",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io:__pkg__",
-        "//src/test/java/com/zacharyhirsch/moldynes/emulator:__pkg__",
     ],
     deps = [
         "@maven//:org_slf4j_slf4j_api",

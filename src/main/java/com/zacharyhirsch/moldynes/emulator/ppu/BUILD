@@ -3,7 +3,6 @@ java_library(
     srcs = glob(["*.java"]),
     visibility = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator:__pkg__",
-        "//src/test/java/com/zacharyhirsch/moldynes/emulator:__pkg__",
     ],
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
