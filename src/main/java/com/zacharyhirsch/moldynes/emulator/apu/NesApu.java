@@ -29,7 +29,7 @@ public final class NesApu {
 
   private boolean pendingIrqInhibited;
 
-  public NesApu(NesClock clock, Display display, Function<Short, Byte> reader) {
+  public NesApu(NesClock clock, Display display, Function<Short, Byte> startDmcDma) {
     this.clock = clock;
     this.display = display;
     this.irq = new NesApuIrq();
@@ -37,7 +37,7 @@ public final class NesApu {
     this.pulse2 = new NesApuPulse(clock, 2);
     this.triangle = new NesApuTriangle(clock);
     this.noise = new NesApuNoise(clock);
-    this.dmc = new NesApuDmc(reader);
+    this.dmc = new NesApuDmc(startDmcDma);
     this.mixer = new NesApuMixer(pulse1, pulse2, triangle, noise, dmc);
     this.frameCounter = 0;
     this.frameCounterResetDelay = 0;

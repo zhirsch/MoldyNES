@@ -1,5 +1,9 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
+import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
+import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
+import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
+import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,6 +11,9 @@ import org.slf4j.LoggerFactory;
 public final class NesCpu {
 
   private static final Logger log = LoggerFactory.getLogger(NesCpu.class);
+
+  private final NesCpuMemory memory;
+  public final NesCpuState state;
 
   private NesCpuCycle cycle;
   private boolean halt;
@@ -17,10 +24,17 @@ public final class NesCpu {
   private boolean irq;
   private boolean irqPending;
 
-  public final NesCpuState state;
   private boolean oldI;
 
-  public NesCpu() {
+  public NesCpu(
+      NesMapper mapper,
+      NesPpu ppu,
+      NesApu apu,
+      NesJoypad joypad1,
+      NesJoypad joypad2,
+      Consumer<Byte> startOamDma) {
+    this.memory = new NesCpuMemory(mapper, ppu, apu, joypad1, joypad2, startOamDma);
+    this.state = new NesCpuState();
     this.cycle = new NesCpuInit();
     this.halt = false;
     this.reset = false;
@@ -29,8 +43,6 @@ public final class NesCpu {
     this.nmiPending = false;
     this.irq = false;
     this.irqPending = false;
-
-    this.state = new NesCpuState();
   }
 
   public void reset() {
@@ -66,6 +78,13 @@ public final class NesCpu {
       irq = false;
     }
     state.cycleType = state.cycleType.next();
+
+    short address = (short) ((state.adh << 8) | Byte.toUnsignedInt(state.adl));
+    if (state.write) {
+      memory.write(address, state.data);
+    } else {
+      state.data = memory.read(address);
+    }
   }
 
   public NesCpuCycle next() {
@@ -127,7 +146,8 @@ public final class NesCpu {
     cycle = new NesCpuOamDma(address, cycle);
   }
 
-  public void startDmcDma(short address, Consumer<Byte> callback) {
-    cycle = new NesCpuDmcDma(address, callback, cycle);
+  public byte startDmcDma(short address) {
+    // TODO: start an actual DMA.
+    return memory.read(address);
   }
 }

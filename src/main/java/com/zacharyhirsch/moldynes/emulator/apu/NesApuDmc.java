@@ -8,9 +8,9 @@ public final class NesApuDmc {
     428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54,
   };
 
-  private final Function<Short, Byte> reader;
   private final NesApuTimer timer;
   private final NesApuIrq irq;
+  private final Function<Short, Byte> startDmcDma;
 
   private boolean loop;
   private int sampleAddress;
@@ -26,10 +26,10 @@ public final class NesApuDmc {
 
   private int outputLevel;
 
-  NesApuDmc(Function<Short, Byte> reader) {
-    this.reader = reader;
+  NesApuDmc(Function<Short, Byte> startDmcDma) {
     this.timer = new NesApuTimer();
     this.irq = new NesApuIrq();
+    this.startDmcDma = startDmcDma;
     this.loop = false;
     this.sampleAddress = 0;
     this.sampleLength = 0;
@@ -98,8 +98,7 @@ public final class NesApuDmc {
   }
 
   private void fillBuffer() {
-    // TODO: stall the CPU
-    buffer = reader.apply((short) currentAddress);
+    buffer = startDmcDma.apply((short) currentAddress);
     incrementCurrentAddress();
     decrementBytesRemaining();
   }
