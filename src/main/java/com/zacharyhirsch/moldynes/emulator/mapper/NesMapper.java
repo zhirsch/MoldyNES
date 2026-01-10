@@ -12,11 +12,11 @@ public interface NesMapper {
     };
   }
 
-  byte readCpu(short address, byte[] ppuRam);
+  byte readCpu(short address);
 
   byte readPpu(short address, byte[] ppuRam);
 
-  void writeCpu(short address, byte[] ppuRam, byte data);
+  void writeCpu(short address, byte data);
 
   void writePpu(short address, byte[] ppuRam, byte data);
 

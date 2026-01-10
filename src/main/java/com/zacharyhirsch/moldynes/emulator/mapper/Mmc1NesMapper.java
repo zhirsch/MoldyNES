@@ -35,18 +35,14 @@ final class Mmc1NesMapper implements NesMapper {
   }
 
   @Override
-  public byte readCpu(short address, byte[] ppuRam) {
+  public byte readCpu(short address) {
     int addr = Short.toUnsignedInt(address);
     assert 0x0000 <= addr && addr <= 0xffff;
     if (0x0000 <= addr && addr <= 0x1fff) {
-      return switch (chrRomBankMode) {
-        case 0 -> rom.chr().read(addr, chrRomBank0Select & 0b1111_1110);
-        case 1 -> rom.chr().read(addr, chrRomBank0Select, chrRomBank1Select);
-        default -> throw new IllegalStateException(String.valueOf(chrRomBankMode));
-      };
+      throw new InvalidAddressReadError(addr);
     }
     if (0x2000 <= addr && addr <= 0x2fff) {
-      return ppuRam[mirror(addr)];
+      throw new InvalidAddressReadError(addr);
     }
     if (0x3000 <= addr && addr <= 0x5fff) {
       throw new InvalidAddressReadError(addr);
@@ -70,23 +66,39 @@ final class Mmc1NesMapper implements NesMapper {
 
   @Override
   public byte readPpu(short address, byte[] ppuRam) {
-    return readCpu(address, ppuRam);
+    int addr = Short.toUnsignedInt(address);
+    assert 0x0000 <= addr && addr <= 0x3fff;
+    if (0x0000 <= addr && addr <= 0x1fff) {
+      return switch (chrRomBankMode) {
+        case 0 -> rom.chr().read(addr, chrRomBank0Select & 0b1111_1110);
+        case 1 -> rom.chr().read(addr, chrRomBank0Select, chrRomBank1Select);
+        default -> throw new IllegalStateException(String.valueOf(chrRomBankMode));
+      };
+    }
+    if (0x2000 <= addr && addr <= 0x3fff) {
+      return ppuRam[mirror(addr)];
+    }
+    throw new InvalidAddressReadError(addr);
   }
 
   @Override
-  public void writeCpu(short address, byte[] ppuRam, byte data) {
+  public void writeCpu(short address, byte data) {
     int addr = Short.toUnsignedInt(address);
     assert 0x0000 <= addr && addr <= 0xffff;
     if (0x0000 <= addr && addr <= 0x1fff) {
-      rom.chr().value()[addr] = data;
-      return;
+      throw new InvalidAddressWriteError(addr);
     }
     if (0x2000 <= addr && addr <= 0x2fff) {
-      ppuRam[mirror(addr)] = data;
-      return;
-    }
-    if (0x3000 <= addr && addr <= 0x5fff) {
       throw new InvalidAddressWriteError(addr);
+    }
+    if (0x3000 <= addr && addr <= 0x3eff) {
+      throw new InvalidAddressReadError(address);
+    }
+    if (0x3f00 <= addr && addr <= 0x3fff) {
+      throw new InvalidAddressReadError(address);
+    }
+    if (0x4000 <= addr && addr <= 0x5fff) {
+      throw new InvalidAddressReadError(address);
     }
     if (0x6000 <= addr && addr <= 0x7fff) {
       if (!prgRamEnabled) {
@@ -116,7 +128,20 @@ final class Mmc1NesMapper implements NesMapper {
 
   @Override
   public void writePpu(short address, byte[] ppuRam, byte data) {
-    writeCpu(address, ppuRam, data);
+    int addr = Short.toUnsignedInt(address);
+    assert 0x0000 <= addr && addr <= 0x3fff;
+    if (0x0000 <= addr && addr <= 0x1fff) {
+      rom.chr().value()[addr] = data;
+      return;
+    }
+    if (0x2000 <= addr && addr <= 0x3eff) {
+      ppuRam[mirror(addr)] = data;
+      return;
+    }
+    if (0x3f00 <= addr && addr <= 0x3fff) {
+      throw new InvalidAddressWriteError(address);
+    }
+    throw new InvalidAddressWriteError(addr);
   }
 
   private void writeControlRegister(byte data) {
