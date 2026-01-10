@@ -69,7 +69,7 @@ public final class NesRomLoader {
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
     return new NesRom(
         new NesRomSection(0x4000, prgRom),
-        new NesRomSection(0x1000, chrRom),
+        new NesRomSection(0x2000, chrRom),
         new NesRomProperties(mapper, nametableLayout));
   }
 
@@ -114,7 +114,7 @@ public final class NesRomLoader {
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
     return new NesRom(
         new NesRomSection(0x4000, prgRom),
-        new NesRomSection(0x1000, chrRom),
+        new NesRomSection(0x2000, chrRom),
         new NesRomProperties(mapper, nametableLayout));
   }
 
