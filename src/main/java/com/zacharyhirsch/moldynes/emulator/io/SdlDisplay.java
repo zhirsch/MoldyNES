@@ -51,7 +51,6 @@ import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
 import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Floats;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -69,7 +68,6 @@ import io.github.libsdl4j.api.video.SDL_Window;
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,7 +114,8 @@ public final class SdlDisplay implements Closeable, Display {
   private final SDL_Renderer renderer;
   private final SDL_Texture texture;
 
-  private final ArrayList<Float> audioBuffer;
+  private final Memory audioBuffer;
+  private int audioBufferLen;
   private final SDL_AudioDeviceID audioDeviceId;
   private final SDL_AudioStream audioStream;
 
@@ -152,7 +151,8 @@ public final class SdlDisplay implements Closeable, Display {
       throw new IllegalStateException("Unable to create SDL texture: " + SDL_GetError());
     }
 
-    audioBuffer = new ArrayList<>();
+    audioBuffer = new Memory(1 << 20);
+    audioBufferLen = 0;
 
     SDL_AudioSpec desired = new SDL_AudioSpec();
     desired.freq = 44_100;
@@ -210,7 +210,8 @@ public final class SdlDisplay implements Closeable, Display {
 
   @Override
   public void play(float sample) {
-    audioBuffer.add(sample);
+    audioBuffer.setFloat(audioBufferLen, sample);
+    audioBufferLen += Float.BYTES;
   }
 
   public void setError() {
@@ -257,18 +258,13 @@ public final class SdlDisplay implements Closeable, Display {
   }
 
   private void outputAudio() {
-    float[] samples = Floats.toArray(audioBuffer);
-    audioBuffer.clear();
-    if (samples.length == 0) {
+    if (audioBufferLen == 0) {
       return;
     }
-    int bytes = Float.BYTES * samples.length;
-    try (Memory ptr = new Memory(bytes)) {
-      ptr.write(0, samples, 0, samples.length);
-      if (SDL_AudioStreamPut(audioStream, ptr, bytes) != 0) {
-        throw new IllegalStateException("Unable to add sample to audio stream: " + SDL_GetError());
-      }
+    if (SDL_AudioStreamPut(audioStream, audioBuffer, audioBufferLen) != 0) {
+      throw new IllegalStateException("Unable to add sample to audio stream: " + SDL_GetError());
     }
+    audioBufferLen = 0;
   }
 
   private void dispatch(SDL_Event event) {
@@ -304,6 +300,7 @@ public final class SdlDisplay implements Closeable, Display {
     if (audioStream != null) {
       SDL_FreeAudioStream(audioStream);
     }
+    audioBuffer.close();
     SDL_Quit();
   }
 }
