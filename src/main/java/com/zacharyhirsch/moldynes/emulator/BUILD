@@ -18,13 +18,23 @@ java_library(
     ],
 )
 
+config_setting(
+    name = "macos",
+    constraint_values = [
+        "@platforms//os:osx",
+    ],
+)
+
 java_binary(
     name = "MoldyNES",
     srcs = ["MoldyNES.java"],
-    jvm_flags = [
-        "-XstartOnFirstThread",
-        "--enable-native-access=ALL-UNNAMED",
-    ],
+    jvm_flags =
+        select({
+            ":macos": ["-XstartOnFirstThread"],
+            "//conditions:default": [],
+        }) + [
+            "--enable-native-access=ALL-UNNAMED",
+        ],
     resources = ["//src/main/resources:Composite_wiki.pal"],
     visibility = ["//roms:__pkg__"],
     runtime_deps = ["@maven//:ch_qos_logback_logback_classic"],

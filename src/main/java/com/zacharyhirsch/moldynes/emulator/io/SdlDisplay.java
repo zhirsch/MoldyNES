@@ -3,10 +3,14 @@ package com.zacharyhirsch.moldynes.emulator.io;
 import static io.github.libsdl4j.api.Sdl.SDL_Init;
 import static io.github.libsdl4j.api.Sdl.SDL_Quit;
 import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_EVERYTHING;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_AudioStreamAvailable;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_AudioStreamGet;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_AudioStreamPut;
 import static io.github.libsdl4j.api.audio.SdlAudio.SDL_CloseAudioDevice;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_FreeAudioStream;
+import static io.github.libsdl4j.api.audio.SdlAudio.SDL_NewAudioStream;
 import static io.github.libsdl4j.api.audio.SdlAudio.SDL_OpenAudioDevice;
 import static io.github.libsdl4j.api.audio.SdlAudio.SDL_PauseAudioDevice;
-import static io.github.libsdl4j.api.audio.SdlAudio.SDL_QueueAudio;
 import static io.github.libsdl4j.api.audio.SdlAudioConst.AUDIO_F32SYS;
 import static io.github.libsdl4j.api.audio.SdlAudioConst.SDL_AUDIO_ALLOW_ANY_CHANGE;
 import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
@@ -56,6 +60,7 @@ import com.zacharyhirsch.moldynes.emulator.NesClock;
 import io.github.libsdl4j.api.audio.SDL_AudioDeviceID;
 import io.github.libsdl4j.api.audio.SDL_AudioFormat;
 import io.github.libsdl4j.api.audio.SDL_AudioSpec;
+import io.github.libsdl4j.api.audio.SDL_AudioStream;
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.event.events.SDL_KeyboardEvent;
 import io.github.libsdl4j.api.render.SDL_Renderer;
@@ -66,8 +71,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class SdlDisplay implements Closeable, Display {
+
+  private static final Logger log = LoggerFactory.getLogger(SdlDisplay.class);
 
   private static final int W = 256;
   private static final int H = 240;
@@ -109,7 +118,8 @@ public final class SdlDisplay implements Closeable, Display {
 
   private final ArrayList<Float> audioBuffer;
   private final SDL_AudioDeviceID audioDeviceId;
-  
+  private final SDL_AudioStream audioStream;
+
   private long lastFrameCycle = 0;
   private Instant lastFrameTime = null;
   public boolean quit = false;
@@ -142,20 +152,52 @@ public final class SdlDisplay implements Closeable, Display {
       throw new IllegalStateException("Unable to create SDL texture: " + SDL_GetError());
     }
 
-    this.audioBuffer = new ArrayList<>();
+    audioBuffer = new ArrayList<>();
 
     SDL_AudioSpec desired = new SDL_AudioSpec();
-    desired.freq = CPU_CYCLES_PER_SECOND;
+    desired.freq = 44_100;
     desired.format = new SDL_AudioFormat(AUDIO_F32SYS);
     desired.channels = 1;
     desired.samples = 1024;
-    desired.callback = null;
+    desired.callback = this::playbackAudio;
     desired.userdata = null;
-    this.audioDeviceId = SDL_OpenAudioDevice(null, 0, desired, null, SDL_AUDIO_ALLOW_ANY_CHANGE);
+    SDL_AudioSpec obtained = new SDL_AudioSpec();
+    audioDeviceId = SDL_OpenAudioDevice(null, 0, desired, obtained, SDL_AUDIO_ALLOW_ANY_CHANGE);
     if (audioDeviceId == null || audioDeviceId.intValue() == 0) {
       throw new IllegalStateException("Unable to open audio device: " + SDL_GetError());
     }
     SDL_PauseAudioDevice(audioDeviceId, 0);
+
+    log.info(
+        "Audio device opened with freq:{}, format:{}, samples:{}",
+        obtained.freq,
+        "%02x".formatted(obtained.format.shortValue()),
+        obtained.samples);
+
+    audioStream =
+        SDL_NewAudioStream(
+            desired.format,
+            desired.channels,
+            CPU_CYCLES_PER_SECOND,
+            obtained.format,
+            obtained.channels,
+            obtained.freq);
+    if (audioStream == null) {
+      throw new IllegalStateException("Unable to open audio stream: " + SDL_GetError());
+    }
+  }
+
+  private void playbackAudio(Pointer userdata, Pointer stream, int len) {
+    int available = SDL_AudioStreamAvailable(audioStream);
+    // if (available < len) {
+    //   log.warn("Audio stream is lagging behind (have:{}, want:{})", available, len);
+    // }
+    if (SDL_AudioStreamGet(audioStream, stream, len) == -1) {
+      throw new IllegalStateException("Unable to read audio stream: " + SDL_GetError());
+    }
+    for (int i = 0; i < len - available; i++) {
+      stream.setByte(available + i, (byte) 0);
+    }
   }
 
   @Override
@@ -220,12 +262,12 @@ public final class SdlDisplay implements Closeable, Display {
     if (samples.length == 0) {
       return;
     }
-    Pointer ptr = new Memory((long) Float.BYTES * samples.length);
-    for (int i = 0; i < samples.length; i++) {
-      ptr.setFloat((long) i * Float.BYTES, samples[i]);
-    }
-    if (SDL_QueueAudio(audioDeviceId, ptr, samples.length * Float.BYTES) != 0) {
-      throw new IllegalStateException("Unable to queue audio: " + SDL_GetError());
+    int bytes = Float.BYTES * samples.length;
+    try (Memory ptr = new Memory(bytes)) {
+      ptr.write(0, samples, 0, samples.length);
+      if (SDL_AudioStreamPut(audioStream, ptr, bytes) != 0) {
+        throw new IllegalStateException("Unable to add sample to audio stream: " + SDL_GetError());
+      }
     }
   }
 
@@ -258,6 +300,9 @@ public final class SdlDisplay implements Closeable, Display {
     }
     if (audioDeviceId != null) {
       SDL_CloseAudioDevice(audioDeviceId);
+    }
+    if (audioStream != null) {
+      SDL_FreeAudioStream(audioStream);
     }
     SDL_Quit();
   }
