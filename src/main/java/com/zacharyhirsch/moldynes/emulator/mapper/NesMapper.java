@@ -1,6 +1,8 @@
 package com.zacharyhirsch.moldynes.emulator.mapper;
 
+import com.zacharyhirsch.moldynes.emulator.memory.Address;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
+import java.nio.ByteBuffer;
 
 public interface NesMapper {
 
@@ -12,13 +14,9 @@ public interface NesMapper {
     };
   }
 
-  byte readCpu(short address);
+  Address resolveCpu(int address);
 
-  byte readPpu(short address, byte[] ppuRam);
-
-  void writeCpu(short address, byte data);
-
-  void writePpu(short address, byte[] ppuRam, byte data);
+  Address resolvePpu(int address, ByteBuffer ppuRam);
 
   final class UnknownMapperError extends RuntimeException {
 

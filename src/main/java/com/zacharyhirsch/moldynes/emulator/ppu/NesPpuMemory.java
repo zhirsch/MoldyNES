@@ -1,51 +1,39 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressReadError;
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
+import com.zacharyhirsch.moldynes.emulator.memory.Address;
+import java.nio.ByteBuffer;
 
 final class NesPpuMemory {
 
   private final NesMapper mapper;
-  private final byte[] palette;
-  private final byte[] ram;
+  private final ByteBuffer palette;
+  private final ByteBuffer ram;
 
   NesPpuMemory(NesMapper mapper) {
     this.mapper = mapper;
-    this.palette = new byte[0x20];
-    this.ram = new byte[0x2000];
+    this.palette = ByteBuffer.wrap(new byte[0x20]);
+    this.ram = ByteBuffer.wrap(new byte[0x2000]);
   }
 
   byte read(short address) {
-    assert 0x0000 <= address && address <= 0x3fff;
-    if (0x0000 <= address && address < 0x3000) {
-      return mapper.readPpu(address, ram);
-    }
-    if (0x3000 <= address && address < 0x3f00) {
-      throw new InvalidAddressReadError(address);
-    }
-    if (0x3f00 <= address && address < 0x4000) {
-      // TODO: buffer needs to be filled with actual ram, not palette ram.
-      return palette[getPaletteAddress(address)];
-    }
-    throw new InvalidAddressReadError(address);
+    return resolve(address).read();
   }
 
   void write(short address, byte data) {
+    resolve(address).write(data);
+  }
+
+  private Address resolve(short address) {
     assert 0x0000 <= address && address <= 0x3fff;
-    if (0x0000 <= address && address <= 0x2fff) {
-      mapper.writePpu(address, ram, data);
-      return;
-    }
-    if (0x3000 <= address && address <= 0x3eff) {
-      mapper.writePpu((short) (address & 0b1110_1111_1111_1111), ram, data);
-      return;
+    if (0x0000 <= address && address <= 0x3eff) {
+      return mapper.resolvePpu(address, ram);
     }
     if (0x3f00 <= address && address <= 0x3fff) {
-      palette[getPaletteAddress(address)] = data;
-      return;
+      // TODO: When read, buffer needs to be filled with actual ram, not palette ram.
+      return Address.of(getPaletteAddress(address), palette::get, palette::put);
     }
-    throw new InvalidAddressWriteError(address);
+    throw new IllegalStateException();
   }
 
   private int getPaletteAddress(short address) {

@@ -3,12 +3,10 @@ package com.zacharyhirsch.moldynes.emulator.cpu;
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
+import com.zacharyhirsch.moldynes.emulator.memory.Address;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import java.nio.ByteBuffer;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 final class NesCpuMemory {
 
@@ -99,60 +97,11 @@ final class NesCpuMemory {
       };
     }
     if (0x4018 <= address && address <= 0x401f) {
-      return Address.of(() -> (byte) 0, unused -> {});
+      return Address.of(() -> (byte) 0, _ -> {});
     }
     if (0x4020 <= address && address <= 0xffff) {
-      return Address.of((short) address, mapper::readCpu, mapper::writeCpu);
+      return mapper.resolveCpu(address);
     }
     throw new IllegalStateException();
-  }
-
-  private interface Address {
-
-    static Address of(Supplier<Byte> read, Consumer<Byte> write) {
-      return new Address() {
-        @Override
-        public byte read() {
-          return read.get();
-        }
-
-        @Override
-        public void write(byte data) {
-          write.accept(data);
-        }
-      };
-    }
-
-    static Address of(int address, Function<Integer, Byte> read, BiConsumer<Integer, Byte> write) {
-      return new Address() {
-        @Override
-        public byte read() {
-          return read.apply(address);
-        }
-
-        @Override
-        public void write(byte data) {
-          write.accept(address, data);
-        }
-      };
-    }
-
-    static Address of(short address, Function<Short, Byte> read, BiConsumer<Short, Byte> write) {
-      return new Address() {
-        @Override
-        public byte read() {
-          return read.apply(address);
-        }
-
-        @Override
-        public void write(byte data) {
-          write.accept(address, data);
-        }
-      };
-    }
-
-    byte read();
-
-    void write(byte data);
   }
 }

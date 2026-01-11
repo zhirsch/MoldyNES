@@ -1,90 +1,63 @@
 package com.zacharyhirsch.moldynes.emulator.mapper;
 
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressReadError;
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
+import com.zacharyhirsch.moldynes.emulator.memory.Address;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidReadError;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidWriteError;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRomProperties.NametableLayout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.nio.ByteBuffer;
 
 // https://www.nesdev.org/wiki/NROM
 final class NromNesMapper implements NesMapper {
 
-  private static final Logger log = LoggerFactory.getLogger(NromNesMapper.class);
-
   private final NesRom rom;
-  private final byte[] ram;
+  private final ByteBuffer ram;
 
   NromNesMapper(NesRom rom) {
     this.rom = rom;
-    this.ram = new byte[0x2000];
+    this.ram = ByteBuffer.wrap(new byte[0x2000]);
   }
 
   @Override
-  public byte readCpu(short address) {
-    int addr = Short.toUnsignedInt(address);
-    assert 0x0000 <= addr && addr <= 0xffff;
-    if (0x0000 <= addr && addr <= 0x5fff) {
-      throw new InvalidAddressReadError(address);
+  public Address resolveCpu(int address) {
+    assert 0x0000 <= address && address <= 0xffff;
+    if (0x0000 <= address && address <= 0x5fff) {
+      return Address.of(address, InvalidReadError::throw_, InvalidWriteError::throw_);
     }
-    if (0x6000 <= addr && addr <= 0x7fff) {
-      return ram[addr - 0x6000];
+    if (0x6000 <= address && address <= 0x7fff) {
+      return Address.of(address - 0x6000, ram::get, ram::put);
     }
-    if (0x8000 <= addr && addr <= 0xffff) {
-      if (rom.prg().value().length == 0x4000) {
-        return rom.prg().read(addr - 0x8000, 0, 0);
-      } else {
-        return rom.prg().read(addr - 0x8000, 0);
-      }
+    if (0x8000 <= address && address <= 0xffff) {
+      return Address.of(address, this::readPrgRom, InvalidWriteError::throw_);
     }
-    throw new InvalidAddressReadError(address);
+    throw new IllegalStateException();
   }
 
   @Override
-  public byte readPpu(short address, byte[] ppuRam) {
-    int addr = Short.toUnsignedInt(address);
-    assert 0x0000 <= addr && addr <= 0x3fff;
-    if (0x0000 <= addr && addr <= 0x1fff) {
-      return rom.chr().read(addr, 0);
+  public Address resolvePpu(int address, ByteBuffer ppuRam) {
+    assert 0x0000 <= address && address <= 0x3fff;
+    if (0x0000 <= address && address <= 0x1fff) {
+      return Address.of(address, this::readChrRom, InvalidWriteError::throw_);
     }
-    if (0x2000 <= addr && addr <= 0x3fff) {
-      return ppuRam[mirror(addr)];
+    if (0x2000 <= address && address <= 0x3eff) {
+      return Address.of(mirror(address), ppuRam::get, ppuRam::put);
     }
-    throw new InvalidAddressReadError(address);
+    if (0x3f00 <= address && address <= 0x3fff) {
+      return Address.of(mirror(address), ppuRam::get, InvalidWriteError::throw_);
+    }
+    throw new IllegalStateException();
   }
 
-  @Override
-  public void writeCpu(short address, byte data) {
-    int addr = Short.toUnsignedInt(address);
-    assert 0x0000 <= addr && addr <= 0xffff;
-    if (0x0000 <= addr && addr <= 0x5fff) {
-      throw new InvalidAddressWriteError(address);
-    }
-    if (0x6000 <= addr && addr <= 0x7fff) {
-      ram[addr - 0x6000] = data;
-      return;
-    }
-    if (0x8000 <= addr && addr <= 0xffff) {
-      throw new InvalidAddressWriteError(address);
-    }
-    throw new InvalidAddressWriteError(address);
+  private byte readChrRom(int address) {
+    return rom.chr().read(address, 0);
   }
 
-  @Override
-  public void writePpu(short address, byte[] ppuRam, byte data) {
-    int addr = Short.toUnsignedInt(address);
-    assert 0x0000 <= addr && addr <= 0x3fff;
-    if (0x0000 <= addr && addr <= 0x1fff) {
-      throw new InvalidAddressWriteError(address);
+  private Byte readPrgRom(int address) {
+    if (rom.prg().value().capacity() == 0x4000) {
+      return rom.prg().read(address - 0x8000, 0, 0);
+    } else {
+      return rom.prg().read(address - 0x8000, 0);
     }
-    if (0x2000 <= addr && addr <= 0x3eff) {
-      ppuRam[mirror(addr)] = data;
-      return;
-    }
-    if (0x3f00 <= addr && addr <= 0x3fff) {
-      throw new InvalidAddressWriteError(address);
-    }
-    throw new InvalidAddressWriteError(address);
   }
 
   private short mirror(int address) {
@@ -109,4 +82,5 @@ final class NromNesMapper implements NesMapper {
     int index = address & 0b0000_0011_1111_1111;
     return (short) ((offset << 10) | index);
   }
+
 }

@@ -1,8 +1,10 @@
 package com.zacharyhirsch.moldynes.emulator.mapper;
 
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressReadError;
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressWriteError;
+import com.zacharyhirsch.moldynes.emulator.memory.Address;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidReadError;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidWriteError;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
+import java.nio.ByteBuffer;
 import java.util.BitSet;
 import java.util.Optional;
 
@@ -10,7 +12,7 @@ import java.util.Optional;
 final class Mmc1NesMapper implements NesMapper {
 
   private final NesRom rom;
-  private final byte[] prgRam;
+  private final ByteBuffer prgRam;
   private final ShiftRegister shiftRegister;
 
   private int nametableArrangement;
@@ -23,7 +25,7 @@ final class Mmc1NesMapper implements NesMapper {
 
   public Mmc1NesMapper(NesRom rom) {
     this.rom = rom;
-    this.prgRam = new byte[0x2000];
+    this.prgRam = ByteBuffer.wrap(new byte[0x2000]);
     this.shiftRegister = new ShiftRegister();
     this.nametableArrangement = 0;
     this.prgRomBankMode = 0;
@@ -35,113 +37,62 @@ final class Mmc1NesMapper implements NesMapper {
   }
 
   @Override
-  public byte readCpu(short address) {
-    int addr = Short.toUnsignedInt(address);
-    assert 0x0000 <= addr && addr <= 0xffff;
-    if (0x0000 <= addr && addr <= 0x1fff) {
-      throw new InvalidAddressReadError(addr);
+  public Address resolveCpu(int address) {
+    assert 0x0000 <= address && address <= 0xffff;
+    if (0x0000 <= address && address <= 0x5fff) {
+      return Address.of(address, InvalidReadError::throw_, InvalidWriteError::throw_);
     }
-    if (0x2000 <= addr && addr <= 0x2fff) {
-      throw new InvalidAddressReadError(addr);
-    }
-    if (0x3000 <= addr && addr <= 0x5fff) {
-      throw new InvalidAddressReadError(addr);
-    }
-    if (0x6000 <= addr && addr <= 0x7fff) {
+    if (0x6000 <= address && address <= 0x7fff) {
       if (!prgRamEnabled) {
-        throw new InvalidAddressReadError(addr, "PRG-RAM");
+        return Address.of(address, InvalidReadError::throw_, InvalidWriteError::throw_);
       }
-      return prgRam[addr - 0x6000];
+      return Address.of(address - 0x6000, prgRam::get, prgRam::put);
     }
-    if (0x8000 <= addr && addr <= 0xffff) {
-      return switch (prgRomBankMode) {
-        case 0, 1 -> rom.prg().read(addr - 0x8000, prgRomBankSelect & 0b1111_1110);
-        case 2 -> rom.prg().read(addr - 0x8000, 0, prgRomBankSelect);
-        case 3 -> rom.prg().read(addr - 0x8000, prgRomBankSelect, rom.prg().getNumBanks() - 1);
-        default -> throw new IllegalStateException(String.valueOf(prgRomBankMode));
-      };
+    if (0x8000 <= address && address <= 0x9fff) {
+      return Address.of(() -> readPrgRom(address), this::writeControlRegister);
     }
-    throw new InvalidAddressReadError(addr);
+    if (0xa000 <= address && address <= 0xbfff) {
+      return Address.of(() -> readPrgRom(address), this::writeChrBank0Register);
+    }
+    if (0xc000 <= address && address <= 0xdfff) {
+      return Address.of(() -> readPrgRom(address), this::writeChrBank1Register);
+    }
+    if (0xe000 <= address && address <= 0xffff) {
+      return Address.of(() -> readPrgRom(address), this::writePrgBankRegister);
+    }
+    throw new IllegalStateException();
   }
 
   @Override
-  public byte readPpu(short address, byte[] ppuRam) {
-    int addr = Short.toUnsignedInt(address);
-    assert 0x0000 <= addr && addr <= 0x3fff;
-    if (0x0000 <= addr && addr <= 0x1fff) {
-      return switch (chrRomBankMode) {
-        case 0 -> rom.chr().read(addr, chrRomBank0Select & 0b1111_1110);
-        case 1 -> rom.chr().read(addr, chrRomBank0Select, chrRomBank1Select);
-        default -> throw new IllegalStateException(String.valueOf(chrRomBankMode));
-      };
+  public Address resolvePpu(int address, ByteBuffer ppuRam) {
+    assert 0x0000 <= address && address <= 0x3fff;
+    if (0x0000 <= address && address <= 0x1fff) {
+      return Address.of(address, this::readChrRom, rom.chr().value()::put);
     }
-    if (0x2000 <= addr && addr <= 0x3fff) {
-      return ppuRam[mirror(addr)];
+    if (0x2000 <= address && address <= 0x3eff) {
+      return Address.of(mirror(address), ppuRam::get, ppuRam::put);
     }
-    throw new InvalidAddressReadError(addr);
+    if (0x3f00 <= address && address <= 0x3fff) {
+      return Address.of(mirror(address), ppuRam::get, InvalidWriteError::throw_);
+    }
+    throw new IllegalStateException();
   }
 
-  @Override
-  public void writeCpu(short address, byte data) {
-    int addr = Short.toUnsignedInt(address);
-    assert 0x0000 <= addr && addr <= 0xffff;
-    if (0x0000 <= addr && addr <= 0x1fff) {
-      throw new InvalidAddressWriteError(addr);
-    }
-    if (0x2000 <= addr && addr <= 0x2fff) {
-      throw new InvalidAddressWriteError(addr);
-    }
-    if (0x3000 <= addr && addr <= 0x3eff) {
-      throw new InvalidAddressReadError(address);
-    }
-    if (0x3f00 <= addr && addr <= 0x3fff) {
-      throw new InvalidAddressReadError(address);
-    }
-    if (0x4000 <= addr && addr <= 0x5fff) {
-      throw new InvalidAddressReadError(address);
-    }
-    if (0x6000 <= addr && addr <= 0x7fff) {
-      if (!prgRamEnabled) {
-        throw new InvalidAddressWriteError(addr, "PRG-RAM");
-      }
-      prgRam[addr - 0x6000] = data;
-      return;
-    }
-    if (0x8000 <= addr && addr <= 0x9fff) {
-      writeControlRegister(data);
-      return;
-    }
-    if (0xa000 <= addr && addr <= 0xbfff) {
-      writeChrBank0Register(data);
-      return;
-    }
-    if (0xc000 <= addr && addr <= 0xdfff) {
-      writeChrBank1Register(data);
-      return;
-    }
-    if (0xe000 <= addr && addr <= 0xffff) {
-      writePrgBankRegister(data);
-      return;
-    }
-    throw new InvalidAddressWriteError(addr);
+  private byte readChrRom(int address) {
+    return switch (chrRomBankMode) {
+      case 0 -> rom.chr().read(address, chrRomBank0Select & 0b1111_1110);
+      case 1 -> rom.chr().read(address, chrRomBank0Select, chrRomBank1Select);
+      default -> throw new IllegalStateException(String.valueOf(chrRomBankMode));
+    };
   }
 
-  @Override
-  public void writePpu(short address, byte[] ppuRam, byte data) {
-    int addr = Short.toUnsignedInt(address);
-    assert 0x0000 <= addr && addr <= 0x3fff;
-    if (0x0000 <= addr && addr <= 0x1fff) {
-      rom.chr().value()[addr] = data;
-      return;
-    }
-    if (0x2000 <= addr && addr <= 0x3eff) {
-      ppuRam[mirror(addr)] = data;
-      return;
-    }
-    if (0x3f00 <= addr && addr <= 0x3fff) {
-      throw new InvalidAddressWriteError(address);
-    }
-    throw new InvalidAddressWriteError(addr);
+  private byte readPrgRom(int address) {
+    return switch (prgRomBankMode) {
+      case 0, 1 -> rom.prg().read(address - 0x8000, prgRomBankSelect & 0b1111_1110);
+      case 2 -> rom.prg().read(address - 0x8000, 0, prgRomBankSelect);
+      case 3 -> rom.prg().read(address - 0x8000, prgRomBankSelect, rom.prg().getNumBanks() - 1);
+      default -> throw new IllegalStateException(String.valueOf(prgRomBankMode));
+    };
   }
 
   private void writeControlRegister(byte data) {

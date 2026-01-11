@@ -1,11 +1,12 @@
 package com.zacharyhirsch.moldynes.emulator.rom;
 
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidAddressReadError;
+import com.zacharyhirsch.moldynes.emulator.memory.InvalidReadError;
+import java.nio.ByteBuffer;
 
-public record NesRomSection(int bankSize, byte[] value) {
+public record NesRomSection(int bankSize, ByteBuffer value) {
 
   public int getNumBanks() {
-    return value.length / bankSize();
+    return value.capacity() / bankSize();
   }
 
   public byte read(int bankAddr, int bankIndex) {
@@ -19,10 +20,10 @@ public record NesRomSection(int bankSize, byte[] value) {
     if (bankSize() <= bankAddr && bankAddr < 2 * bankSize()) {
       return read(bankSize(), bankIndex1, (short) (bankAddr - bankSize()));
     }
-    throw new InvalidAddressReadError(bankAddr);
+    throw new InvalidReadError(bankAddr);
   }
 
   private byte read(int bankSize, int bankIndex, short bankAddr) {
-    return value[bankIndex * bankSize + bankAddr];
+    return value.get(bankIndex * bankSize + bankAddr);
   }
 }

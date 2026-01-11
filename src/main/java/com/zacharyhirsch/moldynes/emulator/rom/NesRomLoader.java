@@ -68,16 +68,19 @@ public final class NesRomLoader {
     int mapper = getMapper(header[6], header[7], header[8]);
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
     return new NesRom(
-        new NesRomSection(0x4000, prgRom),
-        new NesRomSection(0x2000, chrRom),
+        new NesRomSection(0x4000, ByteBuffer.wrap(prgRom).asReadOnlyBuffer()),
+        new NesRomSection(0x2000, ByteBuffer.wrap(chrRom).asReadOnlyBuffer()),
         new NesRomProperties(mapper, nametableLayout));
   }
 
   private static NesRom load10(byte[] header, ByteBuffer buffer) {
     byte[] prgRom = read(buffer, header[4] << 14);
-    byte[] chrRom = read(buffer, header[5] << 13);
-    if (chrRom.length == 0) {
-      chrRom = new byte[0x2000];
+    ByteBuffer chrRom;
+    byte[] chrRomTemp = read(buffer, header[5] << 13);
+    if (chrRomTemp.length == 0) {
+      chrRom = ByteBuffer.wrap(new byte[0x2000]);
+    } else {
+      chrRom = ByteBuffer.wrap(chrRomTemp).asReadOnlyBuffer();
     }
     if ((header[6] & 0b0000_0100) == 0b0000_0100) {
       throw new IllegalArgumentException("trainer not implemented");
@@ -113,7 +116,7 @@ public final class NesRomLoader {
     int mapper = getMapper(header[6], header[7], (byte) 0);
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
     return new NesRom(
-        new NesRomSection(0x4000, prgRom),
+        new NesRomSection(0x4000, ByteBuffer.wrap(prgRom).asReadOnlyBuffer()),
         new NesRomSection(0x2000, chrRom),
         new NesRomProperties(mapper, nametableLayout));
   }
