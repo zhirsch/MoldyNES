@@ -67,7 +67,7 @@ final class Mmc1NesMapper implements NesMapper {
   public Address resolvePpu(int address, ByteBuffer ppuRam) {
     assert 0x0000 <= address && address <= 0x3fff;
     if (0x0000 <= address && address <= 0x1fff) {
-      return Address.of(address, this::readChrRom, rom.chr().value()::put);
+      return Address.of(address, this::readChrRom, rom.chr()::put);
     }
     if (0x2000 <= address && address <= 0x3eff) {
       return Address.of(mirror(address), ppuRam::get, ppuRam::put);
@@ -79,20 +79,53 @@ final class Mmc1NesMapper implements NesMapper {
   }
 
   private byte readChrRom(int address) {
-    return switch (chrRomBankMode) {
-      case 0 -> rom.chr().read(address, chrRomBank0Select & 0b1111_1110);
-      case 1 -> rom.chr().read(address, chrRomBank0Select, chrRomBank1Select);
-      default -> throw new IllegalStateException(String.valueOf(chrRomBankMode));
-    };
+    assert 0x0000 <= address && address <= 0x3fff;
+    int bank0 =
+        switch (chrRomBankMode) {
+          case 0 -> chrRomBank0Select & 0b1111_1110;
+          case 1 -> chrRomBank0Select;
+          default -> throw new IllegalStateException();
+        };
+    int bank1 =
+        switch (chrRomBankMode) {
+          case 0 -> bank0 + 1;
+          case 1 -> chrRomBank1Select;
+          default -> throw new IllegalStateException();
+        };
+    if (0x0000 <= address && address <= 0x1fff) {
+      return rom.chr().get(bank0 * 0x2000 + address - 0x0000);
+    }
+    if (0x2000 <= address && address <= 0x3fff) {
+      return rom.chr().get(bank1 * 0x2000 + address - 0x2000);
+    }
+    throw new InvalidReadError(address);
   }
 
   private byte readPrgRom(int address) {
-    return switch (prgRomBankMode) {
-      case 0, 1 -> rom.prg().read(address - 0x8000, prgRomBankSelect & 0b1111_1110);
-      case 2 -> rom.prg().read(address - 0x8000, 0, prgRomBankSelect);
-      case 3 -> rom.prg().read(address - 0x8000, prgRomBankSelect, rom.prg().getNumBanks() - 1);
-      default -> throw new IllegalStateException(String.valueOf(prgRomBankMode));
-    };
+    assert 0x8000 <= address && address <= 0xffff;
+    int bank0 =
+        switch (prgRomBankMode) {
+          case 0 -> prgRomBankSelect & 0b1111_1110;
+          case 1 -> prgRomBankSelect & 0b1111_1110;
+          case 2 -> 0;
+          case 3 -> prgRomBankSelect;
+          default -> throw new IllegalStateException();
+        };
+    int bank1 =
+        switch (prgRomBankMode) {
+          case 0 -> bank0 + 1;
+          case 1 -> bank0 + 1;
+          case 2 -> prgRomBankSelect;
+          case 3 -> rom.prg().capacity() / 0x4000 - 1;
+          default -> throw new IllegalStateException();
+        };
+    if (0x8000 <= address && address <= 0xbfff) {
+      return rom.prg().get(bank0 * 0x4000 + address - 0x8000);
+    }
+    if (0xc000 <= address && address <= 0xffff) {
+      return rom.prg().get(bank1 * 0x4000 + address - 0xc000);
+    }
+    throw new InvalidReadError(address);
   }
 
   private void writeControlRegister(byte data) {

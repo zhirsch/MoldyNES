@@ -1,42 +1,25 @@
 package com.zacharyhirsch.moldynes.emulator.rom;
 
 import com.zacharyhirsch.moldynes.emulator.rom.NesRomProperties.NametableLayout;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 public final class NesRomLoader {
-
+  
   private NesRomLoader() {}
 
-  public static NesRom load(String path) {
-    ByteBuffer buffer;
-    try (FileInputStream input = new FileInputStream(path)) {
-      buffer = ByteBuffer.wrap(input.readAllBytes());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    NesRom rom = load(buffer);
-    if (buffer.hasRemaining()) {
-      throw new IllegalStateException("buffer not empty");
-    }
-    return rom;
-  }
-
-  private static NesRom load(ByteBuffer buffer) {
-    byte[] header = read(buffer, 16);
-    if (!(header[0] == 'N' && header[1] == 'E' && header[2] == 'S' && header[3] == 0x1a)) {
+  public static NesRom load(InputStream input) throws IOException {
+    byte[] header = input.readNBytes(16);
+    if (!isMagic(header)) {
       throw new IllegalArgumentException("bad magic string");
     }
-    if ((header[7] & 0b0000_1100) == 0b0000_1000) {
-      return load20(header, buffer);
-    }
-    return load10(header, buffer);
+    return isNes20(header) ? load20(header, input) : load10(header, input);
   }
 
-  private static NesRom load20(byte[] header, ByteBuffer buffer) {
-    byte[] prgRom = read(buffer, getSectionSize(header[4], (byte) (header[9] & 0b0000_1111), 14));
-    byte[] chrRom = read(buffer, getSectionSize(header[5], (byte) (header[9] & 0b1111_0000), 13));
+  private static NesRom load20(byte[] header, InputStream input) throws IOException {
+    int prgSize = getSectionSize(header[4], (byte) (header[9] & 0b0000_1111), 0x4000);
+    int chrSize = getSectionSize(header[5], (byte) (header[9] & 0b1111_0000), 0x2000);
     if ((header[6] & 0b0000_0100) == 0b0000_0100) {
       throw new IllegalArgumentException("trainer not implemented");
     }
@@ -64,24 +47,17 @@ public final class NesRomLoader {
     if (header[15] != 1) {
       throw new IllegalArgumentException("bad expansion devices: %02x".formatted(header[15]));
     }
-
     int mapper = getMapper(header[6], header[7], header[8]);
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
     return new NesRom(
-        new NesRomSection(0x4000, ByteBuffer.wrap(prgRom).asReadOnlyBuffer()),
-        new NesRomSection(0x2000, ByteBuffer.wrap(chrRom).asReadOnlyBuffer()),
+        ByteBuffer.wrap(input.readNBytes(prgSize)).asReadOnlyBuffer(),
+        ByteBuffer.wrap(input.readNBytes(chrSize)).asReadOnlyBuffer(),
         new NesRomProperties(mapper, nametableLayout));
   }
 
-  private static NesRom load10(byte[] header, ByteBuffer buffer) {
-    byte[] prgRom = read(buffer, header[4] << 14);
-    ByteBuffer chrRom;
-    byte[] chrRomTemp = read(buffer, header[5] << 13);
-    if (chrRomTemp.length == 0) {
-      chrRom = ByteBuffer.wrap(new byte[0x2000]);
-    } else {
-      chrRom = ByteBuffer.wrap(chrRomTemp).asReadOnlyBuffer();
-    }
+  private static NesRom load10(byte[] header, InputStream input) throws IOException {
+    int prgSize = getSectionSize(header[4], (byte) 0, 0x4000);
+    int chrSize = getSectionSize(header[5], (byte) 0, 0x2000);
     if ((header[6] & 0b0000_0100) == 0b0000_0100) {
       throw new IllegalArgumentException("trainer not implemented");
     }
@@ -112,33 +88,23 @@ public final class NesRomLoader {
     if (header[15] != 0) {
       throw new IllegalArgumentException("bad byte 15: %02x".formatted(header[15]));
     }
-
     int mapper = getMapper(header[6], header[7], (byte) 0);
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
     return new NesRom(
-        new NesRomSection(0x4000, ByteBuffer.wrap(prgRom).asReadOnlyBuffer()),
-        new NesRomSection(0x2000, chrRom),
+        ByteBuffer.wrap(input.readNBytes(prgSize)).asReadOnlyBuffer(),
+        chrSize == 0
+            ? ByteBuffer.wrap(new byte[0x2000])
+            : ByteBuffer.wrap(input.readNBytes(chrSize)).asReadOnlyBuffer(),
         new NesRomProperties(mapper, nametableLayout));
   }
 
-  private static byte[] read(ByteBuffer buffer, int size) {
-    byte[] array = new byte[size];
-    buffer.get(array);
-    return array;
-  }
-
-  private static int getSectionSize(byte lsb, byte msb, int blockSizeLog2) {
+  private static int getSectionSize(byte lsb, byte msb, int blockSize) {
     if (msb == 0xf) {
       int m = (lsb & 0b0000_0011) >>> 0;
       int e = (lsb & 0b1111_1100) >>> 2;
-      long size = Math.powExact(2L, e) * (2 * m + 1);
-      if (size > Integer.MAX_VALUE) {
-        // TODO: allow larger sizes. Java limits arrays to 32-bits.
-        throw new IllegalArgumentException("Section size too large: %08x".formatted(size));
-      }
-      return (int) size;
+      return Math.unsignedPowExact(2, e) * (2 * m + 1);
     }
-    return ((msb << 8) | lsb) * (1 << blockSizeLog2);
+    return ((msb << 8) | lsb) * blockSize;
   }
 
   private static int getMapper(byte header6, byte header7, byte header8) {
@@ -146,5 +112,13 @@ public final class NesRomLoader {
     int nibble2 = (header7 & 0b1111_0000) >>> 4;
     int nibble3 = (header8 & 0b0000_1111) >>> 0;
     return (nibble3 << 8) | (nibble2 << 4) | nibble1;
+  }
+
+  private static boolean isMagic(byte[] header) {
+    return header[0] == 'N' && header[1] == 'E' && header[2] == 'S' && header[3] == 0x1a;
+  }
+
+  private static boolean isNes20(byte[] header) {
+    return (header[7] & 0b0000_1100) == 0b0000_1000;
   }
 }

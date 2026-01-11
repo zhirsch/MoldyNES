@@ -1,9 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
-import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 
 public final class NesPpuPalette {
 
@@ -13,21 +11,23 @@ public final class NesPpuPalette {
     this.colors = colors;
   }
 
-  public static NesPpuPalette load(String path) {
-    try (InputStream input = Resources.getResource(path).openStream()) {
-      return load(ByteBuffer.wrap(input.readAllBytes()));
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static NesPpuPalette load(ByteBuffer buffer) {
+  public static NesPpuPalette load(InputStream input) throws IOException {
     NesPpuColor[] colors = new NesPpuColor[64];
     for (int i = 0; i < 64; i++) {
-      ByteBuffer rgb = buffer.slice(3 * i, 3);
-      colors[i] = new NesPpuColor(rgb.get(0), rgb.get(1), rgb.get(2));
+      int r = readByte(input);
+      int g = readByte(input);
+      int b = readByte(input);
+      colors[i] = new NesPpuColor((byte) r, (byte) g, (byte) b);
     }
     return new NesPpuPalette(colors);
+  }
+
+  private static int readByte(InputStream input) throws IOException {
+    int value = input.read();
+    if (value == -1) {
+      throw new IOException("unexpected end of palette");
+    }
+    return value;
   }
 
   public NesPpuColor get(int paletteIndex) {

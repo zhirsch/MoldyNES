@@ -28,7 +28,7 @@ final class NromNesMapper implements NesMapper {
       return Address.of(address - 0x6000, ram::get, ram::put);
     }
     if (0x8000 <= address && address <= 0xffff) {
-      return Address.of(address, this::readPrgRom, InvalidWriteError::throw_);
+      return Address.of(address, this::readPrgRom, (a, d) -> {});
     }
     throw new IllegalStateException();
   }
@@ -37,7 +37,7 @@ final class NromNesMapper implements NesMapper {
   public Address resolvePpu(int address, ByteBuffer ppuRam) {
     assert 0x0000 <= address && address <= 0x3fff;
     if (0x0000 <= address && address <= 0x1fff) {
-      return Address.of(address, this::readChrRom, InvalidWriteError::throw_);
+      return Address.of(address, this::readChr, this::writeChr);
     }
     if (0x2000 <= address && address <= 0x3eff) {
       return Address.of(mirror(address), ppuRam::get, ppuRam::put);
@@ -48,16 +48,19 @@ final class NromNesMapper implements NesMapper {
     throw new IllegalStateException();
   }
 
-  private byte readChrRom(int address) {
-    return rom.chr().read(address, 0);
+  private byte readChr(int address) {
+    assert 0x0000 <= address && address <= 0x1fff;
+    return rom.chr().get(address & (rom.chr().capacity() - 1));
+  }
+
+  private void writeChr(int address, byte data) {
+    assert 0x0000 <= address && address <= 0x1fff;
+    rom.chr().put(address & (rom.chr().capacity() - 1), data);
   }
 
   private Byte readPrgRom(int address) {
-    if (rom.prg().value().capacity() == 0x4000) {
-      return rom.prg().read(address - 0x8000, 0, 0);
-    } else {
-      return rom.prg().read(address - 0x8000, 0);
-    }
+    assert 0x8000 <= address && address <= 0xffff;
+    return rom.prg().get(address & (rom.prg().capacity() - 1));
   }
 
   private short mirror(int address) {

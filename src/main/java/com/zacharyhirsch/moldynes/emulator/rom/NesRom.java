@@ -1,3 +1,5 @@
 package com.zacharyhirsch.moldynes.emulator.rom;
 
-public record NesRom(NesRomSection prg, NesRomSection chr, NesRomProperties properties) {}
+import java.nio.ByteBuffer;
+
+public record NesRom(ByteBuffer prg, ByteBuffer chr, NesRomProperties properties) {}
