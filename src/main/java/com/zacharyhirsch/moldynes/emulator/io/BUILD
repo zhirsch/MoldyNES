@@ -9,8 +9,8 @@ java_library(
     ],
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/clock",
+        "//third_party/sdl3",
         "@maven//:com_google_guava_guava",
-        "@maven//:io_github_libsdl4j_libsdl4j",
         "@maven//:net_java_dev_jna_jna",
         "@maven//:org_slf4j_slf4j_api",
     ],

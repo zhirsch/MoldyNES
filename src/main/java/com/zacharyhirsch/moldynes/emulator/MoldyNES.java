@@ -32,12 +32,11 @@ final class MoldyNES {
     }
 
     NesMapper mapper = NesMapper.load(rom);
-    NesClock clock = new NesClock();
     NesJoypad joypad1 = new NesJoypad();
     NesJoypad joypad2 = new NesJoypad();
 
-    try (SdlDisplay display = new SdlDisplay(clock, joypad1, joypad2)) {
-      NesBus bus = new NesBus(clock, mapper, palette, display, joypad1, joypad2);
+    try (SdlDisplay display = new SdlDisplay(joypad1, joypad2)) {
+      NesBus bus = new NesBus(mapper, palette, display, joypad1, joypad2);
       try {
         while (!display.quit) {
           bus.tick();

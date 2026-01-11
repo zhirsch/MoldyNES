@@ -16,13 +16,12 @@ public class NesBus {
   private final NesPpu ppu;
 
   public NesBus(
-      NesClock clock,
       NesMapper mapper,
       NesPpuPalette palette,
       Display display,
       NesJoypad joypad1,
       NesJoypad joypad2) {
-    this.clock = clock;
+    this.clock = new NesClock();
     this.apu = new NesApu(clock, display, this::startDmcDma);
     this.ppu = new NesPpu(mapper, display, palette, this::onNmi);
     this.cpu = new NesCpu(mapper, ppu, apu, joypad1, joypad2, this::startOamDma);
