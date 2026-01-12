@@ -23,6 +23,19 @@ public interface NesMapper {
 
   Address resolvePpu(int address, ByteBuffer ppuRam);
 
+  static short mirror(int address, boolean isVerticalMirroring) {
+    int nametable = (address & 0b0000_1100_0000_0000) >>> 10;
+    int offset =
+        switch (nametable) {
+          case 0 -> 0;
+          case 1 -> isVerticalMirroring ? 1 : 0;
+          case 2 -> isVerticalMirroring ? 0 : 1;
+          case 3 -> 1;
+          default -> throw new IllegalStateException();
+        };
+    return (short) ((offset << 10) | (address & 0b0000_0011_1111_1111));
+  }
+
   final class UnknownMapperError extends RuntimeException {
 
     private UnknownMapperError(int mapper) {

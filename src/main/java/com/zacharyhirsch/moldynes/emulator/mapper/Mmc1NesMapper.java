@@ -5,20 +5,33 @@ import com.zacharyhirsch.moldynes.emulator.memory.InvalidReadError;
 import com.zacharyhirsch.moldynes.emulator.memory.InvalidWriteError;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
 import java.nio.ByteBuffer;
-import java.util.BitSet;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // https://www.nesdev.org/wiki/MMC1
 final class Mmc1NesMapper implements NesMapper {
+
+  private static final Logger log = LoggerFactory.getLogger(Mmc1NesMapper.class);
 
   private final NesRom rom;
   private final ByteBuffer prgRam;
   private final ShiftRegister shiftRegister;
 
-  private int nametableArrangement;
-  private int prgRomBankMode;
+  // 4bit0
+  // -----
+  // CPPMM
+  // |||||
+  // |||++- Nametable arrangement: (0: one-screen, lower bank; 1: one-screen, upper bank;
+  // |||               2: horizontal arrangement ("vertical mirroring", PPU A10);
+  // |||               3: vertical arrangement ("horizontal mirroring", PPU A11) )
+  // |++--- PRG-ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
+  // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
+  // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
+  // +----- CHR-ROM bank mode (0: switch 8 KB at a time; 1: switch two separate 4 KB banks)
+  private int control;
+
   private int prgRomBankSelect;
-  private int chrRomBankMode;
   private int chrRomBank0Select;
   private int chrRomBank1Select;
   private boolean prgRamEnabled;
@@ -27,10 +40,8 @@ final class Mmc1NesMapper implements NesMapper {
     this.rom = rom;
     this.prgRam = ByteBuffer.wrap(new byte[0x2000]);
     this.shiftRegister = new ShiftRegister();
-    this.nametableArrangement = 0;
-    this.prgRomBankMode = 0;
+    this.control = 0;
     this.prgRomBankSelect = 0;
-    this.chrRomBankMode = 0;
     this.chrRomBank0Select = 0;
     this.chrRomBank1Select = 0;
     this.prgRamEnabled = true;
@@ -40,25 +51,22 @@ final class Mmc1NesMapper implements NesMapper {
   public Address resolveCpu(int address) {
     assert 0x0000 <= address && address <= 0xffff;
     if (0x0000 <= address && address <= 0x5fff) {
-      return Address.of(address, InvalidReadError::throw_, InvalidWriteError::throw_);
+      return Address.of(() -> (byte) 0, (_) -> {});
     }
     if (0x6000 <= address && address <= 0x7fff) {
       if (!prgRamEnabled) {
-        return Address.of(address, InvalidReadError::throw_, InvalidWriteError::throw_);
+        return Address.of(
+            () -> {
+              throw new InvalidReadError(address);
+            },
+            (_) -> {
+              throw new InvalidWriteError(address);
+            });
       }
       return Address.of(address - 0x6000, prgRam::get, prgRam::put);
     }
-    if (0x8000 <= address && address <= 0x9fff) {
-      return Address.of(() -> readPrgRom(address), this::writeControlRegister);
-    }
-    if (0xa000 <= address && address <= 0xbfff) {
-      return Address.of(() -> readPrgRom(address), this::writeChrBank0Register);
-    }
-    if (0xc000 <= address && address <= 0xdfff) {
-      return Address.of(() -> readPrgRom(address), this::writeChrBank1Register);
-    }
-    if (0xe000 <= address && address <= 0xffff) {
-      return Address.of(() -> readPrgRom(address), this::writePrgBankRegister);
+    if (0x8000 <= address && address <= 0xffff) {
+      return Address.of(address, this::readPrgRom, this::writeRegister);
     }
     throw new IllegalStateException();
   }
@@ -67,163 +75,207 @@ final class Mmc1NesMapper implements NesMapper {
   public Address resolvePpu(int address, ByteBuffer ppuRam) {
     assert 0x0000 <= address && address <= 0x3fff;
     if (0x0000 <= address && address <= 0x1fff) {
-      return Address.of(address, this::readChrRom, rom.chr()::put);
+      return Address.of(address, this::readChrRom, this::writeChrRom);
     }
     if (0x2000 <= address && address <= 0x3eff) {
       return Address.of(mirror(address), ppuRam::get, ppuRam::put);
     }
     if (0x3f00 <= address && address <= 0x3fff) {
-      return Address.of(mirror(address), ppuRam::get, InvalidWriteError::throw_);
+      return Address.of(
+          mirror(address),
+          ppuRam::get,
+          (_, _) -> {
+            throw new InvalidWriteError(address);
+          });
     }
     throw new IllegalStateException();
   }
 
   private byte readChrRom(int address) {
-    assert 0x0000 <= address && address <= 0x3fff;
-    int bank0 =
-        switch (chrRomBankMode) {
-          case 0 -> chrRomBank0Select & 0b1111_1110;
-          case 1 -> chrRomBank0Select;
-          default -> throw new IllegalStateException();
-        };
-    int bank1 =
-        switch (chrRomBankMode) {
-          case 0 -> bank0 + 1;
-          case 1 -> chrRomBank1Select;
-          default -> throw new IllegalStateException();
-        };
-    if (0x0000 <= address && address <= 0x1fff) {
-      return rom.chr().get(bank0 * 0x2000 + address - 0x0000);
+    return switch (control & 0b0001_0000) {
+      case 0b0000_0000 -> readChrRomMode0(address);
+      case 0b0001_0000 -> readChrRomMode1(address);
+      default -> throw new IllegalStateException();
+    };
+  }
+
+  private byte readChrRomMode0(int address) {
+    assert 0x0000 <= address && address <= 0x1fff;
+    return rom.chr().get((chrRomBank0Select & 0b0001_1110) * 0x1000 + address);
+  }
+
+  private byte readChrRomMode1(int address) {
+    assert 0x0000 <= address && address <= 0x1fff;
+    if (0x0000 <= address && address <= 0x0fff) {
+      return rom.chr().get((chrRomBank0Select & 0b0001_1111) * 0x1000 + address);
     }
-    if (0x2000 <= address && address <= 0x3fff) {
-      return rom.chr().get(bank1 * 0x2000 + address - 0x2000);
+    if (0x1000 <= address && address <= 0x1fff) {
+      return rom.chr().get((chrRomBank1Select & 0b0001_1111) * 0x1000 + address - 0x1000);
     }
-    throw new InvalidReadError(address);
+    throw new IllegalStateException();
+  }
+
+  private void writeChrRom(int address, byte data) {
+    switch (control & 0b0001_0000) {
+      case 0b0000_0000 -> writeChrRomMode0(address, data);
+      case 0b0001_0000 -> writeChrRomMode1(address, data);
+      default -> throw new IllegalStateException();
+    }
+  }
+
+  private void writeChrRomMode0(int address, byte data) {
+    assert 0x0000 <= address && address <= 0x1fff;
+    rom.chr().put((chrRomBank0Select & 0b0001_1110) * 0x1000 + address, data);
+  }
+
+  private void writeChrRomMode1(int address, byte data) {
+    assert 0x0000 <= address && address <= 0x1fff;
+    if (0x0000 <= address && address <= 0x0fff) {
+      rom.chr().put((chrRomBank0Select & 0b0001_1111) * 0x1000 + address, data);
+      return;
+    }
+    if (0x1000 <= address && address <= 0x1fff) {
+      rom.chr().put((chrRomBank1Select & 0b0001_1111) * 0x1000 + address - 0x1000, data);
+      return;
+    }
+    throw new IllegalStateException();
   }
 
   private byte readPrgRom(int address) {
+    return switch (control & 0b0000_1100) {
+      case 0b0000_0000, 0b0000_0100 -> readPrgRomMode01(address - 0x8000);
+      case 0b0000_1000 -> readPrgRomMode2(address - 0x8000);
+      case 0b0000_1100 -> readPrgRomMode3(address - 0x8000);
+      default -> throw new IllegalStateException();
+    };
+  }
+
+  private byte readPrgRomMode01(int offset) {
+    assert 0x0000 <= offset && offset <= 0x7fff;
+    return rom.prg().get((prgRomBankSelect & 0b0000_1110) * 0x8000 + offset);
+  }
+
+  private byte readPrgRomMode2(int offset) {
+    assert 0x0000 <= offset && offset <= 0x7fff;
+    if (0x0000 <= offset && offset <= 0x3fff) {
+      return rom.prg().get(offset);
+    }
+    if (0x4000 <= offset && offset <= 0x7fff) {
+      return rom.prg().get((prgRomBankSelect & 0b0000_1111) * 0x4000 + offset - 0x4000);
+    }
+    throw new IllegalStateException();
+  }
+
+  private byte readPrgRomMode3(int offset) {
+    assert 0x0000 <= offset && offset <= 0x7fff;
+    if (0x0000 <= offset && offset <= 0x3fff) {
+      return rom.prg().get((prgRomBankSelect & 0b0000_1111) * 0x4000 + offset);
+    }
+    if (0x4000 <= offset && offset <= 0x7fff) {
+      return rom.prg().get(rom.prg().capacity() - 0x4000 + offset - 0x4000);
+    }
+    throw new IllegalStateException();
+  }
+
+  private void writeRegister(int address, byte data) {
     assert 0x8000 <= address && address <= 0xffff;
-    int bank0 =
-        switch (prgRomBankMode) {
-          case 0 -> prgRomBankSelect & 0b1111_1110;
-          case 1 -> prgRomBankSelect & 0b1111_1110;
-          case 2 -> 0;
-          case 3 -> prgRomBankSelect;
-          default -> throw new IllegalStateException();
-        };
-    int bank1 =
-        switch (prgRomBankMode) {
-          case 0 -> bank0 + 1;
-          case 1 -> bank0 + 1;
-          case 2 -> prgRomBankSelect;
-          case 3 -> rom.prg().capacity() / 0x4000 - 1;
-          default -> throw new IllegalStateException();
-        };
-    if (0x8000 <= address && address <= 0xbfff) {
-      return rom.prg().get(bank0 * 0x4000 + address - 0x8000);
+    if ((data & 0b1000_0000) != 0) {
+      shiftRegister.reset();
+      writeControlRegister((byte) (control | 0x0c));
+      return;
     }
-    if (0xc000 <= address && address <= 0xffff) {
-      return rom.prg().get(bank1 * 0x4000 + address - 0xc000);
+    Optional<Byte> value = shiftRegister.shift(data);
+    if (value.isEmpty()) {
+      return;
     }
-    throw new InvalidReadError(address);
+    if (0x8000 <= address && address <= 0x9fff) {
+      writeControlRegister(value.get());
+      return;
+    }
+    if (0xa000 <= address && address <= 0xbfff) {
+      writeChrBank0Register(value.get());
+      return;
+    }
+    if (0xc000 <= address && address <= 0xdfff) {
+      writeChrBank1Register(value.get());
+      return;
+    }
+    if (0xe000 <= address && address <= 0xffff) {
+      writePrgBankRegister(value.get());
+      return;
+    }
+    throw new IllegalStateException();
   }
 
   private void writeControlRegister(byte data) {
-    if ((data & 0b1000_0000) == 0b1000_0000) {
-      reset();
-      return;
+    int oldControl = control;
+    control = data;
+    if ((oldControl & 0b0000_0011) != (control & 0b0000_0011)) {
+      log.info(
+          "Changing nametable arrangement from {} to {}",
+          (oldControl & 0b0000_0011),
+          (control & 0b0000_0011));
     }
-    Optional<Byte> value = shiftRegister.shift(data);
-    // 4bit0
-    // -----
-    // CPPMM
-    // |||||
-    // |||++- Nametable arrangement: (0: one-screen, lower bank; 1: one-screen, upper bank;
-    // |||               2: horizontal arrangement ("vertical mirroring", PPU A10);
-    // |||               3: vertical arrangement ("horizontal mirroring", PPU A11) )
-    // |++--- PRG-ROM bank mode (0, 1: switch 32 KB at $8000, ignoring low bit of bank number;
-    // |                         2: fix first bank at $8000 and switch 16 KB bank at $C000;
-    // |                         3: fix last bank at $C000 and switch 16 KB bank at $8000)
-    // +----- CHR-ROM bank mode (0: switch 8 KB at a time; 1: switch two separate 4 KB banks)
-    value.ifPresent(val -> nametableArrangement = val & 0b0000_0011);
-    value.ifPresent(val -> prgRomBankMode = (val & 0b0000_1100) >>> 2);
-    value.ifPresent(val -> chrRomBankMode = (val & 0b0001_0000) >>> 4);
+    if ((oldControl & 0b0000_1100) != (control & 0b0000_1100)) {
+      log.info(
+          "Changing PRG-ROM bank mode from {} to {}",
+          (oldControl & 0b0000_1100) >>> 2,
+          (control & 0b0000_1100) >>> 2);
+    }
+    if ((oldControl & 0b0001_0000) != (control & 0b0001_0000)) {
+      log.info(
+          "Changing CHR-ROM bank mode from {} to {}",
+          (oldControl & 0b0001_0000) >>> 4,
+          (control & 0b0001_0000) >>> 4);
+    }
   }
 
   private void writeChrBank0Register(byte data) {
-    if ((data & 0b1000_0000) == 0b1000_0000) {
-      reset();
-      return;
-    }
-    Optional<Byte> value = shiftRegister.shift(data);
-    value.ifPresent(val -> chrRomBank0Select = val);
+    chrRomBank0Select = data;
   }
 
   private void writeChrBank1Register(byte data) {
-    if ((data & 0b1000_0000) == 0b1000_0000) {
-      reset();
-      return;
-    }
-    Optional<Byte> value = shiftRegister.shift(data);
-    value.ifPresent(val -> chrRomBank1Select = val);
+    chrRomBank1Select = data;
   }
 
   private void writePrgBankRegister(byte data) {
-    if ((data & 0b1000_0000) == 0b1000_0000) {
-      reset();
-      return;
+    prgRomBankSelect = data & 0b0000_1111;
+    prgRamEnabled = (data & 0b0001_0000) == 0b0000_0000;
+  }
+
+  private short mirror(int address) {
+    if ((control & 0b0000_0011) == 0) {
+      return (short) (address & 0b0000_0011_1111_1111);
     }
-    Optional<Byte> value = shiftRegister.shift(data);
-    value.ifPresent(val -> prgRomBankSelect = val & 0b0000_1111);
-    value.ifPresent(val -> prgRamEnabled = (val & 0b0001_0000) == 0b0000_0000);
-  }
-
-  private void reset() {
-    shiftRegister.reset();
-    prgRomBankMode = 3;
-  }
-
-  private short mirror(int addr) {
-    // Horizontal mirroring:
-    //   [ A ] [ a ]
-    //   [ B ] [ b ]
-    //
-    // Vertical mirroring:
-    //   [ A ] [ B ]
-    //   [ a ] [ b ]
-
-    return switch (nametableArrangement) {
-      case 0 -> (short) (addr & 0b0000_0011_1111_1111);
-      case 1 -> throw new UnsupportedOperationException(String.valueOf(nametableArrangement));
-      case 2 -> (short) ((0b0000_0000_0000_0000) | (addr & 0b0000_0011_1111_1111));
-      case 3 -> (short) ((0b0000_0100_0000_0000) | (addr & 0b0000_0011_1111_1111));
-      default -> throw new IllegalStateException(String.valueOf(nametableArrangement));
-    };
+    if ((control & 0b0000_0011) == 1) {
+      throw new UnsupportedOperationException(String.valueOf(control));
+    }
+    return NesMapper.mirror(address, (control & 0b0000_0011) == 2);
   }
 
   private static final class ShiftRegister {
 
-    private final BitSet value;
-
+    private int value;
     private int count;
 
     ShiftRegister() {
-      this.value = new BitSet(5);
+      this.value = 0;
       this.count = 0;
     }
 
     Optional<Byte> shift(byte bit) {
-      value.set(count++, (bit & 0b0000_0001) == 0b0000_0001);
+      value = (value | ((bit & 0b0000_0001) << count));
+      count++;
       if (count < 5) {
         return Optional.empty();
       }
-      byte v = value.isEmpty() ? 0 : value.toByteArray()[0];
+      int v = value;
       reset();
-      return Optional.of(v);
+      return Optional.of((byte) v);
     }
 
     public void reset() {
-      value.clear();
+      value = 0;
       count = 0;
     }
   }

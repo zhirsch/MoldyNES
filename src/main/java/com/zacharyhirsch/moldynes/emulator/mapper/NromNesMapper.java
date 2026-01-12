@@ -1,7 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.mapper;
 
 import com.zacharyhirsch.moldynes.emulator.memory.Address;
-import com.zacharyhirsch.moldynes.emulator.memory.InvalidReadError;
 import com.zacharyhirsch.moldynes.emulator.memory.InvalidWriteError;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRomProperties.NametableLayout;
@@ -22,13 +21,13 @@ final class NromNesMapper implements NesMapper {
   public Address resolveCpu(int address) {
     assert 0x0000 <= address && address <= 0xffff;
     if (0x0000 <= address && address <= 0x5fff) {
-      return Address.of(address, InvalidReadError::throw_, InvalidWriteError::throw_);
+      return Address.of(() -> (byte) 0, (_) -> {});
     }
     if (0x6000 <= address && address <= 0x7fff) {
       return Address.of(address - 0x6000, ram::get, ram::put);
     }
     if (0x8000 <= address && address <= 0xffff) {
-      return Address.of(address, this::readPrgRom, (a, d) -> {});
+      return Address.of(address, this::readPrgRom, (_, _) -> {});
     }
     throw new IllegalStateException();
   }
@@ -43,7 +42,12 @@ final class NromNesMapper implements NesMapper {
       return Address.of(mirror(address), ppuRam::get, ppuRam::put);
     }
     if (0x3f00 <= address && address <= 0x3fff) {
-      return Address.of(mirror(address), ppuRam::get, InvalidWriteError::throw_);
+      return Address.of(
+          mirror(address),
+          ppuRam::get,
+          (_, _) -> {
+            throw new InvalidWriteError(address);
+          });
     }
     throw new IllegalStateException();
   }
@@ -73,17 +77,6 @@ final class NromNesMapper implements NesMapper {
     //   [ a ] [ b ]
 
     boolean isVerticalMirroring = rom.properties().nametableLayout() == NametableLayout.VERTICAL;
-    int nametable = (address & 0b0000_1100_0000_0000) >>> 10;
-    int offset =
-        switch (nametable) {
-          case 0 -> 0;
-          case 1 -> isVerticalMirroring ? 1 : 0;
-          case 2 -> isVerticalMirroring ? 0 : 1;
-          case 3 -> 1;
-          default -> throw new IllegalStateException();
-        };
-    int index = address & 0b0000_0011_1111_1111;
-    return (short) ((offset << 10) | index);
+    return NesMapper.mirror(address, isVerticalMirroring);
   }
-
 }
