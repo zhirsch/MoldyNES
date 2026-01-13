@@ -1,6 +1,5 @@
 package com.zacharyhirsch.moldynes.emulator.rom;
 
-import com.zacharyhirsch.moldynes.emulator.rom.NesRomProperties.NametableLayout;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;

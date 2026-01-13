@@ -49,9 +49,12 @@ public final class SdlDisplay implements Closeable, Display {
 
   private final NesJoypad joypad1;
   private final NesJoypad joypad2;
+  private final MemorySegment event;
   private final MemorySegment window;
   private final MemorySegment renderer;
   private final MemorySegment texture;
+  private final MemorySegment pixelsPtr;
+  private final MemorySegment pitch;
 
   private final MemorySegment audioBuffer;
   private int audioBufferLen;
@@ -64,6 +67,7 @@ public final class SdlDisplay implements Closeable, Display {
   public SdlDisplay(NesJoypad joypad1, NesJoypad joypad2) {
     this.joypad1 = joypad1;
     this.joypad2 = joypad2;
+    this.event = SDL_Event.allocate(Arena.global());
 
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO())) {
       throw new SdlException("Unable to initialize SDL video library");
@@ -89,6 +93,9 @@ public final class SdlDisplay implements Closeable, Display {
       throw new SdlException("Unable to create SDL texture");
     }
 
+    pixelsPtr = Arena.global().allocate(C_POINTER);
+    pitch = Arena.global().allocate(C_POINTER);
+
     if (!SDL_InitSubSystem(SDL_INIT_AUDIO())) {
       throw new SdlException("Unable to initialize SDL audio library");
     }
@@ -96,30 +103,28 @@ public final class SdlDisplay implements Closeable, Display {
     audioBuffer = Arena.global().allocate(1 << 20);
     audioBufferLen = 0;
 
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment output = SDL_AudioSpec.allocate(arena);
-      SDL_AudioSpec.freq(output, 44100);
-      SDL_AudioSpec.format(output, SDL_AUDIO_F32());
-      SDL_AudioSpec.channels(output, 1);
-      audioDeviceId = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK(), output);
-      if (audioDeviceId == 0) {
-        throw new SdlException("Unable to open audio device");
-      }
+    MemorySegment output = SDL_AudioSpec.allocate(Arena.global());
+    SDL_AudioSpec.freq(output, 44100);
+    SDL_AudioSpec.format(output, SDL_AUDIO_F32());
+    SDL_AudioSpec.channels(output, 1);
+    audioDeviceId = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK(), output);
+    if (audioDeviceId == 0) {
+      throw new SdlException("Unable to open audio device");
+    }
 
-      MemorySegment input = SDL_AudioSpec.allocate(arena);
-      SDL_AudioSpec.freq(input, CPU_CYCLES_PER_SECOND);
-      SDL_AudioSpec.format(input, SDL_AUDIO_F32());
-      SDL_AudioSpec.channels(input, 1);
-      audioStream = SDL_CreateAudioStream(input, output);
-      if (audioStream == null) {
-        throw new SdlException("Unable to open audio stream");
-      }
-      if (!SDL_BindAudioStream(audioDeviceId, audioStream)) {
-        throw new SdlException("Unable to bind audio stream");
-      }
-      if (!SDL_ResumeAudioDevice(audioDeviceId)) {
-        throw new SdlException("Unable to resume audio device");
-      }
+    MemorySegment input = SDL_AudioSpec.allocate(Arena.global());
+    SDL_AudioSpec.freq(input, CPU_CYCLES_PER_SECOND);
+    SDL_AudioSpec.format(input, SDL_AUDIO_F32());
+    SDL_AudioSpec.channels(input, 1);
+    audioStream = SDL_CreateAudioStream(input, output);
+    if (audioStream == null) {
+      throw new SdlException("Unable to open audio stream");
+    }
+    if (!SDL_BindAudioStream(audioDeviceId, audioStream)) {
+      throw new SdlException("Unable to bind audio stream");
+    }
+    if (!SDL_ResumeAudioDevice(audioDeviceId)) {
+      throw new SdlException("Unable to resume audio device");
     }
   }
 
@@ -141,7 +146,7 @@ public final class SdlDisplay implements Closeable, Display {
     if (!SDL_SetRenderDrawColor(renderer, (byte) 255, (byte) 0, (byte) 0, (byte) 255)) {
       throw new SdlException("Unable to set draw color");
     }
-    if (!SDL_RenderRect(renderer, null)) {
+    if (!SDL_RenderRect(renderer, MemorySegment.NULL)) {
       throw new SdlException("Unable to draw rectangle");
     }
     if (!SDL_RenderPresent(renderer)) {
@@ -161,25 +166,18 @@ public final class SdlDisplay implements Closeable, Display {
   }
 
   public void pump() {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment event = SDL_Event.allocate(arena);
-      while (SDL_PollEvent(event)) {
-        dispatch(event);
-      }
+    while (SDL_PollEvent(event)) {
+      dispatch(event);
     }
   }
 
   private void outputGraphics(byte[] frame) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment pixelsPtr = arena.allocate(C_POINTER);
-      MemorySegment pitch = arena.allocate(C_POINTER);
-      if (!SDL_LockTexture(texture, MemorySegment.NULL, pixelsPtr, pitch)) {
-        throw new SdlException("Unable to lock texture");
-      }
-      MemorySegment pixels = pixelsPtr.get(C_POINTER, 0);
-      MemorySegment.copy(frame, 0, pixels, ValueLayout.JAVA_BYTE, 0, frame.length);
-      SDL_UnlockTexture(texture);
+    if (!SDL_LockTexture(texture, MemorySegment.NULL, pixelsPtr, pitch)) {
+      throw new SdlException("Unable to lock texture");
     }
+    MemorySegment pixels = pixelsPtr.get(C_POINTER, 0);
+    MemorySegment.copy(frame, 0, pixels, ValueLayout.JAVA_BYTE, 0, frame.length);
+    SDL_UnlockTexture(texture);
     if (!SDL_RenderTexture(renderer, texture, MemorySegment.NULL, MemorySegment.NULL)) {
       throw new SdlException("Unable to render texture");
     }

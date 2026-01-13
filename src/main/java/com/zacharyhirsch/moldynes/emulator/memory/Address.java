@@ -1,11 +1,17 @@
 package com.zacharyhirsch.moldynes.emulator.memory;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface Address {
+
+  interface Reader {
+    byte read(int address);
+  }
+
+  interface Writer {
+    void write(int address, byte data);
+  }
 
   static Address of(Supplier<Byte> read, Consumer<Byte> write) {
     return new Address() {
@@ -21,16 +27,16 @@ public interface Address {
     };
   }
 
-  static Address of(int address, Function<Integer, Byte> read, BiConsumer<Integer, Byte> write) {
+  static Address of(int address, Reader reader, Writer writer) {
     return new Address() {
       @Override
       public byte read() {
-        return read.apply(address);
+        return reader.read(address);
       }
 
       @Override
       public void write(byte data) {
-        write.accept(address, data);
+        writer.write(address, data);
       }
     };
   }

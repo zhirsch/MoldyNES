@@ -100,7 +100,6 @@ public final class NesCpu {
     if (irqPending) {
       irqPending = false;
       if (!oldI) {
-        log.info("CPU entering IRQ handler");
         return new NesCpuInterrupt((short) 0xfffe, (short) 0xffff, false).execute(this);
       }
     }

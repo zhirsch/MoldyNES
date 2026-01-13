@@ -7,10 +7,15 @@ import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NesBus {
 
+  private static final Logger log = LoggerFactory.getLogger(NesBus.class);
+
   private final NesClock clock;
+  private final NesMapper mapper;
   private final NesCpu cpu;
   private final NesApu apu;
   private final NesPpu ppu;
@@ -22,6 +27,7 @@ public class NesBus {
       NesJoypad joypad1,
       NesJoypad joypad2) {
     this.clock = new NesClock();
+    this.mapper = mapper;
     this.apu = new NesApu(clock, display, this::startDmcDma);
     this.ppu = new NesPpu(mapper, display, palette, this::onNmi);
     this.cpu = new NesCpu(mapper, ppu, apu, joypad1, joypad2, this::startOamDma);
@@ -29,13 +35,15 @@ public class NesBus {
 
   public void tick() {
     clock.tick();
+    mapper.tick();
     ppu.tick();
     ppu.tick();
     ppu.tick();
     apu.tick();
     cpu.tick();
 
-    if (apu.irq()) {
+    if (apu.irq() || mapper.irq()) {
+//      log.info("Forwarding IRQ to CPU");
       cpu.irq();
     }
   }
