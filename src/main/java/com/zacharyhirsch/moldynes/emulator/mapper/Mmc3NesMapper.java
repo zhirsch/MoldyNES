@@ -1,12 +1,17 @@
 package com.zacharyhirsch.moldynes.emulator.mapper;
 
+import com.zacharyhirsch.moldynes.emulator.memory.Address;
 import com.zacharyhirsch.moldynes.emulator.rom.NametableLayout;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
 import java.nio.ByteBuffer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // https://www.nesdev.org/wiki/MMC3
 // TODO: Support cartridges with hardwired 4-screen VRAM (header6.3).
 final class Mmc3NesMapper extends AbstractNesMapper {
+
+  private static final Logger log = LoggerFactory.getLogger(Mmc3NesMapper.class);
 
   private final NesRom rom;
   private final ByteBuffer wram;
@@ -55,7 +60,7 @@ final class Mmc3NesMapper extends AbstractNesMapper {
   private void checkIrqCounter(int address) {
     boolean thisA12 = (address & 0b0001_0000_0000_0000) != 0;
     if (prevA12 && !thisA12) {
-      cpuClocks = 0;
+      cpuClocks = 3;
     } else if (!prevA12 && thisA12 && cpuClocks == 0) {
       tickIrqCounter();
     }
@@ -65,6 +70,7 @@ final class Mmc3NesMapper extends AbstractNesMapper {
   private void tickIrqCounter() {
     if (irqCounter == 0 || irqCounterReload) {
       irqCounter = irqCounterLatch;
+      irqCounterReload = false;
     } else {
       irqCounter--;
     }
@@ -93,8 +99,13 @@ final class Mmc3NesMapper extends AbstractNesMapper {
   }
 
   @Override
-  protected byte readChrRam(int address) {
+  public Address resolvePpu(int address) {
     checkIrqCounter(address);
+    return super.resolvePpu(address);
+  }
+
+  @Override
+  protected byte readChrRam(int address) {
     return switch (chrRomBankMode) {
       case 0 -> readChrRomMode0(address);
       case 1 -> readChrRomMode1(address);
@@ -104,7 +115,6 @@ final class Mmc3NesMapper extends AbstractNesMapper {
 
   @Override
   protected void writeChrRam(int address, byte data) {
-    checkIrqCounter(address);
     switch (chrRomBankMode) {
       case 0 -> writeChrRomMode0(address, data);
       case 1 -> writeChrRomMode1(address, data);
@@ -114,13 +124,11 @@ final class Mmc3NesMapper extends AbstractNesMapper {
 
   @Override
   protected byte readPpuRam(int address) {
-    //    checkIrqCounter(address);
     return vram.get(mirror(address));
   }
 
   @Override
   protected void writePpuRam(int address, byte data) {
-    //    checkIrqCounter(address);
     vram.put(mirror(address), data);
   }
 

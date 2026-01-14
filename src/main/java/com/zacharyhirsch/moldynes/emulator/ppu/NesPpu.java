@@ -2131,13 +2131,13 @@ public final class NesPpu {
 
   public byte readData() {
     byte data = buffer;
-    buffer = memory.read(v);
+    buffer = memory.read((short) (v & 0b0011_1111_1111_1111));
     incrementAddress();
     return data;
   }
 
   public void writeData(byte data) {
-    memory.write(v, data);
+    memory.write((short) (v & 0b0011_1111_1111_1111), data);
     incrementAddress();
   }
 

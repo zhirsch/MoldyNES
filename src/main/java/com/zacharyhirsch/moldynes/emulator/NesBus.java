@@ -43,7 +43,6 @@ public class NesBus {
     cpu.tick();
 
     if (apu.irq() || mapper.irq()) {
-//      log.info("Forwarding IRQ to CPU");
       cpu.irq();
     }
   }

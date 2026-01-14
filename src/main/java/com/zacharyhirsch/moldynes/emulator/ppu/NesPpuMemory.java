@@ -15,7 +15,7 @@ final class NesPpuMemory {
   }
 
   byte read(short address) {
-    return resolve(address & 0b0011_1111_1111_1111).read();
+    return resolve(address).read();
   }
 
   void write(short address, byte data) {
