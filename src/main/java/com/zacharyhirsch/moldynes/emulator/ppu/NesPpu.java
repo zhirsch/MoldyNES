@@ -2029,6 +2029,8 @@ public final class NesPpu {
   private boolean nmiPending = false;
   private boolean nmiRaise = false;
 
+  private int address = 0;
+
   public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette, Runnable nmi) {
     this.memory = new NesPpuMemory(mapper);
     this.display = display;
@@ -2038,9 +2040,8 @@ public final class NesPpu {
     this.frame = new byte[256 * 240 * 3];
   }
 
-  // TODO: remove this accessor and abstract out the PPU address lines.
-  public int v() {
-    return v;
+  public int address() {
+    return address;
   }
 
   public void writeControl(byte data) {
@@ -2136,17 +2137,22 @@ public final class NesPpu {
 
   public byte readData() {
     byte data = buffer;
-    buffer = memory.read((short) (v & 0b0011_1111_1111_1111));
+    address = v & 0b0011_1111_1111_1111;
+    buffer = memory.read((short) address);
     incrementAddress();
     return data;
   }
 
   public void writeData(byte data) {
-    memory.write((short) (v & 0b0011_1111_1111_1111), data);
+    address = v & 0b0011_1111_1111_1111;
+    memory.write((short) address, data);
     incrementAddress();
   }
 
   public void tick() {
+    if (!isRenderingEnabled() || isVblEnabled()) {
+      address = v & 0b0011_1111_1111_1111;
+    }
     Arrays.stream(SCANLINES[scanline][dot]).forEach(fn -> fn.accept(this));
     if (isVblEnabled() && nmiRaise) {
       nmi.run();
@@ -2359,6 +2365,9 @@ public final class NesPpu {
     }
     for (int i = 0; i < 8; i++) {
       NesPpuSprite sprite = sprites[i];
+      if (sprite == null) {
+        continue;
+      }
       if (sprite.x() <= pixel && pixel < sprite.x() + 8) {
         BitPlane<Byte> pattern = new BitPlane<>(spritePatternLoBytes[i], spritePatternHiBytes[i]);
         BitPlane<Byte> attribute = getSpriteAttributes(sprite);
@@ -2391,19 +2400,21 @@ public final class NesPpu {
     pattern.shift();
   }
 
-  private void fetchNametableByte1() {}
+  private void fetchNametableByte1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = 0x2000 | (v & 0x0fff);
+  }
 
   private void fetchNametableByte2() {
     if (!isRenderingEnabled()) {
       return;
     }
-    int address = 0x2000 | (v & 0x0fff);
     tileIndex = memory.read((short) address);
   }
 
-  private void fetchAttributeByte1() {}
-
-  private void fetchAttributeByte2() {
+  private void fetchAttributeByte1() {
     if (!isRenderingEnabled()) {
       return;
     }
@@ -2420,37 +2431,47 @@ public final class NesPpu {
     // || |||| +++------ high 3 bits of coarse Y (y/4)
     // || ++++---------- attribute offset (960 bytes)
     // ++--------------- nametable select
-    //
-    //  attribute address = 0x23C0 | (v & 0x0C00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07)
     int nametab = (v & 0b0000_1100_0000_0000) >>> 10;
     int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
     int coarseX = (v & 0b0000_0000_0001_1111) >>> 0;
-    int address =
+    address =
         0x23c0
             | (((nametab & 0b0000_0011) >> 0) << 10)
             | (((coarseY & 0b0001_1100) >> 2) << 3)
             | (((coarseX & 0b0001_1100) >> 2) << 0);
+  }
+
+  private void fetchAttributeByte2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    int coarseY = (v & 0b0000_0011_1110_0000) >>> 5;
+    int coarseX = (v & 0b0000_0000_0001_1111) >>> 0;
     byte value = memory.read((short) address);
     byte shift = (byte) (((coarseY & 0b0000_0010) << 1) | (coarseX & 0b0000_0010));
     attribute.set((byte) (value >>> shift));
   }
 
-  private void fetchPatternByteLo1() {}
+  private void fetchPatternByteLo1() {
+    address = computePatternByteAddress(0);
+  }
 
   private void fetchPatternByteLo2() {
     if (!isRenderingEnabled()) {
       return;
     }
-    pattern.setLo(fetchPatternByte(0));
+    pattern.setLo(memory.read((short) address));
   }
 
-  private void fetchPatternByteHi1() {}
+  private void fetchPatternByteHi1() {
+    address = computePatternByteAddress(8);
+  }
 
   private void fetchPatternByteHi2() {
     if (!isRenderingEnabled()) {
       return;
     }
-    pattern.setHi(fetchPatternByte(8));
+    pattern.setHi(memory.read((short) address));
   }
 
   private void reloadShiftRegisters() {
@@ -2472,166 +2493,293 @@ public final class NesPpu {
     oam.resetSecondaryOam(dot);
   }
 
-  private void fetchSprite0PatternByteLo1() {}
+  private void fetchSprite0PatternByteLo1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteLoAddress(0);
+  }
 
   private void fetchSprite0PatternByteLo2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteLo(0);
   }
 
-  private void fetchSprite0PatternByteHi1() {}
+  private void fetchSprite0PatternByteHi1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteHiAddress(0);
+  }
 
   private void fetchSprite0PatternByteHi2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteHi(0);
   }
 
-  private void fetchSprite1PatternByteLo1() {}
+  private void fetchSprite1PatternByteLo1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteLoAddress(1);
+  }
 
   private void fetchSprite1PatternByteLo2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteLo(1);
   }
 
-  private void fetchSprite1PatternByteHi1() {}
+  private void fetchSprite1PatternByteHi1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteHiAddress(1);
+  }
 
   private void fetchSprite1PatternByteHi2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteHi(1);
   }
 
-  private void fetchSprite2PatternByteLo1() {}
+  private void fetchSprite2PatternByteLo1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteLoAddress(2);
+  }
 
   private void fetchSprite2PatternByteLo2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteLo(2);
   }
 
-  private void fetchSprite2PatternByteHi1() {}
+  private void fetchSprite2PatternByteHi1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteHiAddress(2);
+  }
 
   private void fetchSprite2PatternByteHi2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteHi(2);
   }
 
-  private void fetchSprite3PatternByteLo1() {}
+  private void fetchSprite3PatternByteLo1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteLoAddress(3);
+  }
 
   private void fetchSprite3PatternByteLo2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteLo(3);
   }
 
-  private void fetchSprite3PatternByteHi1() {}
+  private void fetchSprite3PatternByteHi1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteHiAddress(3);
+  }
 
   private void fetchSprite3PatternByteHi2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteHi(3);
   }
 
-  private void fetchSprite4PatternByteLo1() {}
+  private void fetchSprite4PatternByteLo1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteLoAddress(4);
+  }
 
   private void fetchSprite4PatternByteLo2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteLo(4);
   }
 
-  private void fetchSprite4PatternByteHi1() {}
+  private void fetchSprite4PatternByteHi1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteHiAddress(4);
+  }
 
   private void fetchSprite4PatternByteHi2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteHi(4);
   }
 
-  private void fetchSprite5PatternByteLo1() {}
+  private void fetchSprite5PatternByteLo1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteLoAddress(5);
+  }
 
   private void fetchSprite5PatternByteLo2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteLo(5);
   }
 
-  private void fetchSprite5PatternByteHi1() {}
+  private void fetchSprite5PatternByteHi1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteHiAddress(5);
+  }
 
   private void fetchSprite5PatternByteHi2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteHi(5);
   }
 
-  private void fetchSprite6PatternByteLo1() {}
+  private void fetchSprite6PatternByteLo1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteLoAddress(6);
+  }
 
   private void fetchSprite6PatternByteLo2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteLo(6);
   }
 
-  private void fetchSprite6PatternByteHi1() {}
+  private void fetchSprite6PatternByteHi1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteHiAddress(6);
+  }
 
   private void fetchSprite6PatternByteHi2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteHi(6);
   }
 
-  private void fetchSprite7PatternByteLo1() {}
+  private void fetchSprite7PatternByteLo1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteLoAddress(7);
+  }
 
   private void fetchSprite7PatternByteLo2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteLo(7);
   }
 
-  private void fetchSprite7PatternByteHi1() {}
+  private void fetchSprite7PatternByteHi1() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
+    address = computeSpritePatternByteHiAddress(7);
+  }
 
   private void fetchSprite7PatternByteHi2() {
+    if (!isRenderingEnabled()) {
+      return;
+    }
     fetchSpritePatternByteHi(7);
   }
 
+  private int computeSpritePatternByteLoAddress(int index) {
+    NesPpuSprite sprite = oam.sprite(index);
+    return computeSpritePatternByteAddress(sprite, 0);
+  }
+
   private void fetchSpritePatternByteLo(int index) {
-    if (!isRenderingEnabled()) {
+    NesPpuSprite sprite = oam.sprite(index);
+    if (!sprite.valid()) {
+      spritePatternLoBytes[index] = 0;
       return;
     }
+    spritePatternLoBytes[index] = memory.read((short) address);
+  }
+
+  private int computeSpritePatternByteHiAddress(int index) {
     NesPpuSprite sprite = oam.sprite(index);
-    spritePatternLoBytes[index] = fetchSpritePatternByte(sprite, 0);
+    return computeSpritePatternByteAddress(sprite, 8);
   }
 
   private void fetchSpritePatternByteHi(int index) {
-    if (!isRenderingEnabled()) {
+    NesPpuSprite sprite = oam.sprite(index);
+    if (!sprite.valid()) {
+      spritePatternHiBytes[index] = 0;
+      sprites[index] = null;
       return;
     }
-    NesPpuSprite sprite = oam.sprite(index);
-    spritePatternHiBytes[index] = fetchSpritePatternByte(sprite, 8);
+    spritePatternHiBytes[index] = memory.read((short) address);
     sprites[index] = sprite;
   }
 
-  private byte fetchPatternByte(int offset) {
-    /*
-    DC_BA98_7654_3210
-    -----------------
-    0H_NNNN_NNNN_Pyyy
-    || |||| |||| |+++- T: Fine Y offset, the row number within a tile
-    || |||| |||| +---- P: Bit plane (0: less significant bit; 1: more significant bit)
-    || +++++++++------ N: Tile number from name table
-    |+---------------- H: Half of pattern table (0: "left"; 1: "right")
-    +----------------- 0: Pattern table is at $0000-$1FFF
-    */
+  private int computePatternByteAddress(int offset) {
     int chrBank = isBgPatternTableAddressHi() ? 1 : 0;
     int tileIndex = Byte.toUnsignedInt(this.tileIndex);
     int fineY = v >> 12;
-    return fetchPatternByte(chrBank, tileIndex, offset, fineY);
+    return computePatternByteAddress(chrBank, tileIndex, offset, fineY);
   }
 
-  private byte fetchSpritePatternByte(NesPpuSprite sprite, int offset) {
-    if (!sprite.valid()) {
-      return 0;
-    }
+  private int computeSpritePatternByteAddress(NesPpuSprite sprite, int offset) {
     int row = scanline - sprite.y();
     return isSpriteSize8x16()
-        ? fetchSprite8x16PatternByte(sprite, offset, row)
-        : fetchSprite8x8PatternByte(sprite, offset, row);
+        ? computeSprite8x16PatternByteAddress(sprite, offset, row)
+        : computeSprite8x8PatternByteAddress(sprite, offset, row);
   }
 
-  private byte fetchSprite8x8PatternByte(NesPpuSprite sprite, int offset, int row) {
+  private int computeSprite8x8PatternByteAddress(NesPpuSprite sprite, int offset, int row) {
     int chrBank = isSpritePatternTableAddressHi() ? 1 : 0;
     int tileIndex = sprite.tileIndex();
     int fineY = isFlipSpriteVertical(sprite) ? 7 - row : row;
-    return fetchPatternByte(chrBank, tileIndex, offset, fineY);
+    return computePatternByteAddress(chrBank, tileIndex, offset, fineY);
   }
 
-  private byte fetchSprite8x16PatternByte(NesPpuSprite sprite, int offset, int row) {
+  private int computeSprite8x16PatternByteAddress(NesPpuSprite sprite, int offset, int row) {
     int chrBank = sprite.tileIndex() & 0b0000_0001;
     int tileIndex = sprite.tileIndex() & 0b1111_1110;
     int fineY = isFlipSpriteVertical(sprite) ? 15 - row : row;
-    return fetchPatternByte(chrBank, tileIndex, offset, fineY);
+    return computePatternByteAddress(chrBank, tileIndex, offset, fineY);
   }
 
-  private byte fetchPatternByte(int chrBank, int tileIndex, int offset, int fineY) {
+  private int computePatternByteAddress(int chrBank, int tileIndex, int offset, int fineY) {
     if (8 <= fineY && fineY <= 15) {
       tileIndex = tileIndex + 1;
     }
-    int address = (chrBank << 12) | (tileIndex << 4) | (offset & 0b1000) | (fineY & 0b0111);
-    return memory.read((short) address);
+    return (chrBank << 12) | (tileIndex << 4) | (offset & 0b1000) | (fineY & 0b0111);
   }
 
   private BitPlane<Byte> getSpriteAttributes(NesPpuSprite sprite) {

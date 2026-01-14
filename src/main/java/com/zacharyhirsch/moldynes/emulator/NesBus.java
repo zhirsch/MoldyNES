@@ -35,10 +35,12 @@ public class NesBus {
 
   public void tick() {
     clock.tick();
-    mapper.tick(ppu.v());
     ppu.tick();
+    mapper.tick(ppu.address());
     ppu.tick();
+    mapper.tick(ppu.address());
     ppu.tick();
+    mapper.tick(ppu.address());
     apu.tick();
     cpu.tick();
 

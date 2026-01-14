@@ -1,6 +1,5 @@
 package com.zacharyhirsch.moldynes.emulator.mapper;
 
-import com.zacharyhirsch.moldynes.emulator.memory.Address;
 import com.zacharyhirsch.moldynes.emulator.rom.NametableLayout;
 import com.zacharyhirsch.moldynes.emulator.rom.NesRom;
 import java.nio.ByteBuffer;
@@ -28,7 +27,7 @@ final class Mmc3NesMapper extends AbstractNesMapper {
   private boolean irqEnable;
   private boolean irq;
   private boolean prevA12;
-  private int cpuClocks = 3;
+  private int clocks = 9;
 
   public Mmc3NesMapper(NesRom rom) {
     this.rom = rom;
@@ -48,9 +47,9 @@ final class Mmc3NesMapper extends AbstractNesMapper {
   }
 
   @Override
-  public void tick(int v) {
-    cpuClocks = Math.clamp(cpuClocks - 1, 0, 3);
-    checkIrqCounter(v);
+  public void tick(int ppuAddress) {
+    clocks = Math.max(clocks - 1, 0);
+    checkIrqCounter(ppuAddress);
   }
 
   @Override
@@ -58,11 +57,11 @@ final class Mmc3NesMapper extends AbstractNesMapper {
     return irq;
   }
 
-  private void checkIrqCounter(int address) {
-    boolean thisA12 = (address & 0b0001_0000_0000_0000) != 0;
+  private void checkIrqCounter(int ppuAddress) {
+    boolean thisA12 = (ppuAddress & 0b0001_0000_0000_0000) != 0;
     if (prevA12 && !thisA12) {
-      cpuClocks = 3;
-    } else if (!prevA12 && thisA12 && cpuClocks == 0) {
+      clocks = 9;
+    } else if (!prevA12 && thisA12 && clocks == 0) {
       tickIrqCounter();
     }
     prevA12 = thisA12;
@@ -152,7 +151,7 @@ final class Mmc3NesMapper extends AbstractNesMapper {
     }
     if (0xc000 <= address && address <= 0xdfff) {
       if (even) {
-        irqCounterLatch = data;
+        irqCounterLatch = Byte.toUnsignedInt(data);
       } else {
         irqCounter = 0;
         irqCounterReload = true;
