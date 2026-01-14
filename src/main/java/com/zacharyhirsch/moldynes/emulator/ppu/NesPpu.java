@@ -2038,6 +2038,11 @@ public final class NesPpu {
     this.frame = new byte[256 * 240 * 3];
   }
 
+  // TODO: remove this accessor and abstract out the PPU address lines.
+  public int v() {
+    return v;
+  }
+
   public void writeControl(byte data) {
     boolean wasNmiEnabled = isNmiEnabled();
     ctrl = data;

@@ -4,7 +4,7 @@ import com.zacharyhirsch.moldynes.emulator.memory.Address;
 
 public interface NesMapper {
 
-  void tick();
+  void tick(int v);
 
   boolean irq();
 

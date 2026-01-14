@@ -6,7 +6,7 @@ import com.zacharyhirsch.moldynes.emulator.rom.NametableLayout;
 public abstract class AbstractNesMapper implements NesMapper {
 
   @Override
-  public void tick() {}
+  public void tick(int v) {}
 
   @Override
   public boolean irq() {

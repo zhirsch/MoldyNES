@@ -48,8 +48,9 @@ final class Mmc3NesMapper extends AbstractNesMapper {
   }
 
   @Override
-  public void tick() {
+  public void tick(int v) {
     cpuClocks = Math.clamp(cpuClocks - 1, 0, 3);
+    checkIrqCounter(v);
   }
 
   @Override
@@ -96,12 +97,6 @@ final class Mmc3NesMapper extends AbstractNesMapper {
   @Override
   protected void writePrgRam(int address, byte data) {
     wram.put(address - 0x6000, data);
-  }
-
-  @Override
-  public Address resolvePpu(int address) {
-    checkIrqCounter(address);
-    return super.resolvePpu(address);
   }
 
   @Override

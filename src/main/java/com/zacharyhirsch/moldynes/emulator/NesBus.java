@@ -35,7 +35,7 @@ public class NesBus {
 
   public void tick() {
     clock.tick();
-    mapper.tick();
+    mapper.tick(ppu.v());
     ppu.tick();
     ppu.tick();
     ppu.tick();
