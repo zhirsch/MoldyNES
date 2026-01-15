@@ -1,7 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.apu;
 
 import com.zacharyhirsch.moldynes.emulator.NesClock;
-import com.zacharyhirsch.moldynes.emulator.io.Display;
+import com.zacharyhirsch.moldynes.emulator.io.Audio;
 import java.util.BitSet;
 import java.util.function.Function;
 import org.slf4j.Logger;
@@ -12,7 +12,7 @@ public final class NesApu {
   private static final Logger log = LoggerFactory.getLogger(NesApu.class);
 
   private final NesClock clock;
-  private final Display display;
+  private final Audio audio;
   private final NesApuIrq irq;
   private final NesApuPulse pulse1;
   private final NesApuPulse pulse2;
@@ -29,9 +29,9 @@ public final class NesApu {
 
   private boolean pendingIrqInhibited;
 
-  public NesApu(NesClock clock, Display display, Function<Short, Byte> startDmcDma) {
+  public NesApu(NesClock clock, Audio audio, Function<Short, Byte> startDmcDma) {
     this.clock = clock;
-    this.display = display;
+    this.audio = audio;
     this.irq = new NesApuIrq();
     this.pulse1 = new NesApuPulse(clock, 1);
     this.pulse2 = new NesApuPulse(clock, 2);
@@ -87,7 +87,7 @@ public final class NesApu {
     noise.tick();
     dmc.tick();
 
-    display.play(mixer.mix());
+    audio.writeAudioSample(mixer.mix());
   }
 
   @SuppressWarnings("DuplicateBranchesInSwitch")
@@ -115,6 +115,7 @@ public final class NesApu {
     }
     if (frameCounter == 29830) {
       frameCounter = 0;
+      audio.present();
     }
   }
 
@@ -141,6 +142,7 @@ public final class NesApu {
     }
     if (frameCounter == 37282) {
       frameCounter = 0;
+      audio.present();
     }
   }
 
@@ -181,6 +183,7 @@ public final class NesApu {
   private boolean handleDelayedFrameCounterReset() {
     if (clock.getCycle() == frameCounterResetDelay) {
       frameCounter = 0;
+      audio.present();
       mode = pendingMode;
       irq.setInhibited(pendingIrqInhibited);
       if (mode == 1) {

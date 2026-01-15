@@ -14,4 +14,5 @@ MODULE.bazel.lock
 .DS_Store
 
 *.nes
+*.nes.wram
 *.log

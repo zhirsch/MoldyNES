@@ -3,8 +3,7 @@ package com.zacharyhirsch.moldynes.emulator.bus;
 import com.zacharyhirsch.moldynes.emulator.NesClock;
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
-import com.zacharyhirsch.moldynes.emulator.io.Display;
-import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
+import com.zacharyhirsch.moldynes.emulator.io.Io;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpuPalette;
@@ -21,17 +20,12 @@ public class NesBus {
   private final NesApu apu;
   private final NesPpu ppu;
 
-  public NesBus(
-      NesMapper mapper,
-      NesPpuPalette palette,
-      Display display,
-      NesJoypad joypad1,
-      NesJoypad joypad2) {
+  public NesBus(NesMapper mapper, NesPpuPalette palette, Io io) {
     this.clock = new NesClock();
     this.mapper = mapper;
-    this.apu = new NesApu(clock, display, this::startDmcDma);
-    this.ppu = new NesPpu(mapper, display, palette, this::onNmi);
-    this.cpu = new NesCpu(mapper, ppu, apu, joypad1, joypad2, this::startOamDma);
+    this.apu = new NesApu(clock, io.audio(), this::startDmcDma);
+    this.ppu = new NesPpu(mapper, io.video(), palette, this::onNmi);
+    this.cpu = new NesCpu(mapper, ppu, apu, io.joypad1(), io.joypad2(), this::startOamDma);
   }
 
   public void tick() {

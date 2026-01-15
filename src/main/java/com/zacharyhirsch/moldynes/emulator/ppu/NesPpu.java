@@ -1,6 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.ppu;
 
-import com.zacharyhirsch.moldynes.emulator.io.Display;
+import com.zacharyhirsch.moldynes.emulator.io.Color;
+import com.zacharyhirsch.moldynes.emulator.io.Video;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -1996,11 +1997,10 @@ public final class NesPpu {
   };
 
   private final NesPpuMemory memory;
-  private final Display display;
+  private final Video video;
   private final Runnable nmi;
   private final NesPpuOam oam;
   private final NesPpuPalette palette;
-  private final byte[] frame;
 
   private int scanline = 0;
   private int dot = 0;
@@ -2031,13 +2031,12 @@ public final class NesPpu {
 
   private int address = 0;
 
-  public NesPpu(NesMapper mapper, Display display, NesPpuPalette palette, Runnable nmi) {
+  public NesPpu(NesMapper mapper, Video video, NesPpuPalette palette, Runnable nmi) {
     this.memory = new NesPpuMemory(mapper);
-    this.display = display;
+    this.video = video;
     this.nmi = nmi;
     this.palette = palette;
     this.oam = new NesPpuOam();
-    this.frame = new byte[256 * 240 * 3];
   }
 
   public int address() {
@@ -2203,7 +2202,7 @@ public final class NesPpu {
   }
 
   private void drawFrame() {
-    display.draw(frame);
+    video.present();
   }
 
   private void incrementAddress() {
@@ -2313,11 +2312,8 @@ public final class NesPpu {
       return;
     }
     byte paletteIndex = memory.read((short) (0x3f00 | renderPixel(dot - 1)));
-    NesPpuColor color = palette.get(paletteIndex);
-    int pos = 3 * (scanline * 256 + dot - 1);
-    frame[pos + 0] = color.r();
-    frame[pos + 1] = color.g();
-    frame[pos + 2] = color.b();
+    Color color = palette.get(paletteIndex);
+    video.writeVideoPixel(dot - 1, scanline, color);
   }
 
   private int renderPixel(int pixel) {

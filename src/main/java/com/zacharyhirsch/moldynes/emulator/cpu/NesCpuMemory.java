@@ -1,7 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
-import com.zacharyhirsch.moldynes.emulator.io.NesJoypad;
+import com.zacharyhirsch.moldynes.emulator.io.Joypad;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.memory.Address;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
@@ -13,8 +13,8 @@ final class NesCpuMemory {
   private final NesMapper mapper;
   private final NesPpu ppu;
   private final NesApu apu;
-  private final NesJoypad joypad1;
-  private final NesJoypad joypad2;
+  private final Joypad joypad1;
+  private final Joypad joypad2;
   private final Consumer<Byte> startOamDma;
   private final ByteBuffer ram;
 
@@ -22,8 +22,8 @@ final class NesCpuMemory {
       NesMapper mapper,
       NesPpu ppu,
       NesApu apu,
-      NesJoypad joypad1,
-      NesJoypad joypad2,
+      Joypad joypad1,
+      Joypad joypad2,
       Consumer<Byte> startOamDma) {
     this.mapper = mapper;
     this.ppu = ppu;
@@ -87,12 +87,12 @@ final class NesCpuMemory {
         case 0x4015 -> Address.of(apu::readStatus, apu::writeStatus);
         case 0x4016 ->
             Address.of(
-                joypad1::read,
+                joypad1::readJoypad,
                 data -> {
-                  joypad1.write(data);
-                  joypad2.write(data);
+                  joypad1.writeJoypad(data);
+                  joypad2.writeJoypad(data);
                 });
-        case 0x4017 -> Address.of(joypad2::read, apu::writeFrameCounter);
+        case 0x4017 -> Address.of(joypad2::readJoypad, apu::writeFrameCounter);
         default -> throw new IllegalStateException();
       };
     }
