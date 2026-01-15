@@ -1,7 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
-import com.zacharyhirsch.moldynes.emulator.io.Joypad;
+import com.zacharyhirsch.moldynes.emulator.io.Joypads;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.memory.Address;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
@@ -13,23 +13,16 @@ final class NesCpuMemory {
   private final NesMapper mapper;
   private final NesPpu ppu;
   private final NesApu apu;
-  private final Joypad joypad1;
-  private final Joypad joypad2;
+  private final Joypads joypads;
   private final Consumer<Byte> startOamDma;
   private final ByteBuffer ram;
 
   NesCpuMemory(
-      NesMapper mapper,
-      NesPpu ppu,
-      NesApu apu,
-      Joypad joypad1,
-      Joypad joypad2,
-      Consumer<Byte> startOamDma) {
+      NesMapper mapper, NesPpu ppu, NesApu apu, Joypads joypads, Consumer<Byte> startOamDma) {
     this.mapper = mapper;
     this.ppu = ppu;
     this.apu = apu;
-    this.joypad1 = joypad1;
-    this.joypad2 = joypad2;
+    this.joypads = joypads;
     this.startOamDma = startOamDma;
     this.ram = ByteBuffer.wrap(new byte[0x0800]);
   }
@@ -85,14 +78,8 @@ final class NesCpuMemory {
         case 0x4013 -> Address.of(() -> (byte) 0, apu.dmc()::writeLength);
         case 0x4014 -> Address.of(() -> (byte) 0, startOamDma);
         case 0x4015 -> Address.of(apu::readStatus, apu::writeStatus);
-        case 0x4016 ->
-            Address.of(
-                joypad1::readJoypad,
-                data -> {
-                  joypad1.writeJoypad(data);
-                  joypad2.writeJoypad(data);
-                });
-        case 0x4017 -> Address.of(joypad2::readJoypad, apu::writeFrameCounter);
+        case 0x4016 -> Address.of(() -> joypads.readJoypad(0), joypads::writeJoypads);
+        case 0x4017 -> Address.of(() -> joypads.readJoypad(1), apu::writeFrameCounter);
         default -> throw new IllegalStateException();
       };
     }

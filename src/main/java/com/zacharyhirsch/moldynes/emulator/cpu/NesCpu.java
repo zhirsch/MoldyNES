@@ -1,7 +1,7 @@
 package com.zacharyhirsch.moldynes.emulator.cpu;
 
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
-import com.zacharyhirsch.moldynes.emulator.io.Joypad;
+import com.zacharyhirsch.moldynes.emulator.io.Joypads;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import java.util.function.Consumer;
@@ -27,13 +27,8 @@ public final class NesCpu {
   private boolean oldI;
 
   public NesCpu(
-      NesMapper mapper,
-      NesPpu ppu,
-      NesApu apu,
-      Joypad joypad1,
-      Joypad joypad2,
-      Consumer<Byte> startOamDma) {
-    this.memory = new NesCpuMemory(mapper, ppu, apu, joypad1, joypad2, startOamDma);
+      NesMapper mapper, NesPpu ppu, NesApu apu, Joypads joypads, Consumer<Byte> startOamDma) {
+    this.memory = new NesCpuMemory(mapper, ppu, apu, joypads, startOamDma);
     this.state = new NesCpuState();
     this.cycle = new NesCpuInit();
     this.halt = false;

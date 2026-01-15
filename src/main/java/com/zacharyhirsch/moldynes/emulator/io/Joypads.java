@@ -1,6 +1,6 @@
 package com.zacharyhirsch.moldynes.emulator.io;
 
-public interface Joypad extends AutoCloseable {
+public interface Joypads extends AutoCloseable {
 
   enum Button {
     RIGHT((byte) 0b1000_0000),
@@ -24,7 +24,7 @@ public interface Joypad extends AutoCloseable {
     }
   }
 
-  byte readJoypad();
+  byte readJoypad(int index);
 
-  void writeJoypad(byte data);
+  void writeJoypads(byte data);
 }

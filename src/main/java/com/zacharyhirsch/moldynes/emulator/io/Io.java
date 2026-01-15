@@ -6,9 +6,7 @@ public interface Io extends AutoCloseable {
 
   Video video();
 
-  Joypad joypad1();
-
-  Joypad joypad2();
+  Joypads joypads();
 
   EventLoop eventLoop();
 }

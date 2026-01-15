@@ -25,7 +25,7 @@ public class NesBus {
     this.mapper = mapper;
     this.apu = new NesApu(clock, io.audio(), this::startDmcDma);
     this.ppu = new NesPpu(mapper, io.video(), palette, this::onNmi);
-    this.cpu = new NesCpu(mapper, ppu, apu, io.joypad1(), io.joypad2(), this::startOamDma);
+    this.cpu = new NesCpu(mapper, ppu, apu, io.joypads(), this::startOamDma);
   }
 
   public void tick() {
