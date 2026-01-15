@@ -14,6 +14,7 @@ public class NesMapperFactory {
       case 0x00 -> new NromNesMapper(rom);
       case 0x01 -> new Mmc1NesMapper(rom);
       case 0x02 -> new UxRomNesMapper(rom);
+      case 0x03 -> new CnromNesMapper(rom);
       case 0x04 -> new Mmc3NesMapper(rom);
       default -> throw new UnknownMapperError(rom.properties().mapper());
     };
