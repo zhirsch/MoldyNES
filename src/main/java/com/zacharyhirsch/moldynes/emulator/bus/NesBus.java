@@ -1,5 +1,6 @@
-package com.zacharyhirsch.moldynes.emulator;
+package com.zacharyhirsch.moldynes.emulator.bus;
 
+import com.zacharyhirsch.moldynes.emulator.NesClock;
 import com.zacharyhirsch.moldynes.emulator.apu.NesApu;
 import com.zacharyhirsch.moldynes.emulator.cpu.NesCpu;
 import com.zacharyhirsch.moldynes.emulator.io.Display;

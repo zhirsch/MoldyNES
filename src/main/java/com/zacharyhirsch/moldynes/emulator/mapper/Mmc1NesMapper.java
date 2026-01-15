@@ -37,9 +37,9 @@ final class Mmc1NesMapper extends AbstractNesMapper {
   private int chrRomBank1Select;
   private boolean prgRamEnabled;
 
-  public Mmc1NesMapper(NesRom rom) {
+  public Mmc1NesMapper(NesRom rom, ByteBuffer wram) {
     this.rom = rom;
-    this.wram = ByteBuffer.wrap(new byte[0x2000]);
+    this.wram = wram;
     this.vram = ByteBuffer.wrap(new byte[0x2000]);
     this.shiftRegister = new ShiftRegister();
     this.control = 0;

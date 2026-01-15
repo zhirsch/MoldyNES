@@ -48,10 +48,11 @@ public final class NesRomLoader {
     }
     int mapper = getMapper(header[6], header[7], header[8]);
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
+    boolean battery = (header[6] &0b0000_0010) != 0;
     return new NesRom(
         ByteBuffer.wrap(input.readNBytes(prgSize)).asReadOnlyBuffer(),
         ByteBuffer.wrap(input.readNBytes(chrSize)).asReadOnlyBuffer(),
-        new NesRomProperties(mapper, nametableLayout));
+        new NesRomProperties(mapper, nametableLayout, battery));
   }
 
   private static NesRom load10(byte[] header, InputStream input) throws IOException {
@@ -89,12 +90,13 @@ public final class NesRomLoader {
     }
     int mapper = getMapper(header[6], header[7], (byte) 0);
     NametableLayout nametableLayout = NametableLayout.fromHeader6(header[6]);
+    boolean battery = (header[6] &0b0000_0010) != 0;
     return new NesRom(
         ByteBuffer.wrap(input.readNBytes(prgSize)).asReadOnlyBuffer(),
         chrSize == 0
             ? ByteBuffer.wrap(new byte[0x2000])
             : ByteBuffer.wrap(input.readNBytes(chrSize)).asReadOnlyBuffer(),
-        new NesRomProperties(mapper, nametableLayout));
+        new NesRomProperties(mapper, nametableLayout, battery));
   }
 
   private static int getSectionSize(byte lsb, byte msb, int blockSize) {
