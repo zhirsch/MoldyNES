@@ -1,3 +1,5 @@
+load("@rules_jvm_external//:defs.bzl", "artifact")
+
 java_library(
     name = "io",
     srcs = glob(["*.java"]),
@@ -11,8 +13,8 @@ java_library(
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/clock",
         "//third_party/sdl3",
-        "@maven//:com_google_guava_guava",
-        "@maven//:net_java_dev_jna_jna",
-        "@maven//:org_slf4j_slf4j_api",
+        artifact("com.google.guava:guava"),
+        artifact("net.java.dev.jna:jna"),
+        artifact("org.slf4j.slf4j:api"),
     ],
 )

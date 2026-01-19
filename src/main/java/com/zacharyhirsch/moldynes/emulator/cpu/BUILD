@@ -1,3 +1,5 @@
+load("@rules_jvm_external//:defs.bzl", "artifact")
+
 java_library(
     name = "cpu",
     srcs = glob(["**/*.java"]),
@@ -12,6 +14,6 @@ java_library(
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/memory",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
-        "@maven//:org_slf4j_slf4j_api",
+        artifact("org.slf4j:slf4j-api"),
     ],
 )

@@ -1,3 +1,5 @@
+load("@rules_jvm_external//:defs.bzl", "artifact")
+
 config_setting(
     name = "macos",
     constraint_values = [
@@ -20,7 +22,7 @@ java_binary(
         "//src/main/resources:logback.xml",
     ],
     visibility = ["//roms:__pkg__"],
-    runtime_deps = ["@maven//:ch_qos_logback_logback_classic"],
+    runtime_deps = [artifact("ch.qos.logback:logback-classic")],
     deps = [
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/bus",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/clock",
@@ -28,7 +30,7 @@ java_binary(
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/ppu",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/rom",
-        "@maven//:com_google_guava_guava",
-        "@maven//:org_slf4j_slf4j_api",
+        artifact("com.google.guava:guava"),
+        artifact("org.slf4j:slf4j-api"),
     ],
 )

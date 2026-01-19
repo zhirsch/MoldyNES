@@ -1,3 +1,5 @@
+load("@rules_jvm_external//:defs.bzl", "artifact")
+
 java_library(
     name = "ppu",
     srcs = glob(["*.java"]),
@@ -10,6 +12,6 @@ java_library(
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/io",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/mapper",
         "//src/main/java/com/zacharyhirsch/moldynes/emulator/memory",
-        "@maven//:com_google_guava_guava",
+        artifact("com.google.guava:guava"),
     ],
 )
