@@ -5,20 +5,13 @@ import com.zacharyhirsch.moldynes.emulator.io.Joypads;
 import com.zacharyhirsch.moldynes.emulator.mapper.NesMapper;
 import com.zacharyhirsch.moldynes.emulator.ppu.NesPpu;
 import java.util.function.Consumer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class NesCpu {
-
-  private static final Logger log = LoggerFactory.getLogger(NesCpu.class);
 
   private final NesCpuMemory memory;
   public final NesCpuState state;
 
   private NesCpuCycle cycle;
-  private boolean halt;
-  private boolean reset;
-  private boolean resetPending;
   private boolean nmi;
   private boolean nmiPending;
   private boolean irq;
@@ -31,17 +24,10 @@ public final class NesCpu {
     this.memory = new NesCpuMemory(mapper, ppu, apu, joypads, startOamDma);
     this.state = new NesCpuState();
     this.cycle = new NesCpuInit();
-    this.halt = false;
-    this.reset = false;
-    this.resetPending = false;
     this.nmi = false;
     this.nmiPending = false;
     this.irq = false;
     this.irqPending = false;
-  }
-
-  public void reset() {
-    this.reset = true;
   }
 
   public void nmi() {
@@ -59,10 +45,6 @@ public final class NesCpu {
       cycle = cycle.execute(this);
     } catch (Exception exc) {
       throw new NesCpuCrashedException(oldPc, exc);
-    }
-    if (reset) {
-      resetPending = true;
-      reset = false;
     }
     if (nmi) {
       nmiPending = true;
@@ -83,11 +65,6 @@ public final class NesCpu {
   }
 
   public NesCpuCycle next() {
-    if (resetPending) {
-      resetPending = false;
-      state.p.i(true);
-      return new NesCpuInit().execute(this);
-    }
     if (nmiPending) {
       nmiPending = false;
       return new NesCpuInterrupt((short) 0xfffa, (short) 0xfffb, false).execute(this);
@@ -102,12 +79,7 @@ public final class NesCpu {
     return cpu -> NesCpuDecoder.decode(state.data).execute(cpu);
   }
 
-  public boolean isRunning() {
-    return !halt;
-  }
-
   public NesCpuCycle halt() {
-    halt = true;
     return next();
   }
 
