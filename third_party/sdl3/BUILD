@@ -1,3 +1,5 @@
+load("@rules_java//java:java_import.bzl", "java_import")
+
 config_setting(
     name = "macos",
     constraint_values = [
